@@ -17,8 +17,9 @@ htmlcov/
 # Environment
 .env
 
-# QC job outputs (never commit reports or media)
-reports/
+# QC job outputs (never commit reports or media).
+# Root-anchored: must NOT match the source package src/deepdub_qc/reports/.
+/reports/
 *.mov
 *.mxf
 *.mp4

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QC Report — {{ r.asset.filename }}</title>
+<style>
+  /* Deepdub design system — dark-first (#0A0A0A canvas), Onest, magenta accent */
+  @import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700&family=JetBrains+Mono&display=swap');
+  :root {
+    --dd-bg: #0A0A0A; --dd-surface-1: #161616; --dd-surface-2: #1F1F1F;
+    --dd-fg-1: #FFFFFF; --dd-fg-2: #B5B5B5; --dd-fg-3: #8A8A8A;
+    --dd-border: rgba(255,255,255,0.08); --dd-border-strong: rgba(255,255,255,0.16);
+    --dd-magenta: #FE338F; --dd-violet: #E25DFF;
+    --dd-success: #25D472; --dd-warning: #FFB020; --dd-danger: #FF2123; --dd-info: #5D7BFF;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--dd-bg); }
+  body {
+    font-family: 'Onest', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--dd-fg-1); margin: 0 auto; max-width: 940px; padding: 40px 28px;
+    font-size: 14px; line-height: 1.45;
+  }
+  header.dd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  header.dd svg { height: 34px; width: auto; display: block; }
+  .head-meta { text-align: right; }
+  .head-meta .title { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+  .head-meta .date { color: var(--dd-fg-2); font-size: 13px; margin-top: 2px; }
+  h2 {
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--dd-fg-3); margin: 30px 0 10px;
+  }
+  .muted { color: var(--dd-fg-3); }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
+  table {
+    border-collapse: separate; border-spacing: 0; width: 100%; margin: 8px 0;
+    background: var(--dd-surface-1); border: 1px solid var(--dd-border); border-radius: 12px;
+    overflow: hidden;
+  }
+  th, td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--dd-border); }
+  tr:last-child td { border-bottom: none; }
+  th { background: var(--dd-surface-2); font-weight: 600; font-size: 12px; color: var(--dd-fg-2); }
+  .kv td:first-child { width: 190px; color: var(--dd-fg-3); font-weight: 600; }
+  .banner {
+    display: flex; align-items: baseline; gap: 14px;
+    background: var(--dd-surface-1); border: 1px solid var(--dd-border);
+    border-left: 4px solid var(--dd-fg-3); border-radius: 12px; padding: 16px 20px; margin: 18px 0;
+  }
+  .banner .verdict { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .banner .sub { color: var(--dd-fg-2); font-size: 13px; }
+  .banner.v-PASS { border-left-color: var(--dd-success); } .banner.v-PASS .verdict { color: var(--dd-success); }
+  .banner.v-WARNING { border-left-color: var(--dd-warning); } .banner.v-WARNING .verdict { color: var(--dd-warning); }
+  .banner.v-FAIL { border-left-color: var(--dd-danger); } .banner.v-FAIL .verdict { color: var(--dd-danger); }
+  .banner.v-ERROR { border-left-color: var(--dd-danger); } .banner.v-ERROR .verdict { color: var(--dd-danger); }
+  .status { font-weight: 700; white-space: nowrap; font-size: 12px; }
+  .s-PASS { color: var(--dd-success); } .s-WARNING { color: var(--dd-warning); }
+  .s-FAIL { color: var(--dd-danger); } .s-ERROR { color: var(--dd-danger); }
+  .s-SKIPPED, .s-NOT_APPLICABLE { color: var(--dd-fg-3); }
+  .counts { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .count {
+    background: var(--dd-surface-1); border: 1px solid var(--dd-border); border-radius: 12px;
+    padding: 10px 16px; min-width: 92px;
+  }
+  .count b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .count span { color: var(--dd-fg-3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .check-name { font-weight: 600; }
+  footer {
+    margin-top: 36px; border-top: 1px solid var(--dd-border); padding-top: 12px;
+    font-size: 11.5px; color: var(--dd-fg-3);
+  }
+  footer .row { margin-top: 3px; }
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    tr { page-break-inside: avoid; }
+  }
+  @page { margin: 14mm 12mm; background: #0A0A0A; }
+</style>
+</head>
+<body>
+
+<header class="dd">
+  {{ wordmark }}
+  <div class="head-meta">
+    <div class="title">Quality Control Report</div>
+    <div class="date">{{ generated_date }} · {{ generated_time }}</div>
+  </div>
+</header>
+
+<div class="banner v-{{ r.summary.overall_status.value }}">
+  <span class="verdict">{{ r.summary.overall_status.value }}</span>
+  <span class="sub">{{ r.summary.blocking_failures }} blocking failure(s) ·
+    {{ r.summary.warnings }} warning(s) · {{ r.summary.total_checks }} checks run</span>
+</div>
+
+<div class="counts">
+  <div class="count"><b>{{ r.summary.passed }}</b><span>Passed</span></div>
+  <div class="count"><b>{{ r.summary.warnings }}</b><span>Warnings</span></div>
+  <div class="count"><b>{{ r.summary.failed }}</b><span>Failed</span></div>
+  <div class="count"><b>{{ r.summary.blocking_failures }}</b><span>Blocking</span></div>
+  <div class="count"><b>{{ r.summary.skipped }}</b><span>Skipped</span></div>
+</div>
+
+<h2>Asset</h2>
+<table class="kv">
+  <tr><td>File</td><td>{{ r.asset.filename }}</td></tr>
+  <tr><td>Duration</td><td class="mono">{{ r.asset.duration_seconds | timecode }}</td></tr>
+  <tr><td>Size</td><td>{{ r.asset.file_size_bytes | filesize }}</td></tr>
+  <tr><td>SHA-256</td><td class="mono">{{ r.asset.sha256 }}</td></tr>
+</table>
+
+<h2>Client &amp; Preset</h2>
+<table class="kv">
+  <tr><td>Client</td><td>{{ r.preset.client }} · {{ r.preset.content_type }}</td></tr>
+  <tr><td>Preset</td><td>{{ r.preset.preset_id }} v{{ r.preset.preset_version }}
+    <span class="mono muted">({{ r.preset.sha256[:16] }}…)</span></td></tr>
+</table>
+
+{% macro finding_rows(items, show_blocking=false) %}
+  {% for f in items %}
+  <tr>
+    <td><span class="check-name">{{ f.display_name }}</span></td>
+    <td class="status s-{{ f.status.value }}">{{ f.status.value }}</td>
+    <td>{{ f.expected | expected }}</td>
+    <td>{{ f.actual | actual }}</td>
+    <td>{{ f | channel }}</td>
+    <td class="muted">{{ f.message }}</td>
+  </tr>
+  {% endfor %}
+{% endmacro %}
+
+{% if blocking_failures %}
+<h2>Blocking Failures</h2>
+<table>
+  <tr><th>Check</th><th>Status</th><th>Target Value</th><th>Measured</th><th>Channel</th><th>Details</th></tr>
+  {{ finding_rows(blocking_failures) }}
+</table>
+{% endif %}
+
+{% if errors %}
+<h2>Execution Errors</h2>
+<table>
+  <tr><th>Check</th><th>Status</th><th>Details</th></tr>
+  {% for f in errors %}
+  <tr>
+    <td><span class="check-name">{{ f.display_name }}</span></td>
+    <td class="status s-ERROR">ERROR</td>
+    <td class="muted">{{ f.message }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if non_blocking_failures or warnings %}
+<h2>Warnings &amp; Non-Blocking Findings</h2>
+<table>
+  <tr><th>Check</th><th>Status</th><th>Target Value</th><th>Measured</th><th>Channel</th><th>Details</th></tr>
+  {{ finding_rows(non_blocking_failures + warnings) }}
+</table>
+{% endif %}
+
+{% if incidents %}
+<h2>Timestamped Incidents</h2>
+<table>
+  <tr><th>TC In</th><th>TC Out</th><th>Check</th><th>Status</th><th>Channel</th></tr>
+  {% for f in incidents %}
+  <tr>
+    <td class="mono">{{ f.start_timecode or (f.start_seconds | timecode) }}</td>
+    <td class="mono">{{ f.end_timecode or (f.end_seconds | timecode) }}</td>
+    <td><span class="check-name">{{ f.display_name }}</span></td>
+    <td class="status s-{{ f.status.value }}">{{ f.status.value }}</td>
+    <td>{{ f | channel }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if r.evidence %}
+<h2>Evidence</h2>
+<table>
+  <tr><th>Type</th><th>File</th><th>TC</th></tr>
+  {% for e in r.evidence %}
+  <tr>
+    <td>{{ e.type.value }}</td>
+    <td class="mono">{{ e.path }}</td>
+    <td class="mono">{{ e.start_seconds | timecode if e.start_seconds is not none else "—" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if passed or skipped %}
+<h2>All Checks</h2>
+<table>
+  <tr><th>Check</th><th>Status</th><th>Target Value</th><th>Measured</th><th>Channel</th><th>Details</th></tr>
+  {{ finding_rows(passed + skipped) }}
+</table>
+{% endif %}
+
+<footer>
+  <div class="row">deepdub-qc {{ r.job.tool_version }} · schema {{ r.schema_version }} ·
+    job <span class="mono">{{ r.job.job_id }}</span> · analysis {{ r.job.duration_seconds | timecode }}</div>
+  <div class="row">FFmpeg {{ r.environment.ffmpeg_version or "—" }} · Python {{ r.environment.python_version }} ·
+    {{ r.environment.platform }}{% if r.environment.docker_image %} · {{ r.environment.docker_image }}{% endif %}</div>
+  {% if detector_versions %}
+  <div class="row">Detectors:
+    {% for det_id, det_version in detector_versions %}
+    <span class="mono">{{ det_id }}/{{ det_version }}</span>{% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="row">Canonical source of truth: report.json — this document is a rendering of it.
+    Deterministic analysis: AI explains, software measures, rules decide.</div>
+</footer>
+
+</body>
+</html>
