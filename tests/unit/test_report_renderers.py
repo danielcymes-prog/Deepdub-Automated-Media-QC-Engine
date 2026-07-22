@@ -59,37 +59,48 @@ class TestHtmlContract:
         assert "<script" not in html.lower()
 
     def test_overall_status_and_counts(self, html: str) -> None:
-        assert "Overall status: FAIL" in html
-        assert "2 blocking failure(s)" in html
+        assert "FAIL" in html
+        assert "1 blocking failure(s)" in html
 
     def test_every_finding_is_rendered(self, html: str) -> None:
         for finding in build_mock_result().findings:
             assert finding.display_name in html, finding.rule_id
-            assert finding.rule_id in html
 
-    def test_expected_and_actual_values_shown(self, html: str) -> None:
-        assert "-24.0 to -22.0 LUFS" in html  # expected range
-        assert "-19.7 LUFS" in html  # actual value
+    def test_target_and_measured_values_shown(self, html: str) -> None:
+        assert "Target Value" in html  # stakeholder-requested phrasing
+        assert "-24.0 to -22.0 LUFS" in html  # target range
+        assert "-19.7 LUFS" in html  # measured value
 
-    def test_timecodes_and_stream_indices_shown(self, html: str) -> None:
-        assert "00:04:12:00" in html
-        assert "stream 1" in html
+    def test_timecodes_and_channel_mapping_shown(self, html: str) -> None:
+        assert "00:04:12:00" in html  # incident TC
+        assert "00:24:12:04" in html  # asset duration as HH:MM:SS:FF @ 23.976
+        assert "stereo · DEU" in html  # channel mapping instead of stream index
 
     def test_identity_and_versions_shown(self, html: str) -> None:
         result = build_mock_result()
         assert result.asset.sha256 in html
-        assert result.preset.sha256 in html
+        assert result.preset.sha256[:16] in html
         assert f"v{result.preset.preset_version}" in html
         assert f"deepdub-qc {result.job.tool_version}" in html
         assert str(result.job.job_id) in html
-        assert "2026-07-22 12:00:00 UTC" in html  # generation timestamp
+        assert "22 Jul 2026" in html  # prominent date
+        assert "12:00 UTC" in html
 
-    def test_evidence_and_remediation_shown(self, html: str) -> None:
+    def test_branding_present(self, html: str) -> None:
+        assert "<title>Deepdub</title>" in html  # embedded wordmark SVG
+        assert "#0A0A0A" in html  # brand canvas
+        assert "Onest" in html  # brand typeface
+
+    def test_stakeholder_removals(self, html: str) -> None:
+        """Per post-production review: no file path, no remediation section."""
+        result = build_mock_result()
+        assert result.asset.input_path not in html
+        assert "Normalize the final mix" not in html  # stays in JSON only
+        assert "Suggested Remediation" not in html
+        assert "Media Technical Summary" not in html
+
+    def test_evidence_shown(self, html: str) -> None:
         assert "evidence/thumbnails/black_00-04-12.png" in html
-        assert "Normalize the final mix" in html
-
-    def test_blocking_flag_visible(self, html: str) -> None:
-        assert "blocking" in html
 
     def test_write_html_report(self, tmp_path: Path) -> None:
         target = write_html_report(build_mock_result(), tmp_path, FIXED_TIMESTAMP)

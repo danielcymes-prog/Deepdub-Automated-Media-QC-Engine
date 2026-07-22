@@ -197,6 +197,39 @@
     {
       "actual": {
         "unit": null,
+        "value": "yuv422p10le"
+      },
+      "blocking": true,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Pixel Format",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": null,
+        "value": "yuv422p10le"
+      },
+      "finding_id": "3ed78e0d-eeb2-5179-8e02-faf2632b1e10",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "19e1942b-c604-5a27-9226-36ead2f53eda"
+      ],
+      "message": "Pixel format is yuv422p10le as required.",
+      "parameter_id": "video.pixel_format",
+      "rule_id": "video-pixel-format",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 0,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": null,
         "value": 2
       },
       "blocking": true,
@@ -334,10 +367,10 @@
         "unit": "s",
         "value": 3.4
       },
-      "blocking": true,
+      "blocking": false,
       "category": "video",
       "created_at": "2026-07-22T10:04:12Z",
-      "display_name": "Black Frames",
+      "display_name": "Drop Frames",
       "end_seconds": 255.4,
       "end_timecode": "00:04:15:10",
       "evidence_ids": [
@@ -345,14 +378,14 @@
         "d6f31b38-5ebb-5917-8961-70070a6d3d83"
       ],
       "expected": null,
-      "finding_id": "4999c445-03a4-589b-9a72-38aa8b4e968f",
+      "finding_id": "7eeca649-698f-5e8b-939c-d23402beb3a6",
       "job_id": "00000000-0000-4000-8000-000000000001",
       "measurement_ids": [
         "c386ee0e-5355-5746-961c-43f318c4ca4d"
       ],
-      "message": "Black frame segment of 3.4 s detected at 00:04:12:00.",
+      "message": "Drop-frame segment of 3.4 s detected at 00:04:12:00.",
       "parameter_id": "video.black_frame_event",
-      "rule_id": "video-black-frames",
+      "rule_id": "video-drop-frames",
       "rule_version": "1.0.0",
       "schema_version": "1.0.0",
       "severity": "error",
@@ -545,6 +578,26 @@
       "value": 23.976
     },
     {
+      "category": "video",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "19e1942b-c604-5a27-9226-36ead2f53eda",
+      "metadata": {},
+      "parameter_id": "video.pixel_format",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 0,
+      "unit": null,
+      "value": "yuv422p10le"
+    },
+    {
       "category": "audio",
       "confidence": 1.0,
       "created_at": "2026-07-22T10:04:12Z",
@@ -710,6 +763,7 @@
       "overall_bitrate": "185 Mb/s"
     },
     "subtitle_streams": [],
+    "timecode_frame_rate": 23.976,
     "video_streams": [
       {
         "codec": "prores",
@@ -731,14 +785,14 @@
   },
   "schema_version": "1.0.0",
   "summary": {
-    "blocking_failures": 2,
+    "blocking_failures": 1,
     "errors": 0,
     "failed": 2,
     "not_applicable": 0,
     "overall_status": "FAIL",
-    "passed": 7,
+    "passed": 8,
     "skipped": 1,
-    "total_checks": 12,
+    "total_checks": 13,
     "warnings": 2
   }
 }
