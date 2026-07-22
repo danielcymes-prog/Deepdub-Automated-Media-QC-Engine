@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.python-version
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+
+# QC job outputs (never commit reports or media)
+reports/
+*.mov
+*.mxf
+*.mp4
+*.wav
+
+# OS
+.DS_Store

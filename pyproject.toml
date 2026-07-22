@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deepdub-qc"
+version = "0.1.0"
+description = "Deepdub automated media quality-control engine. Deterministic media analysis, rule evaluation, and QC reporting."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "Proprietary" }
+authors = [{ name = "Deepdub", email = "daniel.cymes@deepdub.ai" }]
+dependencies = [
+    "pydantic>=2.8",
+    "typer>=0.12",
+    "rich>=13.7",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+deepdub-qc = "deepdub_qc.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-pyyaml>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deepdub_qc"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "SIM", # simplify
+    "PTH", # use pathlib
+    "RUF", # ruff-specific
+    "N",   # pep8-naming
+    "PL",  # pylint subset
+]
+ignore = [
+    "PLR2004", # magic-value comparisons are fine in tests/validators
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR0913"]
+# ID factories intentionally take one argument per identifying content part (ADR-008).
+"src/deepdub_qc/utils/ids.py" = ["PLR0913"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+mypy_path = "src"
+packages = ["deepdub_qc"]
+warn_unreachable = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: tests that exercise multiple subsystems together",
+]

@@ -1,0 +1,440 @@
+{
+  "$defs": {
+    "ActualValue": {
+      "additionalProperties": false,
+      "description": "The measured value a rule was evaluated against.",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ActualValue",
+      "type": "object"
+    },
+    "Category": {
+      "enum": [
+        "file",
+        "container",
+        "video",
+        "audio",
+        "subtitle",
+        "metadata",
+        "deepdub"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "ExpectedApprox": {
+      "additionalProperties": false,
+      "description": "A target value with tolerance (approximately_equals).",
+      "properties": {
+        "tolerance": {
+          "exclusiveMinimum": 0,
+          "title": "Tolerance",
+          "type": "number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "tolerance"
+      ],
+      "title": "ExpectedApprox",
+      "type": "object"
+    },
+    "ExpectedNothing": {
+      "additionalProperties": false,
+      "description": "No payload (exists, not_exists).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "title": "ExpectedNothing",
+      "type": "object"
+    },
+    "ExpectedPattern": {
+      "additionalProperties": false,
+      "description": "A regular expression the actual value must match (regex).",
+      "properties": {
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "title": "ExpectedPattern",
+      "type": "object"
+    },
+    "ExpectedRange": {
+      "additionalProperties": false,
+      "description": "An inclusive numeric range (between).",
+      "properties": {
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "title": "ExpectedRange",
+      "type": "object"
+    },
+    "ExpectedValue": {
+      "additionalProperties": false,
+      "description": "A single comparison value (equals, ordering, contains, count_*).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ExpectedValue",
+      "type": "object"
+    },
+    "ExpectedValues": {
+      "additionalProperties": false,
+      "description": "A set of allowed/forbidden values (in, not_in, contains_all).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "values": {
+          "items": {},
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "ExpectedValues",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "QCStatus": {
+      "description": "Outcome of evaluating one rule, or of a whole job.\n\nSemantics (see docs/DATA_MODEL_REVIEW.md item 7):\n    NOT_APPLICABLE: rule disabled, or its stream selector matches nothing\n        by design.\n    SKIPPED: a required measurement was expected but unavailable\n        (e.g. upstream detector did not run). A SKIPPED enabled blocking\n        rule escalates the job to ERROR - the tool must not pass a file\n        it failed to inspect.",
+      "enum": [
+        "PASS",
+        "WARNING",
+        "FAIL",
+        "ERROR",
+        "SKIPPED",
+        "NOT_APPLICABLE"
+      ],
+      "title": "QCStatus",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "warning",
+        "error",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Outcome of one rule evaluation.\n\nCanonical `message` text is produced from deterministic templates.\nAI-generated explanations are never stored here (ADR-001); they belong to\nthe separate `ai_summary` structure on the report.",
+  "properties": {
+    "actual": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActualValue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "blocking": {
+      "title": "Blocking",
+      "type": "boolean"
+    },
+    "category": {
+      "$ref": "#/$defs/Category"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "display_name": {
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "end_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End Seconds"
+    },
+    "end_timecode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End Timecode"
+    },
+    "evidence_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "expected": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExpectedValue"
+        },
+        {
+          "$ref": "#/$defs/ExpectedValues"
+        },
+        {
+          "$ref": "#/$defs/ExpectedRange"
+        },
+        {
+          "$ref": "#/$defs/ExpectedApprox"
+        },
+        {
+          "$ref": "#/$defs/ExpectedPattern"
+        },
+        {
+          "$ref": "#/$defs/ExpectedNothing"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected"
+    },
+    "finding_id": {
+      "format": "uuid",
+      "title": "Finding Id",
+      "type": "string"
+    },
+    "job_id": {
+      "format": "uuid",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "measurement_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Measurement Ids",
+      "type": "array"
+    },
+    "message": {
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "parameter_id": {
+      "minLength": 1,
+      "title": "Parameter Id",
+      "type": "string"
+    },
+    "rule_id": {
+      "minLength": 1,
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "rule_version": {
+      "title": "Rule Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "start_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start Seconds"
+    },
+    "start_timecode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start Timecode"
+    },
+    "status": {
+      "$ref": "#/$defs/QCStatus"
+    },
+    "stream_index": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stream Index"
+    },
+    "suggested_action": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Suggested Action"
+    }
+  },
+  "required": [
+    "finding_id",
+    "job_id",
+    "rule_id",
+    "parameter_id",
+    "category",
+    "display_name",
+    "status",
+    "severity",
+    "message",
+    "blocking",
+    "rule_version"
+  ],
+  "title": "Finding",
+  "type": "object"
+}

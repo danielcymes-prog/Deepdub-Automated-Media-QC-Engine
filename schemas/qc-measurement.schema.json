@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "Category": {
+      "enum": [
+        "file",
+        "container",
+        "video",
+        "audio",
+        "subtitle",
+        "metadata",
+        "deepdub"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "description": "One normalized value extracted from a media asset by a detector.\n\nDeterminism (ADR-008): `measurement_id` is a content-derived UUIDv5\n(see deepdub_qc.utils.ids). `created_at` is a declared volatile field.",
+  "properties": {
+    "category": {
+      "$ref": "#/$defs/Category"
+    },
+    "confidence": {
+      "default": 1.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "detector_id": {
+      "minLength": 1,
+      "title": "Detector Id",
+      "type": "string"
+    },
+    "detector_version": {
+      "title": "Detector Version",
+      "type": "string"
+    },
+    "end_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End Seconds"
+    },
+    "end_timecode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End Timecode"
+    },
+    "job_id": {
+      "format": "uuid",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "measurement_id": {
+      "format": "uuid",
+      "title": "Measurement Id",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Metadata",
+      "type": "object"
+    },
+    "parameter_id": {
+      "minLength": 1,
+      "title": "Parameter Id",
+      "type": "string"
+    },
+    "raw_artifact_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Artifact Path"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start Seconds"
+    },
+    "start_timecode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start Timecode"
+    },
+    "stream_index": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stream Index"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit"
+    },
+    "value": {
+      "$ref": "#/$defs/JsonValue"
+    }
+  },
+  "required": [
+    "measurement_id",
+    "job_id",
+    "detector_id",
+    "detector_version",
+    "parameter_id",
+    "category",
+    "value"
+  ],
+  "title": "Measurement",
+  "type": "object"
+}

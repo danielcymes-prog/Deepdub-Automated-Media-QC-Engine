@@ -1,0 +1,587 @@
+{
+  "$defs": {
+    "AppliesTo": {
+      "additionalProperties": false,
+      "description": "Stream scope of a rule (ADR-009). Omitted = file/container scope.",
+      "properties": {
+        "quantifier": {
+          "$ref": "#/$defs/Quantifier",
+          "default": "all"
+        },
+        "selector": {
+          "$ref": "#/$defs/StreamSelector",
+          "default": {
+            "index": null,
+            "language": null
+          }
+        },
+        "stream_type": {
+          "$ref": "#/$defs/StreamType"
+        }
+      },
+      "required": [
+        "stream_type"
+      ],
+      "title": "AppliesTo",
+      "type": "object"
+    },
+    "ExpectedApprox": {
+      "additionalProperties": false,
+      "description": "A target value with tolerance (approximately_equals).",
+      "properties": {
+        "tolerance": {
+          "exclusiveMinimum": 0,
+          "title": "Tolerance",
+          "type": "number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "tolerance"
+      ],
+      "title": "ExpectedApprox",
+      "type": "object"
+    },
+    "ExpectedNothing": {
+      "additionalProperties": false,
+      "description": "No payload (exists, not_exists).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "title": "ExpectedNothing",
+      "type": "object"
+    },
+    "ExpectedPattern": {
+      "additionalProperties": false,
+      "description": "A regular expression the actual value must match (regex).",
+      "properties": {
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "title": "ExpectedPattern",
+      "type": "object"
+    },
+    "ExpectedRange": {
+      "additionalProperties": false,
+      "description": "An inclusive numeric range (between).",
+      "properties": {
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "title": "ExpectedRange",
+      "type": "object"
+    },
+    "ExpectedValue": {
+      "additionalProperties": false,
+      "description": "A single comparison value (equals, ordering, contains, count_*).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ExpectedValue",
+      "type": "object"
+    },
+    "ExpectedValues": {
+      "additionalProperties": false,
+      "description": "A set of allowed/forbidden values (in, not_in, contains_all).",
+      "properties": {
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "values": {
+          "items": {},
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "ExpectedValues",
+      "type": "object"
+    },
+    "Operator": {
+      "description": "Generic comparison operators available to preset rules (handoff section 13).",
+      "enum": [
+        "equals",
+        "not_equals",
+        "in",
+        "not_in",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+        "between",
+        "approximately_equals",
+        "contains",
+        "contains_all",
+        "regex",
+        "exists",
+        "not_exists",
+        "count_equals",
+        "count_at_least",
+        "count_at_most"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PresetDefaults": {
+      "additionalProperties": false,
+      "description": "Fallback values applied to rules that omit severity/blocking.",
+      "properties": {
+        "blocking": {
+          "default": true,
+          "title": "Blocking",
+          "type": "boolean"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "default": "error"
+        }
+      },
+      "title": "PresetDefaults",
+      "type": "object"
+    },
+    "PresetMeta": {
+      "additionalProperties": false,
+      "description": "Identity and lifecycle metadata of a preset version (handoff section 12.2).",
+      "properties": {
+        "client": {
+          "minLength": 1,
+          "title": "Client",
+          "type": "string"
+        },
+        "content_type": {
+          "minLength": 1,
+          "title": "Content Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "effective_date": {
+          "format": "date",
+          "title": "Effective Date",
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/PresetStatus",
+          "default": "draft"
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "client",
+        "content_type",
+        "title",
+        "owner",
+        "effective_date"
+      ],
+      "title": "PresetMeta",
+      "type": "object"
+    },
+    "PresetStatus": {
+      "description": "Lifecycle status of a preset version (handoff section 12.2).",
+      "enum": [
+        "draft",
+        "approved",
+        "deprecated"
+      ],
+      "title": "PresetStatus",
+      "type": "string"
+    },
+    "Quantifier": {
+      "description": "How a rule quantifies over the streams matched by its selector (ADR-009).",
+      "enum": [
+        "all",
+        "any",
+        "exactly_one"
+      ],
+      "title": "Quantifier",
+      "type": "string"
+    },
+    "ReportConfig": {
+      "additionalProperties": false,
+      "description": "Preset-controlled report rendering options (handoff section 12.1).",
+      "properties": {
+        "include_evidence": {
+          "default": true,
+          "title": "Include Evidence",
+          "type": "boolean"
+        },
+        "include_passed_checks": {
+          "default": true,
+          "title": "Include Passed Checks",
+          "type": "boolean"
+        },
+        "include_raw_measurements": {
+          "default": false,
+          "title": "Include Raw Measurements",
+          "type": "boolean"
+        },
+        "include_suggested_actions": {
+          "default": true,
+          "title": "Include Suggested Actions",
+          "type": "boolean"
+        }
+      },
+      "title": "ReportConfig",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "description": "A single preset rule: compare a measured parameter against an expectation.\n\n`severity` and `blocking` may be omitted in preset YAML, in which case the\npreset's `defaults` section fills them in at load time (see QCPreset).",
+      "properties": {
+        "applies_to": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AppliesTo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "blocking": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Blocking"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExpectedValue"
+            },
+            {
+              "$ref": "#/$defs/ExpectedValues"
+            },
+            {
+              "$ref": "#/$defs/ExpectedRange"
+            },
+            {
+              "$ref": "#/$defs/ExpectedApprox"
+            },
+            {
+              "$ref": "#/$defs/ExpectedPattern"
+            },
+            {
+              "$ref": "#/$defs/ExpectedNothing"
+            }
+          ],
+          "default": {
+            "unit": null
+          },
+          "title": "Expected"
+        },
+        "operator": {
+          "$ref": "#/$defs/Operator"
+        },
+        "parameter_id": {
+          "minLength": 1,
+          "title": "Parameter Id",
+          "type": "string"
+        },
+        "rule_id": {
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "default": "1.0.0",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Severity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "suggested_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggested Action"
+        }
+      },
+      "required": [
+        "rule_id",
+        "parameter_id",
+        "operator"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "info",
+        "warning",
+        "error",
+        "critical"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "StreamSelector": {
+      "additionalProperties": false,
+      "description": "Selects streams by index or language tag; empty selector = all streams of type.",
+      "properties": {
+        "index": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Index"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language"
+        }
+      },
+      "title": "StreamSelector",
+      "type": "object"
+    },
+    "StreamType": {
+      "description": "Stream scope for rule selectors (ADR-009).",
+      "enum": [
+        "audio",
+        "video",
+        "subtitle",
+        "container"
+      ],
+      "title": "StreamType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A complete, versioned client QC preset.",
+  "properties": {
+    "defaults": {
+      "$ref": "#/$defs/PresetDefaults",
+      "default": {
+        "blocking": true,
+        "severity": "error"
+      }
+    },
+    "preset": {
+      "$ref": "#/$defs/PresetMeta"
+    },
+    "report": {
+      "$ref": "#/$defs/ReportConfig",
+      "default": {
+        "include_evidence": true,
+        "include_passed_checks": true,
+        "include_raw_measurements": false,
+        "include_suggested_actions": true
+      }
+    },
+    "rules": {
+      "items": {
+        "$ref": "#/$defs/Rule"
+      },
+      "minItems": 1,
+      "title": "Rules",
+      "type": "array"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "preset",
+    "rules"
+  ],
+  "title": "QCPreset",
+  "type": "object"
+}

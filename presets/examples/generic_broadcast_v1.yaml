@@ -1,0 +1,98 @@
+# Generic, client-agnostic baseline preset.
+# Used for development and testing until the first client preset is approved (M0).
+# Thresholds below are placeholders pending human approval (handoff section 30).
+schema_version: 1.0.0
+
+preset:
+  id: generic_broadcast
+  version: 1.0.0
+  client: generic
+  content_type: broadcast
+  title: Generic Broadcast Delivery
+  description: Client-agnostic baseline delivery preset for development and testing.
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-22
+  supersedes: null
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: in
+    expected:
+      values: [mov, mxf]
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+
+  - rule_id: video-frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 23.976
+      tolerance: 0.001
+
+  - rule_id: audio-stream-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 2
+    severity: critical
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24.0
+      max: -22.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-true-peak
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2.0
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: filename-pattern
+    parameter_id: filename.pattern
+    operator: regex
+    expected:
+      pattern: "^[A-Za-z0-9._-]+\\.(mov|mxf)$"
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true
