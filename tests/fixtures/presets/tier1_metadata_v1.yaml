@@ -1,0 +1,151 @@
+# Tier 1 metadata-only preset used by the M3 integration tests.
+# Matches scripts/generate_test_media.py reference_1080p2398.mov exactly.
+schema_version: 1.0.0
+
+preset:
+  id: tier1_metadata_test
+  version: 1.0.0
+  client: generic
+  content_type: test
+  title: Tier 1 Metadata Integration Preset
+  description: Metadata-only checks for the M3 end-to-end tests.
+  owner: engineering
+  status: draft
+  effective_date: 2026-07-22
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: file-readable
+    parameter_id: file.readable
+    operator: equals
+    expected:
+      value: true
+
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: in
+    expected:
+      values: [mov, mxf]
+
+  - rule_id: container-duration
+    parameter_id: container.duration
+    operator: between
+    expected:
+      min: 1.0
+      max: 10.0
+      unit: s
+
+  - rule_id: video-stream-count
+    parameter_id: video.stream_count
+    operator: equals
+    expected:
+      value: 1
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: h264
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+
+  - rule_id: video-frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 23.976
+      tolerance: 0.001
+      unit: fps
+
+  - rule_id: video-pixel-format
+    parameter_id: video.pixel_format
+    operator: equals
+    expected:
+      value: yuv420p
+
+  - rule_id: audio-stream-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 2
+    severity: critical
+
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: equals
+    expected:
+      value: pcm_s16le
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-channel-count
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 2
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-channel-layout
+    parameter_id: audio.channel_layout
+    operator: equals
+    expected:
+      value: stereo
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: audio-german-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        language: ger
+      quantifier: all
+    severity: warning
+    blocking: false
+
+  - rule_id: subtitle-stream-count
+    parameter_id: subtitle.stream_count
+    operator: equals
+    expected:
+      value: 0
+
+  - rule_id: filename-pattern
+    parameter_id: filename.pattern
+    operator: regex
+    expected:
+      pattern: "^[A-Za-z0-9._-]+\\.(mov|mxf)$"
+    severity: warning
+    blocking: false

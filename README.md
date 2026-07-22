@@ -10,14 +10,18 @@ explain findings, but never produces measurements or pass/fail decisions.
 
 ## Status
 
-Milestone 2 (report-first prototype). Domain models, preset engine, CLI,
-schemas, CI, and JSON/HTML/PDF report rendering from a mock result.
-Detectors and the rule engine land in M3 — see `docs/ROADMAP.md`.
+Milestone 3 (metadata MVP). End-to-end analysis works: ffprobe metadata
+detection, generic rule engine (18 operators, stream selectors, quantifiers),
+Tier 1 checks, and branded JSON/HTML/PDF reports with stable exit codes.
+Audio QC (loudness, silence, clipping) lands in M4 — see `docs/ROADMAP.md`.
 
-Render the mock report for stakeholder review:
+Analyze a file:
 
 ```bash
-uv run deepdub-qc render-mock --output reports/mock
+uv run deepdub-qc analyze \
+  --input /path/to/delivery.mov \
+  --preset presets/examples/generic_broadcast_v1.yaml \
+  --output reports/job_001
 ```
 
 ## Requirements

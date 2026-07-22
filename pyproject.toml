@@ -60,6 +60,8 @@ ignore = [
 "tests/**" = ["PLR0913"]
 # ID factories intentionally take one argument per identifying content part (ADR-008).
 "src/deepdub_qc/utils/ids.py" = ["PLR0913"]
+# Measurement factories take one argument per measurement field.
+"src/deepdub_qc/detectors/**" = ["PLR0913"]
 
 [tool.mypy]
 python_version = "3.13"

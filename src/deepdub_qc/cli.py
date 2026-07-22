@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.table import Table
 
 from deepdub_qc import __version__
-from deepdub_qc.exceptions import PresetError, PresetValidationError
+from deepdub_qc.exceptions import DeepdubQCError, PresetError, PresetValidationError
 from deepdub_qc.exit_codes import ExitCode
 from deepdub_qc.logging import configure_logging
 from deepdub_qc.presets.loader import load_preset, preset_sha256
@@ -47,6 +47,58 @@ def main(
 def version() -> None:
     """Print the tool version."""
     console.print(f"deepdub-qc {__version__}")
+
+
+@app.command()
+def analyze(
+    input: Annotated[
+        Path, typer.Option("--input", "-i", help="Path to the media file to analyze.")
+    ],
+    preset: Annotated[Path, typer.Option("--preset", "-p", help="Path to the client preset YAML.")],
+    output: Annotated[
+        Path, typer.Option("--output", "-o", help="Job output directory for reports.")
+    ],
+    pdf: Annotated[bool, typer.Option(help="Render report.pdf (requires WeasyPrint).")] = True,
+) -> None:
+    """Analyze one media file against one preset and generate QC reports.
+
+    Exit codes: 0 PASS, 1 WARNING, 2 FAIL, 3 ERROR, 4 invalid preset,
+    5 invalid input, 6 internal error (see README).
+    """
+    from deepdub_qc.orchestration.pipeline import (  # noqa: PLC0415
+        AnalysisOptions,
+        InputFileError,
+        run_analysis,
+    )
+
+    status_exit = {
+        "PASS": ExitCode.QC_PASS,
+        "WARNING": ExitCode.QC_WARNING,
+        "FAIL": ExitCode.QC_FAIL,
+        "ERROR": ExitCode.QC_EXECUTION_ERROR,
+    }
+    try:
+        result = run_analysis(input, preset, output, AnalysisOptions(render_pdf=pdf))
+    except InputFileError as exc:
+        err_console.print(f"[red]Invalid input:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.INVALID_INPUT) from exc
+    except PresetError as exc:
+        err_console.print(f"[red]Invalid preset:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
+    except DeepdubQCError as exc:
+        err_console.print(f"[red]QC execution error:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.QC_EXECUTION_ERROR) from exc
+
+    summary = result.summary
+    verdict_style = {"PASS": "green", "WARNING": "yellow"}.get(summary.overall_status.value, "red")
+    console.print(
+        f"[{verdict_style} bold]{summary.overall_status.value}[/{verdict_style} bold] "
+        f"— {summary.passed} passed, {summary.warnings} warnings, {summary.failed} failed "
+        f"({summary.blocking_failures} blocking), {summary.errors} errors, "
+        f"{summary.skipped} skipped"
+    )
+    console.print(f"Reports written to {output}")
+    raise typer.Exit(code=status_exit[summary.overall_status.value])
 
 
 @app.command("render-mock")

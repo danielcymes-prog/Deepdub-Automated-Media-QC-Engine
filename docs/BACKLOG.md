@@ -36,5 +36,6 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 30 | import-linter layering rules in CI | P2 | S | 3 | M1–M3 | Enforces ADR-010 boundaries mechanically |
 | 31 | FastAPI wrapper + Postgres repository + idempotent jobs | P2 | L | M3–M6, infra decisions | M7 | Service extraction; blocked on §30 human decisions |
 | 32 | Vidchecker comparison harness (`compare_vidchecker.py`) | P2 | M | 26 | M4+ | Parity evidence on checks that matter |
+| 33 | Language-code normalization (ISO 639-2 B/T: ger↔deu, fre↔fra) in detector + preset validation | P1 | S | 18 | M4 | MOV muxers store B codes; dubbing presets will reference both — discovered in M3 integration testing |
 
 Items 1–2 are this week's work. Items 3–11 are one coherent M1 sprint.
