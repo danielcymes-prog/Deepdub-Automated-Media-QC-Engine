@@ -5,8 +5,14 @@
 # golden-corpus re-run (see docs/RISKS.md R1).
 FROM python:3.13-slim-bookworm
 
+# ffmpeg: media analysis (pinned policy above).
+# libpango/libharfbuzz: WeasyPrint PDF rendering (ADR-007).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        libpango-1.0-0 \
+        libpangoft2-1.0-0 \
+        libharfbuzz-subset0 \
     && rm -rf /var/lib/apt/lists/* \
     && ffmpeg -version | head -1
 

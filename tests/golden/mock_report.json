@@ -1,0 +1,744 @@
+{
+  "ai_summary": null,
+  "artifacts": {
+    "evidence_directory": "evidence/",
+    "html_report": "report.html",
+    "pdf_report": "report.pdf",
+    "raw_directory": "raw/"
+  },
+  "asset": {
+    "duration_seconds": 1452.2,
+    "file_size_bytes": 33554432000,
+    "filename": "Final Delivery v2.mov",
+    "input_path": "/media/deliveries/Final Delivery v2.mov",
+    "sha256": "9f2b7c1e4a8d3f6b5c0e9a2d7f4b8c1e6a3d9f2b7c4e8a1d5f0b3c6e9a2d7f4b"
+  },
+  "environment": {
+    "docker_image": "deepdub-qc:0.1.0",
+    "ffmpeg_version": "7.1 (pinned, docker)",
+    "ffprobe_version": "7.1 (pinned, docker)",
+    "platform": "linux/amd64",
+    "python_version": "3.13"
+  },
+  "evidence": [
+    {
+      "created_at": "2026-07-22T10:04:12Z",
+      "end_seconds": null,
+      "evidence_id": "4d68dd79-36b6-5c3f-ae67-bf5cdbfef94c",
+      "finding_id": null,
+      "generated_by": "evidence.thumbnails/1.0.0",
+      "path": "evidence/thumbnails/black_00-04-12.png",
+      "schema_version": "1.0.0",
+      "sha256": null,
+      "start_seconds": 252.0,
+      "type": "thumbnail"
+    },
+    {
+      "created_at": "2026-07-22T10:04:12Z",
+      "end_seconds": null,
+      "evidence_id": "d6f31b38-5ebb-5917-8961-70070a6d3d83",
+      "finding_id": null,
+      "generated_by": "evidence.thumbnails/1.0.0",
+      "path": "evidence/thumbnails/black_00-04-15.png",
+      "schema_version": "1.0.0",
+      "sha256": null,
+      "start_seconds": 255.4,
+      "type": "thumbnail"
+    },
+    {
+      "created_at": "2026-07-22T10:04:12Z",
+      "end_seconds": null,
+      "evidence_id": "d11631aa-c544-53af-a73f-25e6ec0e5dea",
+      "finding_id": null,
+      "generated_by": "evidence.waveforms/1.0.0",
+      "path": "evidence/waveforms/stream1_loudness.png",
+      "schema_version": "1.0.0",
+      "sha256": null,
+      "start_seconds": null,
+      "type": "waveform"
+    }
+  ],
+  "findings": [
+    {
+      "actual": {
+        "unit": null,
+        "value": "mov"
+      },
+      "blocking": true,
+      "category": "container",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Container Format",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": null,
+        "values": [
+          "mov",
+          "mxf"
+        ]
+      },
+      "finding_id": "5fd878b5-2a01-51cc-82ba-836f5a11dacb",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "62d02686-6945-5ff1-a376-5ec732cbfbd5"
+      ],
+      "message": "Container format is 'mov', which is allowed.",
+      "parameter_id": "container.format",
+      "rule_id": "container-format",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": null,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "px",
+        "value": 1920
+      },
+      "blocking": true,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Video Width",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": "px",
+        "value": 1920
+      },
+      "finding_id": "704d379d-6a3f-5c25-a09f-a8ab0740116a",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "d746c177-99d8-5c67-8b07-dac2eefc60e2"
+      ],
+      "message": "Video width is 1920 px as required.",
+      "parameter_id": "video.width",
+      "rule_id": "video-width",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 0,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "px",
+        "value": 1080
+      },
+      "blocking": true,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Video Height",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": "px",
+        "value": 1080
+      },
+      "finding_id": "6dfd81d7-9039-5819-b7ec-0766a4ca9a80",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "34c68254-07d1-561e-b204-79d086486a8e"
+      ],
+      "message": "Video height is 1080 px as required.",
+      "parameter_id": "video.height",
+      "rule_id": "video-height",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 0,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "fps",
+        "value": 23.976
+      },
+      "blocking": true,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Frame Rate",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": "fps",
+        "value": 23.976
+      },
+      "finding_id": "3366c3a8-b342-505d-a9b3-9fb3c429ce6a",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "02e53982-df9f-5892-98d4-46cb6bbaedcd"
+      ],
+      "message": "Frame rate 23.976 fps is within tolerance of the required 23.976 fps.",
+      "parameter_id": "video.frame_rate",
+      "rule_id": "video-frame-rate",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 0,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": null,
+        "value": 2
+      },
+      "blocking": true,
+      "category": "audio",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Audio Stream Count",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": null,
+        "value": 2
+      },
+      "finding_id": "c0121f4d-375d-5fd5-b429-a6ee9d7cf8a2",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "a8898f3e-44f5-5f68-9239-8d10102dedaa"
+      ],
+      "message": "Found 2 audio streams as required.",
+      "parameter_id": "audio.stream_count",
+      "rule_id": "audio-stream-count",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "critical",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": null,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "Hz",
+        "value": 48000
+      },
+      "blocking": true,
+      "category": "audio",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Audio Sample Rate",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": "Hz",
+        "value": 48000
+      },
+      "finding_id": "8b7253ad-9622-5ed0-8b78-cc5a27b511f1",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "84680422-c22a-569f-95a8-0379ee9a4065"
+      ],
+      "message": "All audio streams are 48000 Hz.",
+      "parameter_id": "audio.sample_rate",
+      "rule_id": "audio-sample-rate",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 1,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "dBTP",
+        "value": -2.3
+      },
+      "blocking": true,
+      "category": "audio",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "True Peak",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "unit": "dBTP",
+        "value": -2.0
+      },
+      "finding_id": "14b53a23-3895-56c7-98fa-ff428f2b2ee3",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "4cf04439-8a90-57f5-beee-8e38fa0b3a59"
+      ],
+      "message": "True peak -2.3 dBTP is at or below the -2.0 dBTP ceiling.",
+      "parameter_id": "audio.true_peak",
+      "rule_id": "audio-true-peak",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "PASS",
+      "stream_index": 1,
+      "suggested_action": null
+    },
+    {
+      "actual": {
+        "unit": "LUFS",
+        "value": -19.7
+      },
+      "blocking": true,
+      "category": "audio",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Integrated Loudness",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [
+        "d11631aa-c544-53af-a73f-25e6ec0e5dea"
+      ],
+      "expected": {
+        "max": -22.0,
+        "min": -24.0,
+        "unit": "LUFS"
+      },
+      "finding_id": "0951ebef-e15e-5a74-96b7-1466a0b2f126",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "ca5bb813-2e8b-5eb5-bac2-7a812aa58d08"
+      ],
+      "message": "Integrated loudness -19.7 LUFS exceeds the permitted range of -24.0 to -22.0 LUFS.",
+      "parameter_id": "audio.integrated_loudness",
+      "rule_id": "audio-integrated-loudness",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "FAIL",
+      "stream_index": 1,
+      "suggested_action": "Normalize the final mix to the client loudness target (-23.0 LUFS +/- 1.0 LU) and re-export."
+    },
+    {
+      "actual": {
+        "unit": "s",
+        "value": 3.4
+      },
+      "blocking": true,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Black Frames",
+      "end_seconds": 255.4,
+      "end_timecode": "00:04:15:10",
+      "evidence_ids": [
+        "4d68dd79-36b6-5c3f-ae67-bf5cdbfef94c",
+        "d6f31b38-5ebb-5917-8961-70070a6d3d83"
+      ],
+      "expected": null,
+      "finding_id": "4999c445-03a4-589b-9a72-38aa8b4e968f",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "c386ee0e-5355-5746-961c-43f318c4ca4d"
+      ],
+      "message": "Black frame segment of 3.4 s detected at 00:04:12:00.",
+      "parameter_id": "video.black_frame_event",
+      "rule_id": "video-black-frames",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "error",
+      "start_seconds": 252.0,
+      "start_timecode": "00:04:12:00",
+      "status": "FAIL",
+      "stream_index": 0,
+      "suggested_action": "Inspect the timeline at 00:04:12 for a gap or disabled clip and re-export the affected segment."
+    },
+    {
+      "actual": {
+        "unit": "s",
+        "value": 1.85
+      },
+      "blocking": false,
+      "category": "audio",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Head Silence",
+      "end_seconds": 1.85,
+      "end_timecode": "00:00:01:20",
+      "evidence_ids": [],
+      "expected": {
+        "unit": "s",
+        "value": 1.0
+      },
+      "finding_id": "351c4671-c551-548d-aabe-52120594c6f7",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "a35d1e41-a069-5e74-abdb-fcc099489e0e"
+      ],
+      "message": "Head silence of 1.85 s exceeds the preferred maximum of 1.0 s.",
+      "parameter_id": "audio.head_silence_duration",
+      "rule_id": "audio-head-silence",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "warning",
+      "start_seconds": 0.0,
+      "start_timecode": "00:00:00:00",
+      "status": "WARNING",
+      "stream_index": 1,
+      "suggested_action": "Confirm the head silence matches the client slate/leader spec."
+    },
+    {
+      "actual": {
+        "unit": null,
+        "value": "Final Delivery v2.mov"
+      },
+      "blocking": false,
+      "category": "file",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Filename Pattern",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": {
+        "pattern": "^[A-Za-z0-9._-]+\\.(mov|mxf)$",
+        "unit": null
+      },
+      "finding_id": "0b5404ce-b703-57e4-8eb5-5be28b3ea34f",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [
+        "568e5703-0583-54d8-9daf-56963e5e871a"
+      ],
+      "message": "Filename 'Final Delivery v2.mov' contains spaces, which the delivery specification discourages.",
+      "parameter_id": "filename.pattern",
+      "rule_id": "filename-pattern",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "warning",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "WARNING",
+      "stream_index": null,
+      "suggested_action": "Rename the file to match the client filename convention."
+    },
+    {
+      "actual": null,
+      "blocking": false,
+      "category": "video",
+      "created_at": "2026-07-22T10:04:12Z",
+      "display_name": "Freeze Frames",
+      "end_seconds": null,
+      "end_timecode": null,
+      "evidence_ids": [],
+      "expected": null,
+      "finding_id": "c9b76c85-dc63-5851-9124-d8f5478aeed8",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_ids": [],
+      "message": "Freeze-frame detection did not run: detector not available in this configuration.",
+      "parameter_id": "video.freeze_frame_event",
+      "rule_id": "video-freeze-frames",
+      "rule_version": "1.0.0",
+      "schema_version": "1.0.0",
+      "severity": "warning",
+      "start_seconds": null,
+      "start_timecode": null,
+      "status": "SKIPPED",
+      "stream_index": null,
+      "suggested_action": null
+    }
+  ],
+  "job": {
+    "completed_at": "2026-07-22T10:04:12Z",
+    "duration_seconds": 252.0,
+    "job_id": "00000000-0000-4000-8000-000000000001",
+    "schema_version": "1.0.0",
+    "started_at": "2026-07-22T10:00:00Z",
+    "status": "completed",
+    "tool_version": "0.1.0"
+  },
+  "measurements": [
+    {
+      "category": "container",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "62d02686-6945-5ff1-a376-5ec732cbfbd5",
+      "metadata": {},
+      "parameter_id": "container.format",
+      "raw_artifact_path": "raw/ffprobe.json",
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": null,
+      "unit": null,
+      "value": "mov"
+    },
+    {
+      "category": "video",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "d746c177-99d8-5c67-8b07-dac2eefc60e2",
+      "metadata": {},
+      "parameter_id": "video.width",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 0,
+      "unit": "px",
+      "value": 1920
+    },
+    {
+      "category": "video",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "34c68254-07d1-561e-b204-79d086486a8e",
+      "metadata": {},
+      "parameter_id": "video.height",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 0,
+      "unit": "px",
+      "value": 1080
+    },
+    {
+      "category": "video",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "02e53982-df9f-5892-98d4-46cb6bbaedcd",
+      "metadata": {},
+      "parameter_id": "video.frame_rate",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 0,
+      "unit": "fps",
+      "value": 23.976
+    },
+    {
+      "category": "audio",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "a8898f3e-44f5-5f68-9239-8d10102dedaa",
+      "metadata": {},
+      "parameter_id": "audio.stream_count",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": null,
+      "unit": null,
+      "value": 2
+    },
+    {
+      "category": "audio",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "84680422-c22a-569f-95a8-0379ee9a4065",
+      "metadata": {},
+      "parameter_id": "audio.sample_rate",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 1,
+      "unit": "Hz",
+      "value": 48000
+    },
+    {
+      "category": "audio",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "audio.loudness.ebur128",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "ca5bb813-2e8b-5eb5-bac2-7a812aa58d08",
+      "metadata": {},
+      "parameter_id": "audio.integrated_loudness",
+      "raw_artifact_path": "raw/loudness.json",
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 1,
+      "unit": "LUFS",
+      "value": -19.7
+    },
+    {
+      "category": "audio",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "audio.loudness.ebur128",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "4cf04439-8a90-57f5-beee-8e38fa0b3a59",
+      "metadata": {},
+      "parameter_id": "audio.true_peak",
+      "raw_artifact_path": "raw/loudness.json",
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": 1,
+      "unit": "dBTP",
+      "value": -2.3
+    },
+    {
+      "category": "audio",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "audio.silence",
+      "detector_version": "1.0.0",
+      "end_seconds": 1.85,
+      "end_timecode": "00:00:01:20",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "a35d1e41-a069-5e74-abdb-fcc099489e0e",
+      "metadata": {},
+      "parameter_id": "audio.head_silence_duration",
+      "raw_artifact_path": "raw/silencedetect.log",
+      "schema_version": "1.0.0",
+      "start_seconds": 0.0,
+      "start_timecode": "00:00:00:00",
+      "stream_index": 1,
+      "unit": "s",
+      "value": 1.85
+    },
+    {
+      "category": "video",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "video.black_frames",
+      "detector_version": "1.0.0",
+      "end_seconds": 255.4,
+      "end_timecode": "00:04:15:10",
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "c386ee0e-5355-5746-961c-43f318c4ca4d",
+      "metadata": {},
+      "parameter_id": "video.black_frame_event",
+      "raw_artifact_path": "raw/blackdetect.log",
+      "schema_version": "1.0.0",
+      "start_seconds": 252.0,
+      "start_timecode": "00:04:12:00",
+      "stream_index": 0,
+      "unit": "s",
+      "value": 3.4
+    },
+    {
+      "category": "file",
+      "confidence": 1.0,
+      "created_at": "2026-07-22T10:04:12Z",
+      "detector_id": "metadata.ffprobe",
+      "detector_version": "1.0.0",
+      "end_seconds": null,
+      "end_timecode": null,
+      "job_id": "00000000-0000-4000-8000-000000000001",
+      "measurement_id": "568e5703-0583-54d8-9daf-56963e5e871a",
+      "metadata": {},
+      "parameter_id": "filename.pattern",
+      "raw_artifact_path": null,
+      "schema_version": "1.0.0",
+      "start_seconds": null,
+      "start_timecode": null,
+      "stream_index": null,
+      "unit": null,
+      "value": "Final Delivery v2.mov"
+    }
+  ],
+  "media_summary": {
+    "audio_streams": [
+      {
+        "channel_layout": "stereo",
+        "channels": 2,
+        "codec": "pcm_s24le",
+        "index": 1,
+        "language": "deu",
+        "sample_rate": "48000 Hz"
+      },
+      {
+        "channel_layout": "stereo",
+        "channels": 2,
+        "codec": "pcm_s24le",
+        "index": 2,
+        "language": "eng",
+        "sample_rate": "48000 Hz"
+      }
+    ],
+    "container": {
+      "duration_seconds": 1452.2,
+      "format": "mov",
+      "overall_bitrate": "185 Mb/s"
+    },
+    "subtitle_streams": [],
+    "video_streams": [
+      {
+        "codec": "prores",
+        "frame_rate": "23.976 fps",
+        "index": 0,
+        "pixel_format": "yuv422p10le",
+        "profile": "ProRes 422 HQ",
+        "resolution": "1920x1080",
+        "scan_type": "progressive"
+      }
+    ]
+  },
+  "preset": {
+    "client": "generic",
+    "content_type": "broadcast",
+    "preset_id": "generic_broadcast",
+    "preset_version": "1.0.0",
+    "sha256": "5d2e7b150ac3a6b0cba8f2c9ba58b1dc385f7aabb381991c4e1834b3e26e0000"
+  },
+  "schema_version": "1.0.0",
+  "summary": {
+    "blocking_failures": 2,
+    "errors": 0,
+    "failed": 2,
+    "not_applicable": 0,
+    "overall_status": "FAIL",
+    "passed": 7,
+    "skipped": 1,
+    "total_checks": 12,
+    "warnings": 2
+  }
+}

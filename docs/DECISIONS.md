@@ -90,3 +90,11 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
 - **Context:** The report is what operators and clients judge. Detector work is expensive; building it against an unvalidated report contract invites rework.
 - **Decision:** M2 renders a fully mocked `QCResult` to JSON/HTML/PDF and gets stakeholder sign-off before any detector is written (M3+).
 - **Consequences:** Report contract stabilizes early; mock fixture doubles as the permanent contract-test fixture.
+
+## ADR-012: Report rendering — Jinja2, self-contained HTML, content-based contract tests
+
+- **Status:** Accepted (2026-07-22)
+- **Context:** M2 adds report rendering; the handoff requires printable, JS-free reports readable by non-engineers (§17.2). New runtime dependencies require documentation (CLAUDE.md).
+- **Alternatives:** (a) manual string/f-string HTML assembly — escaping bugs, unmaintainable; (b) client-side rendering of the JSON — violates the no-JS requirement; (c) Jinja2 server-side templating with autoescaping, CSS inlined into a single self-contained document.
+- **Decision:** (c). Dependencies added: `jinja2` (templating) and `weasyprint` (per ADR-007). The PDF is rendered from the same HTML document, so the two visual formats cannot diverge. The HTML contract is enforced by content assertions (every finding, expected/actual values, timecodes, hashes, versions, no `<script>`), not golden HTML bytes, so cosmetic template changes don't break CI. The canonical `report.json` byte layout (sorted keys, two-space indent, trailing newline) IS locked by a golden file.
+- **Consequences:** Native Pango libraries required for PDF output; installed in Docker and CI, with a typed, actionable error (`PdfRenderError`) where missing. Report generation timestamp is injectable and declared volatile (ADR-008).

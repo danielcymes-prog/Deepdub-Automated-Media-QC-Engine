@@ -15,6 +15,8 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "weasyprint>=62",
 ]
 
 [project.scripts]
@@ -66,6 +68,11 @@ mypy_path = "src"
 packages = ["deepdub_qc"]
 warn_unreachable = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+# WeasyPrint ships no type stubs; its use is confined to pdf_renderer.
+module = "weasyprint.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

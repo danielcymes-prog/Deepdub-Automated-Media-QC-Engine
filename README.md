@@ -10,9 +10,15 @@ explain findings, but never produces measurements or pass/fail decisions.
 
 ## Status
 
-Milestone 1 (project foundation). Domain models, preset engine, CLI skeleton,
-schemas, CI. Detectors, rule engine, and report rendering land in M2/M3 —
-see `docs/ROADMAP.md`.
+Milestone 2 (report-first prototype). Domain models, preset engine, CLI,
+schemas, CI, and JSON/HTML/PDF report rendering from a mock result.
+Detectors and the rule engine land in M3 — see `docs/ROADMAP.md`.
+
+Render the mock report for stakeholder review:
+
+```bash
+uv run deepdub-qc render-mock --output reports/mock
+```
 
 ## Requirements
 

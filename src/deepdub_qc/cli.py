@@ -49,6 +49,44 @@ def version() -> None:
     console.print(f"deepdub-qc {__version__}")
 
 
+@app.command("render-mock")
+def render_mock(
+    output: Annotated[
+        Path, typer.Option("--output", "-o", help="Output directory for the rendered reports.")
+    ],
+    pdf: Annotated[
+        bool, typer.Option(help="Also render report.pdf (requires WeasyPrint native libs).")
+    ] = True,
+) -> None:
+    """Render the built-in mock QC result to JSON, HTML, and PDF.
+
+    Report-first prototype (M2): lets stakeholders review the report layout
+    before detectors exist. The mock content is illustrative, not measured.
+    """
+    from deepdub_qc.reports.html_renderer import write_html_report  # noqa: PLC0415
+    from deepdub_qc.reports.json_renderer import write_json_report  # noqa: PLC0415
+    from deepdub_qc.reports.mock_result import build_mock_result  # noqa: PLC0415
+
+    result = build_mock_result()
+    written = [write_json_report(result, output), write_html_report(result, output)]
+
+    if pdf:
+        from deepdub_qc.reports.pdf_renderer import (  # noqa: PLC0415
+            PdfRenderError,
+            write_pdf_report,
+        )
+
+        try:
+            written.append(write_pdf_report(result, output))
+        except PdfRenderError as exc:
+            err_console.print(f"[red]PDF rendering failed:[/red] {exc}")
+            raise typer.Exit(code=ExitCode.INTERNAL_ERROR) from exc
+
+    console.print(f"Mock report rendered (overall status: {result.summary.overall_status.value})")
+    for path in written:
+        console.print(f"  {path}")
+
+
 @presets_app.command("validate")
 def presets_validate(
     path: Annotated[Path, typer.Argument(help="Path to a preset YAML file.")],
