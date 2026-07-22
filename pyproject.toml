@@ -56,6 +56,10 @@ ignore = [
     "PLR2004", # magic-value comparisons are fine in tests/validators
 ]
 
+[tool.ruff.lint.isort]
+# Explicit so local and CI ruff agree regardless of environment layout.
+known-first-party = ["deepdub_qc"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR0913"]
 # ID factories intentionally take one argument per identifying content part (ADR-008).
