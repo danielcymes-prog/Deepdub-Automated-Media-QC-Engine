@@ -106,6 +106,30 @@ FIXTURES: dict[str, list[str]] = {
         "-c:a",
         "pcm_s16le",
     ],
+    # --- Video incident fixture (M5): 1.5s pattern, 1.0s black segment,
+    # 1.0s pattern, then a 1.5s tail freeze (cloned last frame).
+    "video_incidents.mov": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=640x360:rate=25:duration=1.5",
+        "-f",
+        "lavfi",
+        "-i",
+        "color=black:size=640x360:rate=25:duration=1",
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=640x360:rate=25:duration=1",
+        "-filter_complex",
+        "[0:v][1:v][2:v]concat=n=3:v=1[out];[out]tpad=stop_mode=clone:stop_duration=1.5[padded]",
+        "-map",
+        "[padded]",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+    ],
 }
 
 

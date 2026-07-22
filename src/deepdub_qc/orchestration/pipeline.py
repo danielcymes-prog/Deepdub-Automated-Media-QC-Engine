@@ -30,6 +30,7 @@ from deepdub_qc.detectors.registry import all_detectors
 from deepdub_qc.exceptions import DeepdubQCError
 from deepdub_qc.models.asset import Asset
 from deepdub_qc.models.enums import JobStatus
+from deepdub_qc.models.evidence import Evidence
 from deepdub_qc.models.job import QCJob
 from deepdub_qc.models.measurement import Measurement
 from deepdub_qc.models.report import ArtifactPaths, Environment, PresetRef, QCResult
@@ -99,6 +100,13 @@ def run_analysis(
         failed_parameters=frozenset(failed_parameters),
         failure_reasons=failure_reasons,
     )
+
+    evidence: list[Evidence] = []
+    if preset.report.include_evidence:
+        from deepdub_qc.evidence.thumbnails import generate_thumbnails  # noqa: PLC0415
+
+        evidence, findings = generate_thumbnails(findings, input_path, output_dir)
+
     summary = build_summary(findings)
 
     media_summary = _load_media_summary(raw_dir)
@@ -133,11 +141,11 @@ def run_analysis(
         media_summary=media_summary,
         measurements=measurements,
         findings=findings,
-        evidence=[],
+        evidence=evidence,
         artifacts=ArtifactPaths(
             html_report="report.html",
             pdf_report="report.pdf" if options.render_pdf else None,
-            evidence_directory=None,
+            evidence_directory="evidence/" if evidence else None,
             raw_directory="raw/",
         ),
     )

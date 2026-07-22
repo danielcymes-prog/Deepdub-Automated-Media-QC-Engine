@@ -1,0 +1,45 @@
+# Tier 3 video incident preset used by the M5 integration tests.
+schema_version: 1.0.0
+
+preset:
+  id: tier3_video_test
+  version: 1.0.0
+  client: generic
+  content_type: test
+  title: Tier 3 Video Incident Integration Preset
+  description: Black/freeze frame and signal checks for the M5 end-to-end tests.
+  owner: engineering
+  status: draft
+  effective_date: 2026-07-22
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: black-frames
+    parameter_id: video.black_frame_event
+    operator: not_exists
+    display_name: Black Frames
+
+  - rule_id: freeze-frames
+    parameter_id: video.freeze_frame_event
+    operator: not_exists
+    display_name: Freeze Frames
+    severity: warning
+    blocking: false
+
+  - rule_id: luma-average
+    parameter_id: video.luma_avg
+    operator: between
+    expected:
+      min: 10.0
+      max: 245.0
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true

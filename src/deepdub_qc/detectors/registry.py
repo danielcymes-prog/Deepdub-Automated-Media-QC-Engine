@@ -21,5 +21,6 @@ def all_detectors() -> list[Detector]:
     # Import detector modules for their registration side effects.
     from deepdub_qc.detectors.audio import clipping, loudness, silence  # noqa: F401, PLC0415
     from deepdub_qc.detectors.metadata import ffprobe  # noqa: F401, PLC0415
+    from deepdub_qc.detectors.video import incidents  # noqa: F401, PLC0415
 
     return [_REGISTRY[key]() for key in sorted(_REGISTRY)]

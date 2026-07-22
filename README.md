@@ -10,11 +10,12 @@ explain findings, but never produces measurements or pass/fail decisions.
 
 ## Status
 
-Milestone 4 (audio QC). End-to-end analysis covers Tier 1 metadata checks
-plus audio QC: EBU R128 loudness (integrated, LRA, true peak), head/tail/
-internal silence with timestamped incidents, clipping indicators (flat
-factor, peak level), and A/V duration delta. Video incident detection
-(black/freeze frames, evidence thumbnails) lands in M5 — see `docs/ROADMAP.md`.
+Milestone 5 (video incident QC). End-to-end analysis covers all three check
+tiers from the handoff: Tier 1 metadata, Tier 2 audio (EBU R128 loudness,
+silence, clipping indicators), and Tier 3 video incidents (black frames,
+freeze frames, signal statistics) with thumbnail evidence generated at
+incident timestamps and linked to findings. Next: preset management (M6) —
+see `docs/ROADMAP.md`.
 
 Analyze a file:
 
