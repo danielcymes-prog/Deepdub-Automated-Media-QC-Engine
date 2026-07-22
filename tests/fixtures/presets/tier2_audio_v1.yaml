@@ -1,0 +1,107 @@
+# Tier 2 audio QC preset used by the M4 integration tests.
+# Thresholds match the calibrated fixtures in scripts/generate_test_media.py.
+schema_version: 1.0.0
+
+preset:
+  id: tier2_audio_test
+  version: 1.0.0
+  client: generic
+  content_type: test
+  title: Tier 2 Audio Integration Preset
+  description: Loudness, silence, and clipping checks for the M4 end-to-end tests.
+  owner: engineering
+  status: draft
+  effective_date: 2026-07-22
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -25.0
+      max: -21.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: true-peak
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1.5
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+
+  - rule_id: loudness-range
+    parameter_id: audio.loudness_range
+    operator: less_than_or_equal
+    expected:
+      value: 20.0
+      unit: LU
+    severity: warning
+    blocking: false
+
+  - rule_id: head-silence
+    parameter_id: audio.head_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 1.0
+      unit: s
+    severity: warning
+    blocking: false
+
+  - rule_id: tail-silence
+    parameter_id: audio.tail_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 1.0
+      unit: s
+    severity: warning
+    blocking: false
+
+  - rule_id: internal-silence
+    parameter_id: audio.internal_silence_event
+    operator: not_exists
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+
+  - rule_id: peak-level
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -1.0
+      unit: dBFS
+    severity: warning
+    blocking: false
+
+  - rule_id: dc-offset
+    parameter_id: audio.dc_offset
+    operator: between
+    expected:
+      min: -0.01
+      max: 0.01
+    severity: warning
+    blocking: false
+
+  - rule_id: av-duration-delta
+    parameter_id: audio.video_duration_delta
+    operator: between
+    expected:
+      min: -0.5
+      max: 0.5
+      unit: s
+    severity: warning
+    blocking: false

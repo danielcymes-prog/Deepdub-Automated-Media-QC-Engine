@@ -10,10 +10,11 @@ explain findings, but never produces measurements or pass/fail decisions.
 
 ## Status
 
-Milestone 3 (metadata MVP). End-to-end analysis works: ffprobe metadata
-detection, generic rule engine (18 operators, stream selectors, quantifiers),
-Tier 1 checks, and branded JSON/HTML/PDF reports with stable exit codes.
-Audio QC (loudness, silence, clipping) lands in M4 — see `docs/ROADMAP.md`.
+Milestone 4 (audio QC). End-to-end analysis covers Tier 1 metadata checks
+plus audio QC: EBU R128 loudness (integrated, LRA, true peak), head/tail/
+internal silence with timestamped incidents, clipping indicators (flat
+factor, peak level), and A/V duration delta. Video incident detection
+(black/freeze frames, evidence thumbnails) lands in M5 — see `docs/ROADMAP.md`.
 
 Analyze a file:
 

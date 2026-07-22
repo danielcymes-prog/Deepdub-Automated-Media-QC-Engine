@@ -136,8 +136,10 @@ class FfprobeDetector(Detector):
     """Container and stream metadata via ffprobe."""
 
     detector_id = "metadata.ffprobe"
-    detector_version = "1.0.0"
+    detector_version = "1.1.0"  # 1.1.0: added audio.duration, audio.video_duration_delta
     parameters = (
+        "audio.duration",
+        "audio.video_duration_delta",
         "file.readable",
         "file.extension",
         "file.size_bytes",
@@ -317,9 +319,43 @@ class FfprobeDetector(Detector):
                 )
             )
 
+        fmt_duration = _as_float(parsed.get("format", {}).get("duration"))
+        # A/V delta only exists when a video stream exists; container duration
+        # is the fallback for a video stream that lacks a per-stream duration.
+        video_duration = None
+        if by_type["video"]:
+            video_duration = _as_float(by_type["video"][0].get("duration"))
+            if video_duration is None:
+                video_duration = fmt_duration
+
         for stream in by_type["audio"]:
             index = stream.get("index")
             language = (stream.get("tags") or {}).get("language")
+            audio_duration = _as_float(stream.get("duration"))
+            if audio_duration is None:
+                audio_duration = fmt_duration
+            if audio_duration is not None:
+                out.append(
+                    self._measurement(
+                        context,
+                        "audio.duration",
+                        Category.AUDIO,
+                        audio_duration,
+                        "s",
+                        stream_index=index,
+                    )
+                )
+                if video_duration is not None:
+                    out.append(
+                        self._measurement(
+                            context,
+                            "audio.video_duration_delta",
+                            Category.AUDIO,
+                            round(audio_duration - video_duration, 3),
+                            "s",
+                            stream_index=index,
+                        )
+                    )
             out.append(
                 self._measurement(
                     context,

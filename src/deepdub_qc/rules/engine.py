@@ -123,12 +123,14 @@ def _evaluate_rule(
     severity = rule.severity if rule.severity is not None else Severity.ERROR
     blocking = rule.blocking if rule.blocking is not None else True
 
-    def make(
+    def make(  # noqa: PLR0913 - internal factory mirroring Finding fields
         status: QCStatus,
         message: str,
         actual: ActualValue | None = None,
         stream_index: int | None = None,
         measurement_ids: list[UUID] | None = None,
+        start_seconds: float | None = None,
+        end_seconds: float | None = None,
     ) -> Finding:
         return Finding(
             finding_id=ids.finding_id(
@@ -136,7 +138,7 @@ def _evaluate_rule(
                 rule.rule_version,
                 rule.parameter_id,
                 stream_index,
-                None,
+                start_seconds,
                 status.value,
             ),
             job_id=job_id,
@@ -150,6 +152,8 @@ def _evaluate_rule(
             actual=actual,
             message=message,
             stream_index=stream_index,
+            start_seconds=start_seconds,
+            end_seconds=end_seconds,
             measurement_ids=measurement_ids or [],
             suggested_action=rule.suggested_action,
             blocking=blocking,
@@ -175,9 +179,17 @@ def _evaluate_rule(
         present = len(candidates) > 0
         passed = present if rule.operator is Operator.EXISTS else not present
         verb = "present" if present else "absent"
+        # A failing not_exists over event measurements is a timestamped
+        # incident: surface the first offending event's span and stream.
+        offender = candidates[0] if (present and not passed) else None
         return make(
-            QCStatus.PASS if passed else QCStatus.FAIL,
-            f"{display}: measurement for {rule.parameter_id} is {verb}.",
+            QCStatus.PASS if passed else _fail_status(severity),
+            f"{display}: measurement for {rule.parameter_id} is {verb}"
+            + (f" ({len(candidates)} event(s))." if present else "."),
+            actual=(ActualValue(value=offender.value, unit=offender.unit) if offender else None),
+            stream_index=offender.stream_index if offender else None,
+            start_seconds=offender.start_seconds if offender else None,
+            end_seconds=offender.end_seconds if offender else None,
             measurement_ids=[m.measurement_id for m in candidates],
         )
 
@@ -223,6 +235,10 @@ def _evaluate_rule(
         message,
         actual=actual,
         stream_index=stream_index,
+        # Timestamped measurements (silence spans, events) propagate their
+        # span to failing findings so reports can show incident timecodes.
+        start_seconds=exemplar.start_seconds if not passed else None,
+        end_seconds=exemplar.end_seconds if not passed else None,
         measurement_ids=[m.measurement_id for m, _ in results],
     )
 

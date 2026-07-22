@@ -73,6 +73,39 @@ FIXTURES: dict[str, list[str]] = {
         "-metadata:s:a:0",
         "language=ger",
     ],
+    # --- Audio QC fixtures (M4). Loudness calibrated empirically:
+    # sine@volume=0.8 -> -23.0 LUFS integrated; aevalsrc amplitude 0.11 ~ -23 LUFS.
+    # Conforming: -23 LUFS, true peak ~-1.9 dBTP, no silences, no clipping.
+    "audio_ok.wav": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=997:sample_rate=48000:duration=4",
+        "-af",
+        "volume=0.8",
+        "-c:a",
+        "pcm_s16le",
+    ],
+    # Hard-clipped and far too loud: fails loudness, true peak, flat factor.
+    "audio_clipped.wav": [
+        "-f",
+        "lavfi",
+        "-i",
+        "aevalsrc=4*sin(2*PI*997*t):s=48000:d=4",
+        "-c:a",
+        "pcm_s16le",
+    ],
+    # Head silence 1.2s, internal silence 0.8s @3.0s, tail silence 1.5s;
+    # loudness in range (gated measurement of the tone segments).
+    "audio_silences.wav": [
+        "-f",
+        "lavfi",
+        "-i",
+        "aevalsrc='0.11*sin(2*PI*997*t)*between(t\\,1.2\\,3.0)"
+        "+0.11*sin(2*PI*997*t)*between(t\\,3.8\\,4.5)':s=48000:d=6",
+        "-c:a",
+        "pcm_s16le",
+    ],
 }
 
 
