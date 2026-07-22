@@ -10,12 +10,22 @@ explain findings, but never produces measurements or pass/fail decisions.
 
 ## Status
 
-Milestone 5 (video incident QC). End-to-end analysis covers all three check
-tiers from the handoff: Tier 1 metadata, Tier 2 audio (EBU R128 loudness,
-silence, clipping indicators), and Tier 3 video incidents (black frames,
-freeze frames, signal statistics) with thumbnail evidence generated at
-incident timestamps and linked to findings. Next: preset management (M6) —
-see `docs/ROADMAP.md`.
+Milestone 6 (preset management). All three check tiers run end to end
+(metadata, audio, video incidents with thumbnail evidence), and client
+presets are governed: `deepdub-qc presets validate` accepts directories,
+approved presets are locked immutable via `presets/approved.lock.json`
+(ADR-013, CI-enforced), and the first real client presets — translated from
+the production Vidchecker "Delivery" templates — live under
+`presets/clients/marimba/` in draft status pending threshold approval.
+Next: service extraction (M7) — see `docs/ROADMAP.md`.
+
+Preset governance:
+
+```bash
+uv run deepdub-qc presets validate presets   # schema + invariants, all presets
+uv run deepdub-qc presets verify presets     # approved presets unmodified?
+uv run deepdub-qc presets lock presets       # record approvals (reviewed commit)
+```
 
 Analyze a file:
 

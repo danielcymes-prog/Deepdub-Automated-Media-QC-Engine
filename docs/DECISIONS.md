@@ -98,3 +98,11 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
 - **Alternatives:** (a) manual string/f-string HTML assembly — escaping bugs, unmaintainable; (b) client-side rendering of the JSON — violates the no-JS requirement; (c) Jinja2 server-side templating with autoescaping, CSS inlined into a single self-contained document.
 - **Decision:** (c). Dependencies added: `jinja2` (templating) and `weasyprint` (per ADR-007). The PDF is rendered from the same HTML document, so the two visual formats cannot diverge. The HTML contract is enforced by content assertions (every finding, expected/actual values, timecodes, hashes, versions, no `<script>`), not golden HTML bytes, so cosmetic template changes don't break CI. The canonical `report.json` byte layout (sorted keys, two-space indent, trailing newline) IS locked by a golden file.
 - **Consequences:** Native Pango libraries required for PDF output; installed in Docker and CI, with a typed, actionable error (`PdfRenderError`) where missing. Report generation timestamp is injectable and declared volatile (ADR-008).
+
+## ADR-013: Approved-preset immutability via a hash lock file
+
+- **Status:** Accepted (2026-07-22)
+- **Context:** Approved preset versions must be immutable (handoff §12.3), and approval is a human decision (§30). The mechanism must work in the current git-only phase and survive Phase 7 (DB-backed presets).
+- **Alternatives:** (a) convention only — unenforceable; (b) git hooks — bypassable, not visible in CI; (c) a committed `presets/approved.lock.json` mapping approved preset paths to sha256 digests, verified by a unit test on every CI run and a `deepdub-qc presets verify` command.
+- **Decision:** (c). Approving a preset = a reviewed commit that flips `status: approved` and runs `deepdub-qc presets lock`. Editing, demoting, or deleting a locked preset breaks CI with an actionable message. The lock file is the natural seed for the Phase 7 `qc_preset_versions` table.
+- **Consequences:** Approval becomes an explicit, auditable git event; the lock file must be updated in the same commit as any legitimate approval; drafts remain freely editable.

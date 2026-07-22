@@ -1,0 +1,88 @@
+# Translated from the Vidchecker 8.2.2 template "Deliver-Audio" (template id 116),
+# as operated by Deepdub post-production (2026-07-22 review).
+#
+# Vidchecker check            -> Deepdub QC rule
+# --------------------------------------------------------------------------
+# Loudness (integrated)       -> integrated-loudness (-24 LUFS +/- 2, ITU 1770-4)
+# Clipping (medium)           -> clipping-flat-factor + peak-level indicators
+# Min Level (-90 dBFS RMS/10s)-> internal-silence (approximate mapping; a
+#                                windowed-RMS min-level detector is backlog #34)
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+# Status stays `draft` until the post-production engineer signs off; approval
+# happens via `deepdub-qc presets lock` in a reviewed commit.
+schema_version: 1.0.0
+
+preset:
+  id: marimba_deliver_audio
+  version: 1.0.0
+  client: marimba
+  content_type: dubbed_audio_delivery
+  title: Marimba — Deliver Audio
+  description: >-
+    Per-language dubbed audio delivery (WAV). Translated from the Vidchecker
+    "Deliver-Audio" template; thresholds pending post-production approval.
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-22
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  # Vidchecker: Loudness (integrated) -24 LKFS/LUFS +/- 2 dB, ITU 1770-4 / EBU I.
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26.0
+      max: -22.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Integrated Loudness
+
+  # Vidchecker: Clipping, medium sensitivity. Indicator mapping: hard clipping
+  # shows as flat runs at peak level (astats flat factor).
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Clipping (Flat Factor)
+    severity: warning
+    blocking: false
+
+  - rule_id: peak-level
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -0.1
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Peak Level
+    severity: warning
+    blocking: false
+
+  # Vidchecker: Min Level (audio must not be below -90 dBFS RMS for 10 s).
+  # Approximate mapping until backlog #34 (windowed-RMS min-level detector):
+  # long internal silences are the practical failure this check catches.
+  - rule_id: internal-silence
+    parameter_id: audio.internal_silence_event
+    operator: not_exists
+    display_name: Internal Silence
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true

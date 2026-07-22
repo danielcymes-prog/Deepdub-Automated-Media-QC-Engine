@@ -141,31 +141,87 @@ def render_mock(
 
 @presets_app.command("validate")
 def presets_validate(
-    path: Annotated[Path, typer.Argument(help="Path to a preset YAML file.")],
+    path: Annotated[
+        Path, typer.Argument(help="Path to a preset YAML file, or a directory of presets.")
+    ],
 ) -> None:
-    """Validate a preset file against the preset schema and its invariants."""
-    try:
-        preset = load_preset(path)
-        digest = preset_sha256(path)
-    except PresetValidationError as exc:
-        err_console.print(f"[red]INVALID[/red] {path}")
-        for error in exc.errors:
-            err_console.print(f"  - {error}")
-        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
-    except PresetError as exc:
-        err_console.print(f"[red]INVALID[/red] {path}: {exc}")
-        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
+    """Validate preset file(s) against the preset schema and invariants."""
+    from deepdub_qc.presets.governance import discover_presets  # noqa: PLC0415
 
-    table = Table(title=f"Preset OK: {path.name}", show_header=False)
-    table.add_row("Preset ID", preset.preset.id)
-    table.add_row("Version", preset.preset.version)
-    table.add_row("Client", preset.preset.client)
-    table.add_row("Content type", preset.preset.content_type)
-    table.add_row("Status", preset.preset.status.value)
-    table.add_row("Rules", str(len(preset.rules)))
-    table.add_row("Enabled rules", str(sum(1 for rule in preset.rules if rule.enabled)))
-    table.add_row("SHA-256", digest)
+    targets = discover_presets(path) if path.is_dir() else [path]
+    if not targets:
+        err_console.print(f"[red]No preset files found in[/red] {path}")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION)
+
+    failures = 0
+    table = Table(title=f"Preset validation: {path}")
+    table.add_column("Preset")
+    table.add_column("ID / version")
+    table.add_column("Client")
+    table.add_column("Status")
+    table.add_column("Rules")
+    table.add_column("Result")
+    for target in targets:
+        try:
+            preset = load_preset(target)
+            preset_sha256(target)
+        except PresetValidationError as exc:
+            failures += 1
+            table.add_row(target.name, "—", "—", "—", "—", "[red]INVALID[/red]")
+            for error in exc.errors:
+                err_console.print(f"  {target.name}: {error}")
+            continue
+        except PresetError as exc:
+            failures += 1
+            table.add_row(target.name, "—", "—", "—", "—", "[red]INVALID[/red]")
+            err_console.print(f"  {target.name}: {exc}")
+            continue
+        table.add_row(
+            target.name,
+            f"{preset.preset.id} v{preset.preset.version}",
+            preset.preset.client,
+            preset.preset.status.value,
+            str(len(preset.rules)),
+            "[green]OK[/green]",
+        )
     console.print(table)
+    if failures:
+        err_console.print(f"[red]{failures} invalid preset(s)[/red]")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION)
+
+
+@presets_app.command("verify")
+def presets_verify(
+    directory: Annotated[
+        Path, typer.Argument(help="Preset root directory (contains approved.lock.json).")
+    ] = Path("presets"),
+) -> None:
+    """Verify that approved presets are unmodified (immutability check, ADR-013)."""
+    from deepdub_qc.presets.governance import verify_approved  # noqa: PLC0415
+
+    problems = verify_approved(directory)
+    if problems:
+        for problem in problems:
+            err_console.print(f"[red]VIOLATION[/red] {problem}")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION)
+    console.print("[green]Approved presets verified: no violations[/green]")
+
+
+@presets_app.command("lock")
+def presets_lock(
+    directory: Annotated[
+        Path, typer.Argument(help="Preset root directory to (re)generate the lock for.")
+    ] = Path("presets"),
+) -> None:
+    """Record the current approved presets in approved.lock.json.
+
+    Run this only in a reviewed commit after human approval (handoff section 30).
+    """
+    from deepdub_qc.presets.governance import build_lock, write_lock  # noqa: PLC0415
+
+    target = write_lock(directory)
+    entries = build_lock(directory)
+    console.print(f"Wrote {target} ({len(entries)} approved preset(s))")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,93 @@
+# Translated from the Vidchecker 8.2.2 template "Delivery" (template id 116),
+# as operated by Deepdub post-production (2026-07-22 review).
+#
+# Extends the audio checks of marimba_deliver_audio with the enabled video
+# check from the template: Frame Size 1920x1080.
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+schema_version: 1.0.0
+
+preset:
+  id: marimba_delivery
+  version: 1.0.0
+  client: marimba
+  content_type: av_delivery
+  title: Marimba — Delivery (A/V)
+  description: >-
+    Full A/V delivery. Translated from the Vidchecker "Delivery" template;
+    thresholds pending post-production approval.
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-22
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  # Vidchecker: Frame Size 1920x1080 (the only enabled video check).
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+    display_name: Frame Width
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+    display_name: Frame Height
+
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26.0
+      max: -22.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Integrated Loudness
+
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Clipping (Flat Factor)
+    severity: warning
+    blocking: false
+
+  - rule_id: peak-level
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -0.1
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Peak Level
+    severity: warning
+    blocking: false
+
+  - rule_id: internal-silence
+    parameter_id: audio.internal_silence_event
+    operator: not_exists
+    display_name: Internal Silence
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true
