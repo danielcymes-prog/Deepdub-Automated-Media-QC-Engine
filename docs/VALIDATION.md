@@ -60,6 +60,36 @@ Environment: ffmpeg 4.4.2 (dev sandbox). Re-run on the pinned Docker image
 and on the RDP with `uv run pytest tests/integration/test_ebu_conformance.py`
 after placing the test set under tests/fixtures/ebu/.
 
+## Capability gap — Alphorn AD multi-mono master (2026-07-23)
+
+MCHNCL_EPS-201 (Mechanical, audio-only MOV, 3,141,703,557 bytes, 45:19.84,
+8 x mono PCM 24/48k = 5.1 + 2.0 downmix; layout confirmed by ffprobe:
+FL FR C LFE BL BR DL DR). Both tools ran the same bytes:
+
+- **Vidchecker 8.2.2** (template "Delivery", task 34384, 2 s): produced
+  **zero measurements**. Its audio tests bind to track 1 channels 1-2; every
+  track is mono, so loudness/clipping/min-level/dual-mono all reported
+  "Some channels configured in this test are not present. This test will
+  not be run." Verdict Warning = nine could-not-test alerts.
+- **deepdub-qc 0.1.0** (preset `alphorn_ad_full_mix` draft, 7 min 3 s):
+  full loudness/true-peak/silence/clipping measurements for **all eight
+  tracks**. Structure PASS (mov, 8 tracks, mono, pcm_s24le, 48 kHz);
+  no clipping on any track (flat factor 0.0, peaks <= -2.07 dBFS);
+  per-track integrated loudness FL -28.8 / FR -28.9 / C -22.4 /
+  LFE -70.0 / BL -33.5 / BR -33.2 / DL -21.6 / DR -21.7 LUFS.
+  One WARNING: the LFE track's -70 LUFS falls outside the placeholder
+  loudness bounds - correct behavior for a generic per-track rule, and
+  evidence the preset needs channel-role-aware expectations (exempt LFE).
+
+Not a measurement-parity point (Vidchecker produced no numbers to compare);
+recorded as a **capability demonstration**: multi-mono localization
+masters - the dominant Deepdub asset shape - are testable per-track by
+deepdub-qc and untestable by the Vidchecker template model in use.
+
+**Follow-up identified:** filename targets like "-27LU" apply to the 5.1
+program measured jointly (ITU 1770 channel weighting), not to individual
+mono tracks. Requires a track-grouping loudness capability (backlog #35).
+
 ## Outstanding validation
 
 - Video-side parity (black frames, freeze frames) — needs a Vidchecker

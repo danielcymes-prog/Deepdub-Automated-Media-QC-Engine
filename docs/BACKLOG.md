@@ -40,3 +40,13 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 34 | Windowed-RMS min-level detector (`audio.min_rms_level`) | P1 | M | 20 | M6+ | Vidchecker "Min Level" check (-90 dBFS RMS for 10 s) has no exact equivalent yet; marimba presets approximate it with internal-silence |
 
 Items 1–2 are this week's work. Items 3–11 are one coherent M1 sprint.
+
+35. **Grouped-stream loudness measurement (audio groups).** Multi-mono
+    masters (e.g. Alphorn AD: 8 x mono = 5.1 + 2.0) carry program-level
+    loudness targets that apply to the channel group measured jointly with
+    ITU 1770 weighting, not per track. Add an `audio.group` concept
+    (preset-declared track->group mapping, e.g. tracks 1-6 = "5.1",
+    7-8 = "2.0"), measure via ffmpeg `amerge`/`join` into the grouped
+    layout + ebur128, and emit `audio.group_integrated_loudness` etc.
+    Also: channel-role-aware rule selectors (exempt LFE from loudness
+    bounds). Motivated by MCHNCL_EPS-201 run, docs/VALIDATION.md.
