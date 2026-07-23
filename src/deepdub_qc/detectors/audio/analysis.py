@@ -20,6 +20,13 @@ from deepdub_qc.detectors.audio.common import (
     run_audio_filter,
 )
 from deepdub_qc.detectors.audio.loudness import parse_ebur128
+from deepdub_qc.detectors.audio.min_rms import (
+    LOW_RMS_THRESHOLD_DB,
+    RMS_WINDOW_SECONDS,
+    merge_low_rms_events,
+    parse_windowed_rms,
+    windowed_rms_filter,
+)
 from deepdub_qc.detectors.audio.silence import (
     MIN_SILENCE_SECONDS,
     NOISE_FLOOR_DB,
@@ -50,7 +57,7 @@ class AudioAnalysisDetector(Detector):
     """Loudness, silence, and clipping indicators in a single pass per stream."""
 
     detector_id = "audio.analysis.ffmpeg"
-    detector_version = "1.0.0"
+    detector_version = "1.1.0"  # 1.1.0: windowed-RMS min-level events (backlog #34)
     parameters = (
         "audio.integrated_loudness",
         "audio.loudness_range",
@@ -65,6 +72,8 @@ class AudioAnalysisDetector(Detector):
         "audio.flat_factor",
         "audio.peak_count",
         "audio.dc_offset",
+        "audio.low_rms_event",
+        "audio.low_rms_event_count",
     )
 
     def is_applicable(self, context: QCContext) -> bool:
@@ -73,14 +82,20 @@ class AudioAnalysisDetector(Detector):
     def run(self, context: QCContext) -> list[Measurement]:
         measurements: list[Measurement] = []
         for stream in list_audio_streams(context.input_path):
-            stderr = run_audio_filter(context.input_path, stream.ordinal, COMBINED_FILTER)
+            audio_filter = f"{COMBINED_FILTER},{windowed_rms_filter(stream.sample_rate)}"
+            result = run_audio_filter(context.input_path, stream.ordinal, audio_filter)
+            stderr = result.stderr
             raw_name = f"audio_analysis_a{stream.index}.log"
             context.raw_dir.mkdir(parents=True, exist_ok=True)
             (context.raw_dir / raw_name).write_text(stderr, encoding="utf-8")
+            (context.raw_dir / f"audio_rms_windows_a{stream.index}.log").write_text(
+                result.stdout, encoding="utf-8"
+            )
 
             measurements.extend(self._loudness(context, stream, stderr, raw_name))
             measurements.extend(self._silence(context, stream, stderr, raw_name))
             measurements.extend(self._clipping(context, stream, stderr, raw_name))
+            measurements.extend(self._low_rms(context, stream, result.stdout))
         return measurements
 
     # ------------------------------------------------------------------ sections
@@ -144,6 +159,33 @@ class AudioAnalysisDetector(Detector):
         )
         return out
 
+    def _low_rms(
+        self, context: QCContext, stream: AudioStreamRef, stdout: str
+    ) -> list[Measurement]:
+        """Vidchecker Min-Level equivalent: merged low windowed-RMS spans."""
+        raw_name = f"audio_rms_windows_a{stream.index}.log"
+        windows = parse_windowed_rms(stdout)
+        events = merge_low_rms_events(windows, stream.duration_seconds)
+        out = [
+            self._measurement(
+                context, stream, "audio.low_rms_event_count", len(events), None, raw_name
+            )
+        ]
+        out.extend(
+            self._measurement(
+                context,
+                stream,
+                "audio.low_rms_event",
+                event.duration,
+                "s",
+                raw_name,
+                start=event.start,
+                end=event.end,
+            )
+            for event in events
+        )
+        return out
+
     def _clipping(
         self, context: QCContext, stream: AudioStreamRef, stderr: str, raw_name: str
     ) -> list[Measurement]:
@@ -188,6 +230,8 @@ class AudioAnalysisDetector(Detector):
             metadata={
                 "noise_floor_db": NOISE_FLOOR_DB,
                 "min_silence_seconds": MIN_SILENCE_SECONDS,
+                "low_rms_threshold_db": LOW_RMS_THRESHOLD_DB,
+                "rms_window_seconds": RMS_WINDOW_SECONDS,
             },
             raw_artifact_path=f"raw/{raw_name}",
         )

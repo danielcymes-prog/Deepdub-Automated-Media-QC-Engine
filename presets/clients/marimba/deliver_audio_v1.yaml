@@ -142,6 +142,19 @@ rules:
     severity: warning
     blocking: false
 
+  # Vidchecker: Min Level, exact counterpart (backlog #34 done). Detector
+  # measures windowed RMS (-90 dB / 5 s windows definition); this template's
+  # threshold is -95 dB for 5 s, so any qualifying span appears as an event.
+  - rule_id: min-level
+    parameter_id: audio.low_rms_event
+    operator: not_exists
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Min Level (Windowed RMS)
+    severity: warning
+    blocking: false
+
 report:
   include_passed_checks: true
   include_raw_measurements: false

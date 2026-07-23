@@ -185,7 +185,13 @@ def _min_level_rows(
     report: dict[str, Any], task: VidcheckerTask, tolerances: Tolerances
 ) -> list[ComparisonRow]:
     rows = []
-    span_parameters = ("audio.tail_silence_duration", "audio.internal_silence_event")
+    # low_rms_event is the exact Min-Level counterpart (windowed RMS);
+    # silence spans remain as fallbacks for reports from older detectors.
+    span_parameters = (
+        "audio.low_rms_event",
+        "audio.tail_silence_duration",
+        "audio.internal_silence_event",
+    )
     for alert in task.alerts:
         if alert.alert_type_id != ALERT_MIN_LEVEL or alert.not_run:
             continue

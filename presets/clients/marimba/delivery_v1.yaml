@@ -153,6 +153,22 @@ rules:
     severity: warning
     blocking: false
 
+  # Vidchecker: Min Level (-90 dB RMS for 10 s), exact counterpart via the
+  # windowed-RMS detector (-90 dB / 5 s window definition). The 10 s template
+  # duration maps to the event-duration threshold here.
+  - rule_id: min-level
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 10.0
+      unit: s
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Min Level (Windowed RMS)
+    severity: warning
+    blocking: false
+
 report:
   include_passed_checks: true
   include_raw_measurements: false

@@ -12,19 +12,23 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from deepdub_qc.detectors.base import DetectorRunError
-from deepdub_qc.utils.subprocess import ToolError, run_tool
+from deepdub_qc.utils.subprocess import ToolError, ToolResult, run_tool
 
 #: Full-file audio decode limit. Recorded, not tuned, for MVP (handoff section 29).
 AUDIO_ANALYSIS_TIMEOUT = 3600.0
 
+#: Assumed when ffprobe does not report a rate (broadcast default).
+DEFAULT_SAMPLE_RATE = 48000
+
 
 @dataclass(frozen=True)
 class AudioStreamRef:
-    """One audio stream: ffprobe global index, per-type ordinal, duration."""
+    """One audio stream: ffprobe global index, per-type ordinal, duration, rate."""
 
     index: int
     ordinal: int
     duration_seconds: float | None
+    sample_rate: int = DEFAULT_SAMPLE_RATE
 
 
 def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
@@ -39,7 +43,7 @@ def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
         "-select_streams",
         "a",
         "-show_entries",
-        "stream=index,duration",
+        "stream=index,duration,sample_rate",
         "-show_entries",
         "format=duration",
         "-print_format",
@@ -59,21 +63,24 @@ def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
     streams = []
     for ordinal, stream in enumerate(parsed.get("streams", [])):
         duration = _to_float(stream.get("duration"))
+        rate = _to_float(stream.get("sample_rate"))
         streams.append(
             AudioStreamRef(
                 index=int(stream["index"]),
                 ordinal=ordinal,
                 duration_seconds=duration if duration is not None else fallback,
+                sample_rate=int(rate) if rate else DEFAULT_SAMPLE_RATE,
             )
         )
     return streams
 
 
-def run_audio_filter(input_path: Path, ordinal: int, audio_filter: str) -> str:
-    """Decode one audio stream through a filter chain; return captured stderr.
+def run_audio_filter(input_path: Path, ordinal: int, audio_filter: str) -> ToolResult:
+    """Decode one audio stream through a filter chain; return the tool result.
 
     ffmpeg filter analysis output (ebur128, silencedetect, astats) is written
-    to stderr; the decoded audio is discarded (-f null).
+    to stderr; ametadata window prints go to stdout (file=-); the decoded
+    audio is discarded (-f null).
     """
     args = [
         "ffmpeg",
@@ -91,10 +98,9 @@ def run_audio_filter(input_path: Path, ordinal: int, audio_filter: str) -> str:
         "-",
     ]
     try:
-        result = run_tool(args, timeout=AUDIO_ANALYSIS_TIMEOUT)
+        return run_tool(args, timeout=AUDIO_ANALYSIS_TIMEOUT)
     except ToolError as exc:
         raise DetectorRunError(f"ffmpeg audio analysis failed: {exc}") from exc
-    return result.stderr
 
 
 def _to_float(value: object) -> float | None:
