@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 
@@ -21,6 +22,32 @@ from deepdub_qc.exceptions import DeepdubQCError
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT_SECONDS = 300.0
+
+#: Active child process per thread, so a controller (the server worker's
+#: cancel/timeout monitor) can terminate a long ffmpeg run mid-flight from
+#: another thread. ffmpeg/ffprobe spawn no children of their own, so killing
+#: the direct child terminates the whole tool.
+_ACTIVE: dict[int, subprocess.Popen[str]] = {}
+_ACTIVE_LOCK = threading.Lock()
+
+
+def terminate_active_tool(thread_ident: int) -> bool:
+    """Kill the tool currently running on the given thread, if any.
+
+    Returns True when a process was signalled. The victim thread's run_tool
+    then sees a non-zero exit and raises ToolExecutionError; callers that
+    initiated the kill (cancel/timeout) classify that error themselves.
+    """
+    with _ACTIVE_LOCK:
+        process = _ACTIVE.get(thread_ident)
+    if process is None:
+        return False
+    try:
+        process.kill()
+    except OSError:  # already exited
+        return False
+    logger.info("terminated active tool", extra={"thread": thread_ident, "pid": process.pid})
+    return True
 
 
 class ToolError(DeepdubQCError):
@@ -80,40 +107,50 @@ def run_tool(
         msg = "run_tool requires a non-empty argument array"
         raise ValueError(msg)
     started = time.monotonic()
+    ident = threading.get_ident()
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             args,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
             text=True,
-            timeout=timeout,
             shell=False,
-            check=False,
         )
     except FileNotFoundError as exc:
         raise ToolNotFoundError(f"executable not found: {args[0]}") from exc
+
+    with _ACTIVE_LOCK:
+        _ACTIVE[ident] = process
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired as exc:
+        process.kill()
+        process.communicate()  # reap; avoid zombies and dangling pipes
         logger.error(
             "tool timed out",
             extra={"tool": args[0], "timeout_seconds": timeout},
         )
         raise ToolTimeoutError(f"{args[0]} exceeded timeout of {timeout:.0f}s") from exc
+    finally:
+        with _ACTIVE_LOCK:
+            _ACTIVE.pop(ident, None)
 
     duration = time.monotonic() - started
     logger.debug(
         "tool finished",
-        extra={"tool": args[0], "exit_code": completed.returncode, "duration": duration},
+        extra={"tool": args[0], "exit_code": process.returncode, "duration": duration},
     )
-    if check and completed.returncode != 0:
+    if check and process.returncode != 0:
         raise ToolExecutionError(
-            f"{args[0]} failed with exit code {completed.returncode}: "
-            f"{completed.stderr.strip()[:500]}",
-            exit_code=completed.returncode,
-            stderr=completed.stderr,
+            f"{args[0]} failed with exit code {process.returncode}: {stderr.strip()[:500]}",
+            exit_code=process.returncode,
+            stderr=stderr,
         )
     return ToolResult(
         args=tuple(args),
-        exit_code=completed.returncode,
-        stdout=completed.stdout,
-        stderr=completed.stderr,
+        exit_code=process.returncode,
+        stdout=stdout,
+        stderr=stderr,
         duration_seconds=duration,
     )
