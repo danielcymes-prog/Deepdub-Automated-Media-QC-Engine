@@ -121,6 +121,7 @@ class VideoIncidentDetector(Detector):
         )
         args = [
             "ffmpeg",
+            "-nostdin",
             "-hide_banner",
             "-nostats",
             "-i",

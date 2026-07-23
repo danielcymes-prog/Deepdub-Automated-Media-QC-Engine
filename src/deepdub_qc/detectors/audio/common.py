@@ -77,6 +77,7 @@ def run_audio_filter(input_path: Path, ordinal: int, audio_filter: str) -> str:
     """
     args = [
         "ffmpeg",
+        "-nostdin",
         "-hide_banner",
         "-nostats",
         "-i",

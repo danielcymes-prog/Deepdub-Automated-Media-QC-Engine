@@ -72,6 +72,7 @@ def _grab(finding: Finding, input_path: Path, thumb_dir: Path, output_dir: Path)
     thumb_dir.mkdir(parents=True, exist_ok=True)
     args = [
         "ffmpeg",
+        "-nostdin",
         "-y",
         "-v",
         "error",
