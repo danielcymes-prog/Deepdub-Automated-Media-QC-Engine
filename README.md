@@ -36,6 +36,25 @@ uv run deepdub-qc analyze \
   --output reports/job_001
 ```
 
+Analyze a whole directory (one job per file + `batch_summary.json`; exit
+code is the worst individual result):
+
+```bash
+uv run deepdub-qc batch \
+  --input-dir /path/to/season_deliveries \
+  --preset presets/clients/marimba/delivery_v1.yaml \
+  --output-dir reports/season_08
+```
+
+Compare against a Vidchecker XML report of the same file (parity harness;
+refuses to compare different bytes):
+
+```bash
+uv run deepdub-qc compare \
+  --report reports/job_001/report.json \
+  --vidchecker /path/to/vidchecker_export.xml
+```
+
 ## Requirements
 
 - Python 3.13+

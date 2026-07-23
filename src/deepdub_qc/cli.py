@@ -108,6 +108,80 @@ def analyze(
 
 
 @app.command()
+def batch(
+    input_dir: Annotated[
+        Path, typer.Option("--input-dir", "-i", help="Directory containing media files.")
+    ],
+    preset: Annotated[Path, typer.Option("--preset", "-p", help="Path to the client preset YAML.")],
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir", "-o", help="Root directory for per-file job outputs.")
+    ],
+    pdf: Annotated[bool, typer.Option(help="Render report.pdf per file.")] = False,
+) -> None:
+    """Analyze every media file in a directory against one preset.
+
+    One job directory (report.json/report.html) per file, plus
+    batch_summary.json at the root. Exit code is the worst individual
+    result: 0 PASS, 1 WARNING, 2 FAIL, 3 ERROR, 4 invalid preset,
+    5 no media files found.
+    """
+    from deepdub_qc.orchestration.batch import (  # noqa: PLC0415
+        SUMMARY_FILENAME,
+        EmptyBatchError,
+        batch_status,
+        run_batch,
+    )
+    from deepdub_qc.orchestration.pipeline import AnalysisOptions  # noqa: PLC0415
+
+    def show_progress(message: str) -> None:
+        err_console.print(f"[dim]{message}[/dim]")
+
+    try:
+        items = run_batch(
+            input_dir,
+            preset,
+            output_dir,
+            AnalysisOptions(render_pdf=pdf, on_progress=show_progress),
+        )
+    except EmptyBatchError as exc:
+        err_console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=ExitCode.INVALID_INPUT) from exc
+    except PresetError as exc:
+        err_console.print(f"[red]Invalid preset:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
+
+    status_style = {"PASS": "green", "WARNING": "yellow", "FAIL": "red", "ERROR": "red"}
+    table = Table(title=f"Batch results: {input_dir} ({len(items)} file(s))")
+    for column in ("File", "Status", "Pass", "Warn", "Fail", "Error", "Duration"):
+        table.add_column(column)
+    for item in items:
+        style = status_style[item.status]
+        duration = f"{item.duration_seconds:.1f}s" if item.duration_seconds else "—"
+        table.add_row(
+            item.filename,
+            f"[{style}]{item.status}[/{style}]",
+            str(item.passed),
+            str(item.warnings),
+            str(item.failed),
+            str(item.errors),
+            duration,
+        )
+        if item.error_message:
+            err_console.print(f"  [red]{item.filename}:[/red] {item.error_message}")
+    console.print(table)
+    console.print(f"Summary written to {output_dir / SUMMARY_FILENAME}")
+
+    worst = batch_status(items)
+    status_exit = {
+        "PASS": ExitCode.QC_PASS,
+        "WARNING": ExitCode.QC_WARNING,
+        "FAIL": ExitCode.QC_FAIL,
+        "ERROR": ExitCode.QC_EXECUTION_ERROR,
+    }
+    raise typer.Exit(code=status_exit[worst])
+
+
+@app.command()
 def compare(
     report: Annotated[
         Path, typer.Option("--report", "-r", help="Path to a deepdub-qc report.json.")
