@@ -78,6 +78,7 @@ def _job_payload(store: JobStore, job: JobRecord) -> dict[str, Any]:
         "cancel_requested": job.cancel_requested,
         "resubmit_of": job.resubmit_of,
         "cancelled_by": job.cancelled_by,
+        "degraded_note": job.degraded_note,
     }
 
 

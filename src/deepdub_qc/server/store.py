@@ -69,6 +69,8 @@ class JobRecord:
     duplicate_override: bool = False
     resubmit_of: str | None = None
     cancelled_by: str | None = None
+    #: E10 degraded-artifacts note (e.g. PDF rendering failed); never a verdict.
+    degraded_note: str | None = None
 
     @property
     def duplicate_key(self) -> str:
@@ -123,6 +125,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     duplicate_override INTEGER NOT NULL DEFAULT 0,
     resubmit_of      TEXT,
     cancelled_by     TEXT,
+    degraded_note    TEXT,
     duplicate_key    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);
@@ -138,6 +141,10 @@ class JobStore:
         database.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # Lightweight migration for databases created before this column.
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(jobs)")}
+            if "degraded_note" not in columns:
+                conn.execute("ALTER TABLE jobs ADD COLUMN degraded_note TEXT")
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self._database, timeout=30.0)
@@ -248,8 +255,20 @@ class JobStore:
                 (json.dumps(events), job_id),
             )
 
-    def mark_completed(self, job_id: str, qc_status: str, summary: dict[str, Any]) -> None:
-        self._finish(job_id, JobStatus.COMPLETED, qc_status=qc_status, summary=summary)
+    def mark_completed(
+        self,
+        job_id: str,
+        qc_status: str,
+        summary: dict[str, Any],
+        degraded_note: str | None = None,
+    ) -> None:
+        self._finish(
+            job_id,
+            JobStatus.COMPLETED,
+            qc_status=qc_status,
+            summary=summary,
+            degraded_note=degraded_note,
+        )
 
     def mark_failed(self, job_id: str, reason: str, message: str) -> None:
         self._finish(job_id, JobStatus.FAILED, error_reason=reason, error_message=message)
@@ -267,12 +286,13 @@ class JobStore:
         error_reason: str | None = None,
         error_message: str | None = None,
         cancelled_by: str | None = None,
+        degraded_note: str | None = None,
     ) -> None:
         with self._connect() as conn:
             updated = conn.execute(
                 """UPDATE jobs SET status = ?, finished_at = ?, qc_status = ?,
                    summary_json = ?, error_reason = ?, error_message = ?,
-                   cancelled_by = COALESCE(?, cancelled_by)
+                   cancelled_by = COALESCE(?, cancelled_by), degraded_note = ?
                    WHERE job_id = ?""",
                 (
                     status.value,
@@ -282,6 +302,7 @@ class JobStore:
                     error_reason,
                     error_message,
                     cancelled_by,
+                    degraded_note,
                     job_id,
                 ),
             ).rowcount
@@ -422,4 +443,5 @@ def _record(row: sqlite3.Row) -> JobRecord:
         duplicate_override=bool(row["duplicate_override"]),
         resubmit_of=row["resubmit_of"],
         cancelled_by=row["cancelled_by"],
+        degraded_note=row["degraded_note"],
     )

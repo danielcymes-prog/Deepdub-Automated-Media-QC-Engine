@@ -166,6 +166,26 @@ class TestWorkerFlows:
         run_worker_until(store, config, runner, [job_id])
         assert store.get(job_id).status is JobStatus.CANCELLED
 
+    def test_pdf_failure_degrades_never_fails(self, tmp_path: Path) -> None:
+        """E10: the PDF backend being unavailable completes the job with a
+        degraded-artifacts note; verdict and canonical artifacts unaffected."""
+        config = make_config(tmp_path)  # pdf.renderer=playwright, not installed here
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+
+        def runner(input_path, preset_path, output_dir, on_progress):
+            output_dir.mkdir(parents=True, exist_ok=True)
+            (output_dir / "report.html").write_text("<html>report</html>")
+            return "PASS", {"passed": 1}
+
+        run_worker_until(store, config, runner, [job_id])
+        job = store.get(job_id)
+        assert job.status is JobStatus.COMPLETED
+        assert job.qc_status == "PASS"
+        assert job.degraded_note is not None
+        assert "PDF could not be generated" in job.degraded_note
+        assert "verdict is unaffected" in job.degraded_note
+
     def test_start_recovers_orphans(self, tmp_path: Path) -> None:
         config = make_config(tmp_path)
         store = JobStore(config.paths.database)

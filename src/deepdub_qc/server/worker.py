@@ -166,11 +166,37 @@ class Worker:
             self._store.mark_failed(job.job_id, "internal_error", str(exc))
             logger.exception("job crashed", extra={"job_id": job.job_id})
         else:
-            self._store.mark_completed(job.job_id, qc_status, summary)
+            degraded = self._render_pdf(job)
+            self._store.mark_completed(job.job_id, qc_status, summary, degraded_note=degraded)
             logger.info("job completed", extra={"job_id": job.job_id, "qc_status": qc_status})
         finally:
             job_done.set()
             monitor_thread.join(timeout=5.0)
+
+    def _render_pdf(self, job: JobRecord) -> str | None:
+        """E10: PDF failure degrades artifacts, never the job or the verdict."""
+        from deepdub_qc.reports.pdf_from_html import (  # noqa: PLC0415
+            PdfRenderError,
+            render_pdf_from_html,
+        )
+
+        job_dir = Path(job.output_dir)
+        try:
+            render_pdf_from_html(
+                job_dir / "report.html",
+                job_dir / "report.pdf",
+                renderer=self._config.pdf.renderer.value,
+                timeout_seconds=self._config.pdf.render_timeout_seconds,
+            )
+        except PdfRenderError as exc:
+            logger.warning(
+                "pdf rendering degraded", extra={"job_id": job.job_id, "error": str(exc)}
+            )
+            return (
+                f"The PDF could not be generated ({exc}). The HTML and JSON "
+                "reports are complete and the QC verdict is unaffected."
+            )
+        return None
 
     def _classify_pipeline_error(
         self, job: JobRecord, exc: DeepdubQCError, timed_out: bool

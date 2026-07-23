@@ -46,6 +46,9 @@
   </form>
 
 {% elif job.status == 'completed' %}
+  {% if job.degraded_note %}
+  <div class="banner banner-warning"><span>⚠</span><div>{{ job.degraded_note }}</div></div>
+  {% endif %}
   {% if summary %}
   <p class="summary-line">
     {{ summary.total_checks or (summary.passed + summary.warnings + summary.failed + summary.errors) }} checks
