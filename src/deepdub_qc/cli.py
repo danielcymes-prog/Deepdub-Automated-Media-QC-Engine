@@ -107,6 +107,92 @@ def analyze(
     raise typer.Exit(code=status_exit[summary.overall_status.value])
 
 
+@app.command()
+def compare(
+    report: Annotated[
+        Path, typer.Option("--report", "-r", help="Path to a deepdub-qc report.json.")
+    ],
+    vidchecker: Annotated[
+        Path, typer.Option("--vidchecker", "-x", help="Path to a Vidchecker XML report export.")
+    ],
+    loudness_tolerance: Annotated[
+        float, typer.Option(help="Loudness agreement tolerance in LU.")
+    ] = 0.3,
+    span_tolerance: Annotated[
+        float, typer.Option(help="Silence/min-level span agreement tolerance in seconds.")
+    ] = 1.0,
+    markdown_out: Annotated[
+        Path | None,
+        typer.Option(
+            help="Also write the comparison as a Markdown table (for docs/VALIDATION.md)."
+        ),
+    ] = None,
+) -> None:
+    """Compare a deepdub-qc report against a Vidchecker XML report (parity harness).
+
+    Requires both reports to describe identical file bytes. Exit codes:
+    0 all comparable checks match, 2 mismatches found, 5 invalid input or
+    the reports describe different files.
+    """
+    import json  # noqa: PLC0415
+
+    from deepdub_qc.comparison import (  # noqa: PLC0415
+        IdentityMismatchError,
+        RowStatus,
+        Tolerances,
+        VidcheckerParseError,
+        compare_reports,
+        parse_vidchecker_report,
+    )
+
+    try:
+        report_data = json.loads(report.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        err_console.print(f"[red]Cannot read report.json:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.INVALID_INPUT) from exc
+
+    try:
+        task = parse_vidchecker_report(vidchecker)
+        result = compare_reports(
+            report_data,
+            task,
+            Tolerances(loudness_lu=loudness_tolerance, span_seconds=span_tolerance),
+        )
+    except (VidcheckerParseError, IdentityMismatchError) as exc:
+        err_console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=ExitCode.INVALID_INPUT) from exc
+
+    style = {
+        RowStatus.MATCH: "[green]MATCH[/green]",
+        RowStatus.MISMATCH: "[red]MISMATCH[/red]",
+        RowStatus.VIDCHECKER_NOT_RUN: "[yellow]VC NOT RUN[/yellow]",
+        RowStatus.INFO: "[dim]INFO[/dim]",
+    }
+    table = Table(title=f"Parity: {result.filename} ({result.file_size:,} bytes)")
+    for column in ("Check", "Stream", "Vidchecker", "deepdub-qc", "Delta", "Status", "Note"):
+        table.add_column(column)
+    for row in result.rows:
+        table.add_row(
+            row.check,
+            row.stream,
+            row.vidchecker,
+            row.deepdub,
+            row.delta,
+            style[row.status],
+            row.note,
+        )
+    console.print(table)
+    console.print(
+        f"{result.matches} match, {result.mismatches} mismatch, "
+        f"{result.not_run} not run by Vidchecker"
+    )
+    if markdown_out is not None:
+        markdown_out.write_text(result.to_markdown(), encoding="utf-8")
+        console.print(f"Markdown written to {markdown_out}")
+    if result.mismatches:
+        raise typer.Exit(code=ExitCode.QC_FAIL)
+
+
 @app.command("render-mock")
 def render_mock(
     output: Annotated[
