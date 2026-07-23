@@ -8,9 +8,10 @@ Impact/likelihood: H/M/L. Owner defaults to engineering unless noted.
 Filter outputs (`ebur128`, `blackdetect`, `silencedetect`) change subtly between FFmpeg releases; the same file can yield different measurements on different machines.
 *Mitigation:* Pin FFmpeg in Docker (ADR-008); record versions in every result; treat FFmpeg upgrades as releases with full golden-corpus re-runs; CI determinism test runs inside the pinned image.
 
-**R2. Loudness accuracy vs. Vidchecker/Dolby disagreement (H/M).**
+**R2. Loudness accuracy vs. Vidchecker/Dolby disagreement (H/M -> partially retired).**
 Clients compare our LUFS numbers against Vidchecker's. Divergence past ~0.1 LU erodes trust in the whole tool.
-*Mitigation:* Validate `ebur128` against EBU R128 reference test vectors in M4; build the Vidchecker comparison harness (backlog #32); document known measurement deltas per check.
+*Status 2026-07-23:* First production parity point recorded (docs/VALIDATION.md): integrated loudness within 0.05 LU of Vidchecker 8.2.2 on a 49-minute mix; silence spans within 0.2 s; same verdict. Remaining: EBU reference vectors, video-side parity, clipping-positive material.
+*Mitigation:* Extend the parity set; build the Vidchecker comparison harness on their XML report format (backlog #32); document known measurement deltas per check.
 
 **R3. Parsing fragile FFmpeg text output (M/H).**
 `blackdetect`/`freezedetect`/`silencedetect` emit unstructured stderr text, not JSON.
