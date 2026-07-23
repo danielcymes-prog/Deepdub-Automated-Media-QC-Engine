@@ -1,12 +1,18 @@
-# Translated from the Vidchecker 8.2.2 template "Deliver-Audio" (template id 116),
-# as operated by Deepdub post-production (2026-07-22 review).
+# Translated from the Vidchecker 8.2.2 template "Deliver-Audio", as operated
+# by Deepdub post-production. Refined 2026-07-22 against actual Vidchecker
+# report exports (ART_OF_CRIME S05/S08 final mixes).
 #
 # Vidchecker check            -> Deepdub QC rule
 # --------------------------------------------------------------------------
+# Codec PCM + Bit Depth 24    -> audio-codec (pcm_s24le)
+# Sample Rate 48 kHz          -> audio-sample-rate
 # Loudness (integrated)       -> integrated-loudness (-24 LUFS +/- 2, ITU 1770-4)
 # Clipping (medium)           -> clipping-flat-factor + peak-level indicators
-# Min Level (-90 dBFS RMS/10s)-> internal-silence (approximate mapping; a
-#                                windowed-RMS min-level detector is backlog #34)
+# Min Level (-95 dBFS RMS/5s) -> head/tail/internal silence rules (approximate
+#                                mapping; windowed-RMS detector is backlog #34.
+#                                Observed reports show violations are long
+#                                trailing silences, which tail-silence catches.)
+# Dual Mono / Clicks and Pops -> not yet implemented (future detectors)
 #
 # ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
 # Status stays `draft` until the post-production engineer signs off; approval
@@ -31,6 +37,61 @@ defaults:
   severity: error
 
 rules:
+  # Vidchecker: Codec PCM + Bit Depth 24 (pcm_s24le encodes both).
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: equals
+    expected:
+      value: pcm_s24le
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Audio Codec (PCM 24-bit)
+
+  # Vidchecker: Sample Rate 48 kHz.
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Sample Rate
+
+  - rule_id: audio-channel-count
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 2
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Channel Count
+
+  # Vidchecker: Min Level (approximate; see header). Long head/tail silences
+  # are the observed real-world failure mode in Vidchecker reports.
+  - rule_id: head-silence
+    parameter_id: audio.head_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 30.0
+      unit: s
+    display_name: Head Silence
+    severity: warning
+    blocking: false
+
+  - rule_id: tail-silence
+    parameter_id: audio.tail_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 30.0
+      unit: s
+    display_name: Tail Silence
+    severity: warning
+    blocking: false
+
   # Vidchecker: Loudness (integrated) -24 LKFS/LUFS +/- 2 dB, ITU 1770-4 / EBU I.
   - rule_id: integrated-loudness
     parameter_id: audio.integrated_loudness
