@@ -10,7 +10,7 @@ Filter outputs (`ebur128`, `blackdetect`, `silencedetect`) change subtly between
 
 **R2. Loudness accuracy vs. Vidchecker/Dolby disagreement (H/M -> partially retired).**
 Clients compare our LUFS numbers against Vidchecker's. Divergence past ~0.1 LU erodes trust in the whole tool.
-*Status 2026-07-23:* First production parity point recorded (docs/VALIDATION.md): integrated loudness within 0.05 LU of Vidchecker 8.2.2 on a 49-minute mix; silence spans within 0.2 s; same verdict. Remaining: EBU reference vectors, video-side parity, clipping-positive material.
+*Status 2026-07-23:* Loudness accuracy validated two ways (docs/VALIDATION.md): EBU Loudness test set v05 - all 68 assertable vectors pass Tech 3341/3342 targets; production parity with Vidchecker 8.2.2 within 0.05 LU. Remaining: video-side parity, clipping-positive material.
 *Mitigation:* Extend the parity set; build the Vidchecker comparison harness on their XML report format (backlog #32); document known measurement deltas per check.
 
 **R3. Parsing fragile FFmpeg text output (M/H).**

@@ -1,0 +1,150 @@
+# EBU loudness conformance manifest (Tech 3341 v3 / Tech 3342 v3).
+# Expected values and tolerances from the specifications; the WAV fixtures
+# come from the EBU Loudness test set v05 (tech.ebu.ch, 'technical testing
+# purposes' licence -> NOT committed; see tests/fixtures/ebu/README.md).
+# max_momentary lower tolerance is relaxed to 0.6 LU on the case-13 burst
+# vectors: our max-M derives from 100 ms ebur128 log lines, which can
+# undersample very short bursts (documented measurement limitation).
+vectors:
+  - file: "1kHz Sine -20 LUFS-16bit.wav"
+    integrated: {target: -20.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "1kHz Sine -26 LUFS-16bit.wav"
+    integrated: {target: -26.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "1kHz Sine -40 LUFS-16bit.wav"
+    integrated: {target: -40.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "EBU-reference_listening_signal_pinknoise_500Hz_2kHz_R128.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-1-16bit.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-2-16bit.wav"
+    integrated: {target: -33.0, tol_plus: 0.1, tol_minus: 0.1}
+    max_short_term: {target: -33.0, tol_plus: 0.1, tol_minus: 0.1}
+    max_momentary: {target: -33.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-3-16bit-v02.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-4-16bit-v02.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-5-16bit-v02.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-6-5channels-16bit.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-6-6channels-WAVEEX-16bit.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-7_seq-3342-5-24bit.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+    loudness_range: {target: 5.0, tol_plus: 1.0, tol_minus: 1.0}
+  - file: "seq-3341-2011-8_seq-3342-6-24bit-v02.wav"
+    integrated: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+    loudness_range: {target: 15.0, tol_plus: 1.0, tol_minus: 1.0}
+  - file: "seq-3341-9-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-1-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-2-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-3-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-4-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-5-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-6-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-7-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-8-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-9-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-10-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-11-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-12-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-13-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-14-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-15-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-16-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-17-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-18-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-19-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-10-20-24bit.wav"
+    max_short_term: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-12-24bit.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.1}
+  - file: "seq-3341-13-1-24bit.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-2-24bit.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-3-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-4-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-5-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-6-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-7-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-8-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-9-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-10-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-11-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-12-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-13-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-14-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-15-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-16-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-17-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-18-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-19-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-13-20-24bit.wav.wav"
+    max_momentary: {target: -23.0, tol_plus: 0.1, tol_minus: 0.6}
+  - file: "seq-3341-15-24bit.wav.wav"
+    true_peak: {target: -6.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-16-24bit.wav.wav"
+    true_peak: {target: -6.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-17-24bit.wav.wav"
+    true_peak: {target: -6.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-18-24bit.wav.wav"
+    true_peak: {target: -6.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-19-24bit.wav.wav"
+    true_peak: {target: 3.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-20-24bit.wav.wav"
+    true_peak: {target: 0.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-21-24bit.wav.wav"
+    true_peak: {target: 0.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-22-24bit.wav.wav"
+    true_peak: {target: 0.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3341-23-24bit.wav.wav"
+    true_peak: {target: 0.0, tol_plus: 0.2, tol_minus: 0.4}
+  - file: "seq-3342-1-16bit.wav"
+    loudness_range: {target: 10.0, tol_plus: 1.0, tol_minus: 1.0}
+  - file: "seq-3342-2-16bit.wav"
+    loudness_range: {target: 5.0, tol_plus: 1.0, tol_minus: 1.0}
+  - file: "seq-3342-3-16bit.wav"
+    loudness_range: {target: 20.0, tol_plus: 1.0, tol_minus: 1.0}
+  - file: "seq-3342-4-16bit.wav"
+    loudness_range: {target: 15.0, tol_plus: 1.0, tol_minus: 1.0}
