@@ -1,0 +1,143 @@
+# Alphorn AD localization master: audio-only MOV, 8 x mono PCM 24-bit/48 kHz
+# (5.1 + 2.0 track layout, e.g. MCHNCL_EPS-201_..._dedeFULL-51-20-27LU...mov).
+#
+# Context (2026-07-23): the Vidchecker "Delivery" template cannot test these
+# masters at all - its audio tests are bound to track 1 channels 1-2, but
+# every track is mono, so all measurements are skipped. deepdub-qc analyzes
+# each audio stream independently.
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+# Loudness bounds are deliberately wide/informational until Alphorn's spec
+# is confirmed (filename hints a -27 LU related target).
+schema_version: 1.0.0
+
+preset:
+  id: alphorn_ad_full_mix
+  version: 1.0.0
+  client: alphorn
+  content_type: ad_localization_master
+  title: Alphorn — AD Full Mix Master (8x mono)
+  description: >-
+    Audio-only MOV localization master with eight mono PCM tracks
+    (5.1 + 2.0). Structural checks blocking; level checks informational
+    pending Alphorn threshold approval.
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-23
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mov
+    display_name: Container Format
+
+  - rule_id: audio-stream-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 8
+    display_name: Audio Track Count
+    severity: critical
+
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: equals
+    expected:
+      value: pcm_s24le
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Audio Codec (PCM 24-bit)
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Sample Rate
+
+  - rule_id: audio-channel-count
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Mono Tracks
+
+  # Informational level checks (placeholder bounds pending Alphorn spec).
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -40.0
+      max: -15.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Integrated Loudness
+    severity: warning
+    blocking: false
+
+  - rule_id: true-peak
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1.0
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: True Peak
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Clipping (Flat Factor)
+    severity: warning
+    blocking: false
+
+  - rule_id: head-silence
+    parameter_id: audio.head_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 30.0
+      unit: s
+    display_name: Head Silence
+    severity: warning
+    blocking: false
+
+  - rule_id: tail-silence
+    parameter_id: audio.tail_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 30.0
+      unit: s
+    display_name: Tail Silence
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true
