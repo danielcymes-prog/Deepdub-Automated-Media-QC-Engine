@@ -77,8 +77,14 @@ def analyze(
         "FAIL": ExitCode.QC_FAIL,
         "ERROR": ExitCode.QC_EXECUTION_ERROR,
     }
+
+    def show_progress(message: str) -> None:
+        err_console.print(f"[dim]{message}[/dim]")
+
     try:
-        result = run_analysis(input, preset, output, AnalysisOptions(render_pdf=pdf))
+        result = run_analysis(
+            input, preset, output, AnalysisOptions(render_pdf=pdf, on_progress=show_progress)
+        )
     except InputFileError as exc:
         err_console.print(f"[red]Invalid input:[/red] {exc}")
         raise typer.Exit(code=ExitCode.INVALID_INPUT) from exc

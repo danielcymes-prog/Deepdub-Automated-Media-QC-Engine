@@ -15,6 +15,7 @@ import logging
 import platform as platform_module
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -54,6 +55,10 @@ class AnalysisOptions:
 
     render_pdf: bool = True
     job_id: UUID | None = None  # injectable for tests; random by default
+    #: Optional stage-progress callback (message string). Long analyses would
+    #: otherwise be silent: full-file decodes and hashing take minutes on
+    #: large masters. Never receives canonical data - display only.
+    on_progress: Callable[[str], None] | None = None
 
 
 def run_analysis(
@@ -90,9 +95,12 @@ def run_analysis(
         },
     )
 
-    context = QCContext(job_id=job_id, input_path=input_path, raw_dir=raw_dir)
-    measurements, failed_parameters, failure_reasons = _run_detectors(context)
+    notify = options.on_progress or (lambda _message: None)
 
+    context = QCContext(job_id=job_id, input_path=input_path, raw_dir=raw_dir)
+    measurements, failed_parameters, failure_reasons = _run_detectors(context, notify)
+
+    notify("Evaluating rules")
     findings = evaluate(
         preset,
         measurements,
@@ -105,12 +113,15 @@ def run_analysis(
     if preset.report.include_evidence:
         from deepdub_qc.evidence.thumbnails import generate_thumbnails  # noqa: PLC0415
 
+        notify("Generating evidence")
         evidence, findings = generate_thumbnails(findings, input_path, output_dir)
 
     summary = build_summary(findings)
 
     media_summary = _load_media_summary(raw_dir)
     duration = _container_duration(measurements)
+    notify(f"Hashing asset ({input_path.stat().st_size / 1_073_741_824:.2f} GB)")
+    asset_sha256 = sha256_file(input_path)
     completed_wall = datetime.now(UTC)
 
     result = QCResult(
@@ -126,7 +137,7 @@ def run_analysis(
             input_path=str(input_path),
             filename=input_path.name,
             file_size_bytes=input_path.stat().st_size,
-            sha256=sha256_file(input_path),
+            sha256=asset_sha256,
             duration_seconds=duration,
         ),
         preset=PresetRef(
@@ -150,6 +161,7 @@ def run_analysis(
         ),
     )
 
+    notify("Rendering reports")
     write_json_report(result, output_dir)
     write_html_report(result, output_dir, generated_at=completed_wall)
     if options.render_pdf:
@@ -171,15 +183,17 @@ def run_analysis(
 
 def _run_detectors(
     context: QCContext,
+    notify: Callable[[str], None],
 ) -> tuple[list[Measurement], set[str], dict[str, str]]:
     """Run applicable detectors; failures become ERROR findings, never crashes."""
     measurements: list[Measurement] = []
     failed_parameters: set[str] = set()
     failure_reasons: dict[str, str] = {}
+    detectors = [d for d in all_detectors() if d.is_applicable(context)]
     detector: Detector
-    for detector in all_detectors():
-        if not detector.is_applicable(context):
-            continue
+    for index, detector in enumerate(detectors, start=1):
+        notify(f"[{index}/{len(detectors)}] Running {detector.detector_id}")
+        started = time.monotonic()
         try:
             produced = detector.run(context)
         except DetectorRunError as exc:
@@ -196,8 +210,13 @@ def _run_detectors(
                 if parameter not in produced_ids:
                     failed_parameters.add(parameter)
                     failure_reasons[parameter] = str(exc)
+            notify(f"    {detector.detector_id} FAILED: {exc}")
             continue
         measurements.extend(produced)
+        notify(
+            f"    {detector.detector_id} done in {time.monotonic() - started:.1f}s "
+            f"({len(produced)} measurements)"
+        )
     return measurements, failed_parameters, failure_reasons
 
 

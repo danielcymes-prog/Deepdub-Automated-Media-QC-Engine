@@ -198,3 +198,19 @@ class TestAnalyzeCli:
             ],
         )
         assert result.exit_code == 4
+
+
+class TestProgressCallback:
+    def test_progress_messages_emitted(self, media_dir: Path, tmp_path: Path) -> None:
+        messages: list[str] = []
+        run_analysis(
+            media_dir / "reference_1080p2398.mov",
+            TIER1_PRESET,
+            tmp_path / "job",
+            AnalysisOptions(render_pdf=False, on_progress=messages.append),
+        )
+        joined = "\n".join(messages)
+        assert "Running metadata.ffprobe" in joined
+        assert "Evaluating rules" in joined
+        assert "Hashing asset" in joined
+        assert "Rendering reports" in joined
