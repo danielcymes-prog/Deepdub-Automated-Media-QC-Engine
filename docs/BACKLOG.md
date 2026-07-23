@@ -35,7 +35,7 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 29 | Preset immutability enforcement + approval workflow + fixtures | P2 | M | 8 | M6 | Client governance |
 | 30 | import-linter layering rules in CI | P2 | S | 3 | M1–M3 | Enforces ADR-010 boundaries mechanically |
 | 31 | FastAPI wrapper + Postgres repository + idempotent jobs | P2 | L | M3–M6, infra decisions | M7 | Service extraction; blocked on §30 human decisions |
-| 32 | Vidchecker comparison harness (`compare_vidchecker.py`) | P2 | M | 26 | M4+ | Parity evidence on checks that matter |
+| 32 | ~~Vidchecker comparison harness~~ **DONE 2026-07-23**: `deepdub-qc compare` (src/deepdub_qc/comparison/) | P2 | M | 26 | M4+ | Parity evidence on checks that matter |
 | 33 | Language-code normalization (ISO 639-2 B/T: ger↔deu, fre↔fra) in detector + preset validation | P1 | S | 18 | M4 | MOV muxers store B codes; dubbing presets will reference both — discovered in M3 integration testing |
 | 34 | Windowed-RMS min-level detector (`audio.min_rms_level`) | P1 | M | 20 | M6+ | Vidchecker "Min Level" check (-90 dBFS RMS for 10 s) has no exact equivalent yet; marimba presets approximate it with internal-silence |
 

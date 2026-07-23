@@ -30,6 +30,14 @@ change (ADR-008 in practice).
 
 ## Method notes
 
+- **Automated harness:** `deepdub-qc compare -r report.json -x vidchecker.xml`
+  (src/deepdub_qc/comparison/) encodes this method - byte-identity check
+  first, then loudness (+/-0.3 LU default), min-level/silence spans
+  (+/-1.0 s, max-overlap matching), clipping presence, and detection of
+  tests Vidchecker could not run. Exit 0 = parity, 2 = mismatch,
+  5 = different files. `--markdown-out` emits a table for this document.
+  Re-run on parity point 1: 4 MATCH, 0 MISMATCH.
+
 - Vidchecker XML report export (namespace `http://www.vidcheck.com/services`)
   is machine-readable: `TaskAlert` elements carry `AlertTypeId`, spans, and
   `DetailParams` (e.g. `LoudnessDb`). The comparison harness (backlog #32)
