@@ -66,6 +66,8 @@ known-first-party = ["deepdub_qc"]
 "src/deepdub_qc/utils/ids.py" = ["PLR0913"]
 # Measurement factories take one argument per measurement field.
 "src/deepdub_qc/detectors/**" = ["PLR0913"]
+# Mock fixture factories mirror the full Measurement/Finding field sets.
+"src/deepdub_qc/reports/mock_result.py" = ["PLR0913"]
 
 [tool.mypy]
 python_version = "3.13"

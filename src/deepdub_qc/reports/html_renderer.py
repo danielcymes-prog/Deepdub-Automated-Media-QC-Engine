@@ -45,7 +45,7 @@ def _fmt_unit(value: object, unit: str | None) -> str:
     return f"{value} {unit}" if unit else f"{value}"
 
 
-def format_expected(expected: object) -> str:
+def format_expected(expected: object) -> str:  # noqa: PLR0911 - one return per payload shape
     """Human-readable rendering of a rule's target value."""
     match expected:
         case ExpectedRange(min=lo, max=hi, unit=unit):
@@ -91,7 +91,7 @@ def format_timecode(seconds: float | None, fps: float = _DEFAULT_TIMECODE_FPS) -
         return "—"
     total = int(seconds)
     frames = int((seconds - total) * fps)  # floor: never point past the event
-    if frames >= int(round(fps)):  # guard against float edge cases
+    if frames >= round(fps):  # guard against float edge cases
         frames = 0
         total += 1
     hours, remainder = divmod(total, 3600)

@@ -14,18 +14,7 @@ from __future__ import annotations
 import math
 import re
 
-from deepdub_qc.detectors.audio.common import (
-    AudioStreamRef,
-    list_audio_streams,
-    run_audio_filter,
-)
-from deepdub_qc.detectors.base import Detector, QCContext
-from deepdub_qc.detectors.registry import register
-from deepdub_qc.models.enums import Category
-from deepdub_qc.models.measurement import Measurement
-from deepdub_qc.utils import ids
-
-_FIELDS = {
+ASTATS_FIELDS = {
     "DC offset": ("audio.dc_offset", None),
     "Peak level dB": ("audio.peak_level", "dBFS"),
     "Flat factor": ("audio.flat_factor", None),
@@ -43,7 +32,7 @@ def parse_astats_overall(stderr: str) -> dict[str, float]:
     values: dict[str, float] = {}
     for match in _LINE.finditer(section):
         name = match.group(1).strip()
-        if name in _FIELDS and name not in values:
+        if name in ASTATS_FIELDS and name not in values:
             try:
                 value = float(match.group(2))
             except ValueError:
@@ -51,68 +40,3 @@ def parse_astats_overall(stderr: str) -> dict[str, float]:
             if math.isfinite(value):
                 values[name] = value
     return values
-
-
-@register
-class ClippingDetector(Detector):
-    """Peak/flatness clipping indicators per audio stream via ffmpeg astats."""
-
-    detector_id = "audio.clipping.astats"
-    detector_version = "1.0.0"
-    parameters = (
-        "audio.peak_level",
-        "audio.flat_factor",
-        "audio.peak_count",
-        "audio.dc_offset",
-    )
-
-    def is_applicable(self, context: QCContext) -> bool:
-        return True
-
-    def run(self, context: QCContext) -> list[Measurement]:
-        measurements: list[Measurement] = []
-        for stream in list_audio_streams(context.input_path):
-            stderr = run_audio_filter(context.input_path, stream.ordinal, "astats")
-            raw_name = f"astats_a{stream.index}.log"
-            context.raw_dir.mkdir(parents=True, exist_ok=True)
-            (context.raw_dir / raw_name).write_text(stderr, encoding="utf-8")
-
-            values = parse_astats_overall(stderr)
-            for field, (parameter_id, unit) in _FIELDS.items():
-                if field in values:
-                    measurements.append(
-                        self._measurement(
-                            context, stream, parameter_id, values[field], unit, raw_name
-                        )
-                    )
-        return measurements
-
-    def _measurement(
-        self,
-        context: QCContext,
-        stream: AudioStreamRef,
-        parameter_id: str,
-        value: float,
-        unit: str | None,
-        raw_name: str,
-    ) -> Measurement:
-        return Measurement(
-            measurement_id=ids.measurement_id(
-                self.detector_id,
-                self.detector_version,
-                parameter_id,
-                stream.index,
-                None,
-                None,
-                value,
-            ),
-            job_id=context.job_id,
-            detector_id=self.detector_id,
-            detector_version=self.detector_version,
-            parameter_id=parameter_id,
-            category=Category.AUDIO,
-            value=value,
-            unit=unit,
-            stream_index=stream.index,
-            raw_artifact_path=f"raw/{raw_name}",
-        )

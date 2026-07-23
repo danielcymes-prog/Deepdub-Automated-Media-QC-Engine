@@ -7,7 +7,7 @@ from uuid import UUID
 
 import pytest
 
-from deepdub_qc.detectors.audio.loudness import LoudnessDetector
+from deepdub_qc.detectors.audio.analysis import AudioAnalysisDetector
 from deepdub_qc.detectors.base import QCContext
 from deepdub_qc.models import QCStatus
 from deepdub_qc.orchestration.pipeline import AnalysisOptions, run_analysis
@@ -104,15 +104,13 @@ class TestAudioQC:
             AnalysisOptions(render_pdf=False),
         )
         raw = tmp_path / "job" / "raw"
-        assert list(raw.glob("ebur128_a*.log"))
-        assert list(raw.glob("silencedetect_a*.log"))
-        assert list(raw.glob("astats_a*.log"))
+        assert list(raw.glob("audio_analysis_a*.log"))
 
 
 class TestLoudnessReproducibility:
     def test_repeated_measurement_identical(self, media_dir: Path, tmp_path: Path) -> None:
-        """ADR-008: loudness measurements must be bit-identical run-to-run."""
-        detector = LoudnessDetector()
+        """ADR-008: audio measurements must be bit-identical run-to-run."""
+        detector = AudioAnalysisDetector()
         job_id = UUID("00000000-0000-4000-8000-0000000000c3")
         runs = []
         for i in range(2):

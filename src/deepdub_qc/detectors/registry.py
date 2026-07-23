@@ -19,7 +19,7 @@ def register(cls: type[Detector]) -> type[Detector]:
 def all_detectors() -> list[Detector]:
     """Instantiate every registered detector, in deterministic id order."""
     # Import detector modules for their registration side effects.
-    from deepdub_qc.detectors.audio import clipping, loudness, silence  # noqa: F401, PLC0415
+    from deepdub_qc.detectors.audio import analysis  # noqa: F401, PLC0415
     from deepdub_qc.detectors.metadata import ffprobe  # noqa: F401, PLC0415
     from deepdub_qc.detectors.video import incidents  # noqa: F401, PLC0415
 
