@@ -1,0 +1,44 @@
+# Deepdub QC server configuration — example (docs/server-config-spec.md).
+# Copy to C:\DeepdubQC\config\server.yaml on the RDP host and edit the
+# REQUIRED values below. The server refuses to start on unknown keys.
+schema_version: 1
+
+server:
+  host: 127.0.0.1        # loopback only: RDP login is the perimeter
+  port: 8571
+  max_gui_sessions: 2
+  gui_session_ttl_minutes: 15
+  queue_poll_interval_seconds: 2
+
+jobs:
+  max_concurrent_jobs: 1
+  max_queue_length: 20
+  max_job_duration_minutes: 240
+  max_file_size_gb: 150
+  duplicate_inflight_policy: warn_confirm
+
+paths:
+  # REQUIRED: the only locations media may be read from.
+  media_roots:
+    - 'D:\njarka'
+    - 'D:\Daniel'
+    - 'D:\marimba'
+  jobs_root: 'C:\DeepdubQC\data\jobs'
+  database: 'C:\DeepdubQC\data\qc.sqlite3'    # must be a LOCAL disk
+  presets_root: 'presets'                      # relative to the repo checkout
+
+tools:
+  # REQUIRED: explicit paths, never resolved from PATH.
+  ffmpeg_path: 'C:\ffmpeg\bin\ffmpeg.exe'
+  ffprobe_path: 'C:\ffmpeg\bin\ffprobe.exe'
+  # expected_ffmpeg_version: 'N-121567'        # uncomment to pin (ADR-008)
+  subprocess_timeout_seconds: 600
+
+pdf:
+  renderer: playwright
+  render_timeout_seconds: 120
+
+logging:
+  level: INFO
+  directory: 'C:\DeepdubQC\logs\app'
+  retention_days: 30

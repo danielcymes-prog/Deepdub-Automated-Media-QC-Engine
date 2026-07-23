@@ -267,6 +267,71 @@ def compare(
         raise typer.Exit(code=ExitCode.QC_FAIL)
 
 
+@app.command()
+def serve(
+    config: Annotated[
+        Path,
+        typer.Option(
+            "--config", "-c", help="Path to server.yaml (see config/server.example.yaml)."
+        ),
+    ],
+) -> None:
+    """Start the Phase 3.5 QC service: JSON API + operator web GUI (ADR-014).
+
+    Runs until interrupted. Exit code 4 on invalid configuration.
+    """
+    import os  # noqa: PLC0415
+
+    import uvicorn  # noqa: PLC0415
+
+    from deepdub_qc.server.app import create_app  # noqa: PLC0415
+    from deepdub_qc.server.config import (  # noqa: PLC0415
+        ConfigError,
+        load_config,
+        validate_runtime,
+    )
+    from deepdub_qc.server.store import JobStore  # noqa: PLC0415
+    from deepdub_qc.server.worker import Worker  # noqa: PLC0415
+
+    try:
+        loaded = load_config(config)
+        runtime_warnings = validate_runtime(loaded)
+    except ConfigError as exc:
+        err_console.print(f"[red]Invalid server config:[/red] {exc}")
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
+
+    for warning in [*loaded.warnings, *runtime_warnings]:
+        err_console.print(f"[yellow]WARNING[/yellow] {warning}")
+    for override in loaded.env_overrides:
+        err_console.print(f"[dim]env override active: {override}[/dim]")
+
+    settings = loaded.config
+    # Phase 3.5 tool resolution: the configured binaries' directory goes to
+    # the FRONT of PATH so every pipeline subprocess resolves exactly those
+    # (explicit per-call paths are the Phase 7 refinement).
+    os.environ["PATH"] = (
+        str(settings.tools.ffmpeg_path.parent) + os.pathsep + os.environ.get("PATH", "")
+    )
+
+    store = JobStore(settings.paths.database)
+    application = create_app(loaded, store=store)
+    worker = Worker(store, settings)
+    worker.start()
+    console.print(
+        f"[green bold]Deepdub QC service ready[/green bold] — open "
+        f"http://{settings.server.host}:{settings.server.port}"
+    )
+    try:
+        uvicorn.run(
+            application,
+            host=settings.server.host,
+            port=settings.server.port,
+            log_level=settings.logging.level.value.lower(),
+        )
+    finally:
+        worker.stop()
+
+
 @app.command("render-mock")
 def render_mock(
     output: Annotated[

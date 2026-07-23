@@ -55,6 +55,15 @@ uv run deepdub-qc compare \
   --vidchecker /path/to/vidchecker_export.xml
 ```
 
+Run the operator web console (Phase 3.5 — submit jobs, watch the queue,
+open reports from a browser):
+
+```bash
+cp config/server.example.yaml server.yaml   # edit media_roots + tool paths
+uv run deepdub-qc serve --config server.yaml
+# open http://127.0.0.1:8571
+```
+
 ## Requirements
 
 - Python 3.13+
