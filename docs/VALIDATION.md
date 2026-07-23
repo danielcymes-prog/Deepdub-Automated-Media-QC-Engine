@@ -98,6 +98,34 @@ deepdub-qc and untestable by the Vidchecker template model in use.
 program measured jointly (ITU 1770 channel weighting), not to individual
 mono tracks. Requires a track-grouping loudness capability (backlog #35).
 
+## RHOA M&E master - video-side comparison (2026-07-23)
+
+TheRealHousewivesOfAtlanta_CRC03_398067_ENG_ME.mov, 41,323,446,408 bytes
+(identical in both reports), 44:10, ProRes 422 HQ 1920x1080 23.976p +
+4 x mono PCM 24/48k (M&E stereo pair at -25.8 LUFS; effects pair at
+~-31.9 LUFS).
+
+- **Vidchecker 8.2.2** ("Delivery" template, 24 min, Warning): all four
+  audio tests skipped - same multi-mono channel-binding gap as the Alphorn
+  AD master, now demonstrated on a second client's real delivery.
+  Black/freeze tests not configured in the template. One substantive
+  finding: Corrupt Frame at 88.088 s.
+- **deepdub-qc 0.1.0** (marimba delivery preset, 43 min, largest asset to
+  date): full per-track audio measurements, video structure confirmed,
+  9 black events + 12 freeze events forming a coherent picture (frozen/
+  black leader to ~90 s, 1 s act-break blacks at 746/1254/1608/1898/2391 s,
+  tail black). Verdict FAIL is preset policy (stereo/loudness rules vs an
+  M&E master), not a media disagreement.
+- **Convergence:** Vidchecker's corrupt frame at 88.088 s falls exactly in
+  the one-frame gap between our black events (80.08-88.088 and
+  88.13-90.09) - both tools localized the same anomalous frame by
+  different methods.
+
+No strict measurement-parity rows (Vidchecker measured no audio; its
+black/freeze tests were off), recorded as capability evidence + the
+convergence point. Gap identified on our side: no named corrupt/artifact
+frame detector (backlog #36).
+
 ## Outstanding validation
 
 - Video-side parity (black frames, freeze frames) — needs a Vidchecker

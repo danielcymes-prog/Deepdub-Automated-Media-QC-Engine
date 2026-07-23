@@ -50,3 +50,10 @@ Items 1–2 are this week's work. Items 3–11 are one coherent M1 sprint.
     layout + ebur128, and emit `audio.group_integrated_loudness` etc.
     Also: channel-role-aware rule selectors (exempt LFE from loudness
     bounds). Motivated by MCHNCL_EPS-201 run, docs/VALIDATION.md.
+
+36. **Corrupt/artifact frame detector.** Vidchecker's CorruptFrameTest
+    flagged a single anomalous frame (RHOA M&E, 88.088 s) that our data
+    only localized indirectly (a one-frame gap between black events).
+    Evaluate ffmpeg signalstats outlier detection / decode-error counters
+    to emit video.corrupt_frame_event. Motivated by docs/VALIDATION.md
+    RHOA comparison.
