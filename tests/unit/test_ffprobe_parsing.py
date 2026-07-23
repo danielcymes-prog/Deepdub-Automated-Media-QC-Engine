@@ -71,5 +71,5 @@ class TestBuildMediaSummary:
         assert video["frame_rate"] == 23.976
         audio = summary["audio_streams"][0]
         assert audio["sample_rate"] == 48000
-        assert audio["language"] == "deu"
+        assert audio["language"] == "de"  # normalized (backlog #33): raw tag was "deu"
         assert summary["subtitle_streams"] == []

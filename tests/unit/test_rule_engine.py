@@ -238,6 +238,14 @@ class TestStreamSelection:
         findings = evaluate(self.make_preset("all", language="jpn"), self.multi_stream(), JOB_ID)
         assert findings[0].status is QCStatus.SKIPPED
 
+    def test_language_selector_normalizes_synonyms(self) -> None:
+        """Backlog #33: 'de', 'ger' and 'de-DE' all select the stream tagged 'deu'."""
+        for spelling in ("de", "ger", "de-DE"):
+            findings = evaluate(
+                self.make_preset("all", language=spelling), self.multi_stream(), JOB_ID
+            )
+            assert findings[0].status is QCStatus.PASS, spelling
+
 
 class TestAggregation:
     def make_findings(self, *specs: tuple[str, bool]) -> list:

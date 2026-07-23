@@ -23,6 +23,7 @@ from deepdub_qc.models.report import Summary
 from deepdub_qc.models.rule import ExpectedNothing, Rule
 from deepdub_qc.rules.evaluators import EvaluationError, evaluate_operator
 from deepdub_qc.utils import ids
+from deepdub_qc.utils.language import normalize_language
 
 if TYPE_CHECKING:
     from deepdub_qc.models.preset import QCPreset
@@ -105,10 +106,15 @@ def _resolve_language_indices(
     if applies is None or applies.selector.language is None:
         return None
     language_parameter = f"{applies.stream_type.value}.language"
+    # Both sides normalized (backlog #33): presets may say "ger", "deu" or
+    # "de"; measurements are already canonical, tolerate legacy reports.
+    wanted = normalize_language(applies.selector.language)
     return {
         m.stream_index
         for m in by_parameter.get(language_parameter, [])
-        if m.value == applies.selector.language and m.stream_index is not None
+        if isinstance(m.value, str)
+        and normalize_language(m.value) == wanted
+        and m.stream_index is not None
     }
 
 

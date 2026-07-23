@@ -22,6 +22,7 @@ from deepdub_qc.detectors.registry import register
 from deepdub_qc.models.enums import Category
 from deepdub_qc.models.measurement import Measurement
 from deepdub_qc.utils import ids
+from deepdub_qc.utils.language import normalize_language
 from deepdub_qc.utils.subprocess import ToolError, run_tool
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ def build_media_summary(parsed: dict[str, Any]) -> dict[str, Any]:
                 "sample_rate": _as_int(s.get("sample_rate")),
                 "channels": s.get("channels"),
                 "channel_layout": s.get("channel_layout"),
-                "language": (s.get("tags") or {}).get("language"),
+                "language": normalize_language((s.get("tags") or {}).get("language")),
             }
             for s in audio
         ],
@@ -105,7 +106,7 @@ def build_media_summary(parsed: dict[str, Any]) -> dict[str, Any]:
             {
                 "index": s.get("index"),
                 "codec": s.get("codec_name"),
-                "language": (s.get("tags") or {}).get("language"),
+                "language": normalize_language((s.get("tags") or {}).get("language")),
             }
             for s in subs
         ],
@@ -136,7 +137,7 @@ class FfprobeDetector(Detector):
     """Container and stream metadata via ffprobe."""
 
     detector_id = "metadata.ffprobe"
-    detector_version = "1.1.0"  # 1.1.0: added audio.duration, audio.video_duration_delta
+    detector_version = "1.2.0"  # 1.2.0: normalized language tags (backlog #33)
     parameters = (
         "audio.duration",
         "audio.video_duration_delta",
@@ -330,7 +331,8 @@ class FfprobeDetector(Detector):
 
         for stream in by_type["audio"]:
             index = stream.get("index")
-            language = (stream.get("tags") or {}).get("language")
+            # Canonical form (backlog #33): "ger"/"deu"/"de-DE" all -> "de".
+            language = normalize_language((stream.get("tags") or {}).get("language"))
             audio_duration = _as_float(stream.get("duration"))
             if audio_duration is None:
                 audio_duration = fmt_duration

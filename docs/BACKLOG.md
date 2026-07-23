@@ -36,7 +36,7 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 30 | import-linter layering rules in CI | P2 | S | 3 | M1–M3 | Enforces ADR-010 boundaries mechanically |
 | 31 | FastAPI wrapper + Postgres repository + idempotent jobs | P2 | L | M3–M6, infra decisions | M7 | Service extraction; blocked on §30 human decisions |
 | 32 | ~~Vidchecker comparison harness~~ **DONE 2026-07-23**: `deepdub-qc compare` (src/deepdub_qc/comparison/) | P2 | M | 26 | M4+ | Parity evidence on checks that matter |
-| 33 | Language-code normalization (ISO 639-2 B/T: ger↔deu, fre↔fra) in detector + preset validation | P1 | S | 18 | M4 | MOV muxers store B codes; dubbing presets will reference both — discovered in M3 integration testing |
+| 33 | ~~Language-code normalization~~ **DONE 2026-07-23**: utils/language.py, applied in ffprobe 1.2.0 + rule selectors (both sides normalized) | P1 | S | 18 | M4 | MOV muxers store B codes; dubbing presets will reference both — discovered in M3 integration testing |
 | 34 | ~~Windowed-RMS min-level detector~~ **DONE 2026-07-23**: `audio.low_rms_event` in audio.analysis.ffmpeg/1.1.0 (-90 dB RMS / 5 s windows) | P1 | M | 20 | M6+ | Vidchecker "Min Level" check (-90 dBFS RMS for 10 s) has no exact equivalent yet; marimba presets approximate it with internal-silence |
 
 Items 1–2 are this week's work. Items 3–11 are one coherent M1 sprint.
