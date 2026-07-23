@@ -106,3 +106,32 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
 - **Alternatives:** (a) convention only — unenforceable; (b) git hooks — bypassable, not visible in CI; (c) a committed `presets/approved.lock.json` mapping approved preset paths to sha256 digests, verified by a unit test on every CI run and a `deepdub-qc presets verify` command.
 - **Decision:** (c). Approving a preset = a reviewed commit that flips `status: approved` and runs `deepdub-qc presets lock`. Editing, demoting, or deleting a locked preset breaks CI with an actionable message. The lock file is the natural seed for the Phase 7 `qc_preset_versions` table.
 - **Consequences:** Approval becomes an explicit, auditable git event; the lock file must be updated in the same commit as any legitimate approval; drafts remain freely editable.
+
+## ADR-014: Phase 3.5 — Local web GUI + persistent service on the shared RDP host
+
+- **Status:** Accepted (2026-07-23). Authored during the parallel design effort
+  as `docs/adr/0004-local-web-gui-on-shared-rdp-host.md`; folded here as the
+  canonical record. Full context, alternatives (per-user server, native
+  desktop app), and consequences live in that file.
+- **Context:** Operators (max 2) need point-and-click submission, queue
+  visibility, and report access on a shared Windows RDP host, before Composer
+  integration (now the final step; M7 service extraction deferred).
+- **Decision:** One persistent FastAPI service (`deepdub-qc serve`) with a
+  server-rendered local web GUI (Jinja2 + vanilla JS, no framework, no CDN).
+  Zero QC logic in the GUI. API routes mirror the future Composer contract
+  (handoff section 23). Single in-process worker, max_concurrent_jobs=1.
+  SQLite holds job orchestration state ONLY (partially supersedes ADR-005;
+  report.json remains the sole source of truth per ADR-002). GUI sessions
+  capped at 2. FFmpeg/ffprobe located via explicit config. New dependencies:
+  fastapi, uvicorn (server); playwright optional for Windows PDF.
+- **Amends ADR-007:** on the Windows deployment target, PDF rendering uses
+  Playwright (headless Chromium) behind the existing PdfRenderer interface
+  (ADR-012); WeasyPrint remains the Docker/Linux default. WeasyPrint's
+  native Pango/Cairo stack is not reliably deterministic on Windows.
+- **Specs:** docs/server-gui-spec.md (functional), docs/gui-design-spec.md
+  (visual), docs/server-config-spec.md (configuration),
+  docs/windows-deployment.md (service install/upgrade).
+- **Consequences:** Windows service administration becomes part of the
+  product; persistence arrives earlier than ADR-005 planned but only for
+  queue state; Phase 7 extraction becomes a re-deployment of an existing
+  API shape rather than a redesign.

@@ -64,7 +64,23 @@ Complexity scale: **S** ≈ days, **M** ≈ 1–2 weeks, **L** ≈ 2–4 weeks (
 - **Dependencies:** M3.
 - **Acceptance:** A new client preset added purely as YAML passes validation and runs; CI fails if an approved preset file changes.
 
-## M7 — Service Extraction
+## M6.5 — Phase 3.5: Local Server + Operator GUI (ACTIVE)
+
+- **Goal:** operators submit jobs, watch the queue, and open reports from a
+  browser on the shared RDP host; presets selectable (read-only) in the GUI;
+  installation packaged for Windows (docs/windows-deployment.md).
+- **Scope:** `deepdub-qc serve` (FastAPI + Jinja2 GUI per
+  docs/server-gui-spec.md + docs/gui-design-spec.md), SQLite job queue
+  (orchestration state only), single background worker, session cap,
+  Windows service deployment, Playwright PDF option (ADR-014).
+- **Dependencies:** ADR-014; brand-token approval pending (placeholders in
+  use, handoff section 30).
+- **Sequencing note (2026-07-23):** M7 service extraction and Composer
+  integration are deliberately AFTER this milestone — Composer is the final
+  step. The API surface built here mirrors the section 23 contract so M7
+  becomes redeployment, not redesign.
+
+## M7 — Service Extraction (deferred until after M6.5)
 
 - **Objective:** Same core, callable as a service.
 - **Deliverables:** FastAPI wrapper implementing handoff §23 endpoints; job persistence (Postgres, repository interface from ADR-005); object-storage abstraction; idempotent job execution; worker abstraction aligned with existing Deepdub queue infra (**requires infra decision — see RISKS**).

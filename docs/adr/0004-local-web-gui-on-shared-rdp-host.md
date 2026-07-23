@@ -4,6 +4,8 @@
 - **Phase:** 3.5 (local server + GUI, between Phase 3 metadata MVP and Phase 7 service extraction)
 - **Related documents:** `docs/server-gui-spec.md`, `docs/windows-deployment.md`, `docs/server-config-spec.md`, `DEEPDUB_QC_CLAUDE_CODE_HANDOFF.md`
 
+> **FOLDED:** this decision is canonically recorded as **ADR-014** in `docs/DECISIONS.md` (2026-07-23). This file remains as the full-length context/alternatives record.
+>
 > **Filing note.** `docs/DECISIONS.md` (ADR-006) mandates a single decisions file, and its numbering already reaches ADR-013. This record was authored as a standalone file during a parallel design effort to avoid write collisions with the active Phase 1 build. When the repository is quiet, the owner of `DECISIONS.md` should fold this record in as **ADR-014** (or the next free number) and replace this file with a pointer, or supersede ADR-006. Do not treat the "0004" filename as this decision's canonical number. This is listed as an open question below.
 
 ---
