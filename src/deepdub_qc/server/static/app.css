@@ -1,0 +1,158 @@
+/* Deepdub QC Console — design tokens per docs/gui-design-spec.md §2.
+   BRAND PLACEHOLDER: --dd-accent, wordmark pending brand approval (§30). */
+:root {
+  --dd-bg: #121217;
+  --dd-surface: #1B1B22;
+  --dd-surface-2: #24242D;
+  --dd-border: #33333E;
+  --dd-text: #EDEDF2;
+  --dd-text-dim: #A0A0AE;
+  --dd-accent: #7C5CFF;
+  --dd-accent-hover: #9678FF;
+  --qc-pass: #2FBF71;
+  --qc-warning: #E8A13C;
+  --qc-fail: #E5484D;
+  --qc-error: #B84DD9;
+  --job-pending: #8A8A98;
+  --job-running: var(--dd-accent);
+  --job-done: #6E6E7A;
+  --font-ui: Inter, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--dd-bg); color: var(--dd-text);
+  font-family: var(--font-ui); font-size: 14px; line-height: 1.5;
+}
+.mono { font-family: var(--font-mono); font-size: 13px; }
+.dim { color: var(--dd-text-dim); }
+h1 { font-size: 24px; font-weight: 600; margin: 0 0 16px; }
+h2 { font-size: 18px; font-weight: 600; margin: 24px 0 8px; }
+a { color: var(--dd-accent); text-decoration: none; }
+a:hover { color: var(--dd-accent-hover); }
+:focus-visible { outline: 2px solid var(--dd-accent); outline-offset: 2px; }
+
+/* ---- shell ---- */
+.shell-header {
+  height: 56px; display: flex; align-items: center; gap: 32px; padding: 0 24px;
+  background: var(--dd-surface); border-bottom: 1px solid var(--dd-border);
+}
+.wordmark { font-weight: 600; color: var(--dd-text); }
+.shell-header nav { display: flex; gap: 20px; flex: 1; }
+.shell-header nav a { color: var(--dd-text-dim); padding: 16px 2px; border-bottom: 2px solid transparent; }
+.shell-header nav a.active { color: var(--dd-text); border-bottom-color: var(--dd-accent); }
+.health { color: var(--qc-pass); }
+.health.down { color: var(--qc-fail); }
+main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.shell-footer {
+  height: 32px; display: flex; align-items: center; padding: 0 24px;
+  color: var(--dd-text-dim); border-top: 1px solid var(--dd-border); font-size: 12px;
+}
+
+/* ---- badges (verdicts: saturated, reserved) & chips (orchestration) ---- */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px;
+  border-radius: 999px; font-weight: 600; font-size: 12px; color: #fff; }
+.badge-lg { font-size: 15px; padding: 6px 16px; }
+.badge-pass { background: var(--qc-pass); }
+.badge-warning { background: var(--qc-warning); color: #121217; }
+.badge-fail { background: var(--qc-fail); }
+.badge-error { background: var(--qc-error); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 1px 10px;
+  border-radius: 999px; border: 1px solid var(--dd-border); color: var(--dd-text-dim);
+  font-size: 13px; white-space: nowrap; }
+.chip-running { color: var(--dd-accent); border-color: var(--dd-accent); }
+.chip-failed { color: var(--dd-text); }
+.pill { padding: 1px 8px; border-radius: 999px; border: 1px solid; font-size: 12px; }
+.pill-approved { color: var(--qc-pass); border-color: var(--qc-pass); }
+.pill-draft { color: var(--qc-warning); border-color: var(--qc-warning); }
+.pill-deprecated { color: var(--dd-text-dim); border-color: var(--dd-border); text-decoration: line-through; }
+.spinner { width: 12px; height: 12px; border: 2px solid var(--dd-border);
+  border-top-color: var(--dd-accent); border-radius: 50%; display: inline-block;
+  animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- tables ---- */
+.data-table { width: 100%; border-collapse: collapse; background: var(--dd-surface);
+  border: 1px solid var(--dd-border); border-radius: 8px; overflow: hidden; }
+.data-table th { text-align: left; font-weight: 500; padding: 10px 12px;
+  border-bottom: 1px solid var(--dd-border); position: sticky; top: 0;
+  background: var(--dd-surface); }
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--dd-border); height: 40px; }
+.data-table tbody tr:hover { background: var(--dd-surface-2); cursor: pointer; }
+.data-table tr.group-row td { font-weight: 600; background: var(--dd-bg); cursor: default; }
+.table-foot { display: flex; justify-content: space-between; padding: 8px 4px; }
+.flash { animation: cellflash 0.3s ease-out; }
+@keyframes cellflash { from { background: var(--dd-surface-2); } }
+.empty-state { text-align: center; color: var(--dd-text-dim); padding: 64px 0; }
+
+/* ---- forms ---- */
+.form-column { max-width: 640px; margin: 0 auto; }
+label { display: block; margin: 20px 0 6px; font-weight: 500; }
+input[type="text"], select {
+  width: 100%; padding: 8px 10px; background: var(--dd-surface-2);
+  border: 1px solid var(--dd-border); border-radius: 6px; color: var(--dd-text);
+  font-size: 14px; min-height: 32px;
+}
+.path-row { display: flex; gap: 8px; }
+.field-help { color: var(--dd-text-dim); font-size: 13px; margin: 4px 0 0; }
+.field-check { color: var(--qc-pass); font-size: 13px; margin: 4px 0 0; min-height: 1em; }
+.field-check.bad { color: var(--qc-fail); }
+.field-error { color: var(--qc-fail); font-size: 13px; margin: 4px 0 0; }
+input.error, select.error { border-color: var(--qc-fail); }
+.preset-card { margin-top: 8px; padding: 12px; background: var(--dd-surface);
+  border: 1px solid var(--dd-border); border-radius: 8px; }
+.output-hint { margin-top: 24px; }
+.form-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+
+/* ---- buttons ---- */
+button, .button { display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; min-height: 32px; border-radius: 6px; font-weight: 500;
+  font-size: 14px; border: 1px solid var(--dd-border); background: var(--dd-surface-2);
+  color: var(--dd-text); cursor: pointer; }
+button:hover, .button:hover { background: var(--dd-border); color: var(--dd-text); }
+.primary { background: var(--dd-accent); border-color: var(--dd-accent); color: #fff; }
+.primary:hover { background: var(--dd-accent-hover); color: #fff; }
+.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.danger-outline { background: transparent; border-color: var(--qc-fail); color: var(--qc-fail); }
+.danger-outline:hover { background: var(--qc-fail); color: #fff; }
+.icon-button { padding: 6px 10px; }
+
+/* ---- job detail ---- */
+.hero { display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 24px; margin-bottom: 24px; }
+.file-title { font-size: 18px; margin-bottom: 4px; }
+.path-line { font-size: 13px; word-break: break-all; }
+.meta-row { margin-top: 6px; font-size: 13px; }
+.stage-list { list-style: none; padding: 0; margin: 16px 0; }
+.stage-list li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.stage-done { color: var(--qc-pass); }
+.summary-line { font-size: 15px; }
+.finding-row { border-left: 4px solid var(--qc-fail); background: var(--dd-surface);
+  padding: 10px 14px; margin: 8px 0; border-radius: 0 8px 8px 0;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.finding-name { font-weight: 500; min-width: 180px; }
+.blocking-tag { background: var(--qc-fail); color: #fff; font-size: 11px;
+  font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: auto; }
+.actions-row { display: flex; align-items: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+.log-tail pre { background: var(--dd-surface); border: 1px solid var(--dd-border);
+  border-radius: 8px; padding: 12px; font-size: 12px; overflow-x: auto; }
+
+/* ---- banners, panels, modal ---- */
+.banner { display: flex; gap: 12px; padding: 12px 16px; border-radius: 8px;
+  margin: 16px 0; border: 1px solid; }
+.banner-warning { border-color: var(--qc-warning); background: rgba(232,161,60,0.08); }
+.banner-danger { border-color: var(--qc-fail); background: rgba(229,72,77,0.08); }
+.centered-panel { display: flex; justify-content: center; padding: 64px 24px; }
+.panel { max-width: 480px; text-align: center; background: var(--dd-surface);
+  border: 1px solid var(--dd-border); border-radius: 8px; padding: 32px; }
+dialog { width: 720px; max-width: 90vw; height: 480px; background: var(--dd-surface);
+  color: var(--dd-text); border: 1px solid var(--dd-border); border-radius: 8px;
+  padding: 16px; overflow: auto; }
+dialog::backdrop { background: rgba(0,0,0,0.6); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; }
+.browser-list { list-style: none; padding: 0; margin: 8px 0; }
+.browser-list li { display: flex; justify-content: space-between; padding: 6px 8px;
+  border-radius: 6px; cursor: pointer; }
+.browser-list li:hover { background: var(--dd-surface-2); }
+.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

@@ -1,0 +1,27 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import preset_status_pill %}
+{% set nav = 'presets' %}
+{% block title %}Presets — Deepdub QC{% endblock %}
+{% block content %}
+<h1>Presets</h1>
+<p class="dim">Presets are versioned files managed in git — this list is read-only.
+To change thresholds, talk to the preset owner.</p>
+<table class="data-table">
+  <thead><tr><th>Title</th><th>ID / version</th><th>Content type</th>
+             <th>Status</th><th>Effective</th></tr></thead>
+  <tbody>
+  {% for client, entries in catalog|groupby('client') %}
+    <tr class="group-row"><td colspan="5">{{ client }}</td></tr>
+    {% for p in entries %}
+    <tr>
+      <td title="{{ p.description }}">{{ p.title }}</td>
+      <td class="mono">{{ p.preset_id }}@{{ p.version }}</td>
+      <td>{{ p.content_type }}</td>
+      <td>{{ preset_status_pill(p.status) }}</td>
+      <td class="mono">{{ p.effective_date }}</td>
+    </tr>
+    {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

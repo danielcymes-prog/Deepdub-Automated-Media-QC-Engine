@@ -1,0 +1,117 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import verdict_badge, job_chip %}
+{% set nav = 'jobs' %}
+{% block title %}{{ job.filename }} — Deepdub QC{% endblock %}
+{% block content %}
+<div id="job-region" {% if job.status in ('pending', 'running') %}data-poll="/jobs/{{ job.job_id }}"{% endif %}>
+
+<div class="hero">
+  <div>
+    <h1 class="mono file-title">{{ job.filename }}</h1>
+    <div class="dim mono path-line">
+      {{ job.input_path }}
+      <button type="button" class="icon-button copy" data-copy="{{ job.input_path }}" title="Copy path">⧉</button>
+    </div>
+    <div class="meta-row dim">
+      <span class="mono">{{ job.preset_id }}@{{ job.preset_version }}</span>
+      · requested by {{ job.requested_by }}
+      · submitted <span title="{{ job.created_at }}">{{ job.created_at[:16]|replace('T', ' ') }}</span>
+    </div>
+  </div>
+  <div class="hero-state">
+    {% if job.status == 'completed' %}{{ verdict_badge(job.qc_status, 'lg') }}
+    {% else %}{{ job_chip(job.status, job.queue_position) }}{% endif %}
+  </div>
+</div>
+
+{% if job.status == 'pending' %}
+  <p>Queued — position {{ job.queue_position }} of {{ job.queue_total }}</p>
+  <p class="dim">One job runs at a time. This job starts automatically.</p>
+  <form method="post" action="/jobs/{{ job.job_id }}/cancel"
+        onsubmit="return confirm('Cancel this job?')">
+    <button class="danger-outline">Cancel job</button>
+  </form>
+
+{% elif job.status == 'running' %}
+  <ul class="stage-list" aria-live="polite">
+    {% for event in job.progress %}
+    <li><span class="stage-done">✓</span> {{ event.label }}
+        <span class="dim mono">{{ event.at[11:19] }}</span></li>
+    {% endfor %}
+    <li><span class="spinner"></span> <span class="dim">working…</span></li>
+  </ul>
+  <form method="post" action="/jobs/{{ job.job_id }}/cancel"
+        onsubmit="return confirm('Cancelling a running job stops the analysis immediately. Partial output stays in the job folder, but no report is produced. Cancel?')">
+    <button class="danger-outline">Cancel job</button>
+  </form>
+
+{% elif job.status == 'completed' %}
+  {% if summary %}
+  <p class="summary-line">
+    {{ summary.total_checks or (summary.passed + summary.warnings + summary.failed + summary.errors) }} checks
+    · {{ summary.passed }} passed · {{ summary.warnings }} warnings
+    · {{ summary.failed }} failed · {{ summary.blocking_failures or 0 }} blocking
+  </p>
+  {% endif %}
+  {% if blocking %}
+  <h2>Blocking failures</h2>
+  {% for finding in blocking %}
+  <div class="finding-row">
+    <div class="finding-name">{{ finding.display_name or finding.rule_id }}</div>
+    <div class="mono">
+      <span class="dim">expected</span>
+      {{ finding.expected.value if finding.expected and finding.expected.value is not none
+         else (finding.expected.min ~ '…' ~ finding.expected.max if finding.expected else '—') }}
+      {{ finding.expected.unit or '' if finding.expected }}
+      &nbsp;<span class="dim">measured</span>
+      {{ finding.actual.value if finding.actual else '—' }} {{ finding.actual.unit or '' if finding.actual }}
+    </div>
+    {% if finding.start_timecode %}<span class="chip mono">{{ finding.start_timecode }}</span>{% endif %}
+    <span class="blocking-tag">BLOCKING</span>
+  </div>
+  {% endfor %}
+  {% if blocking_more %}<p class="dim">…and {{ blocking_more }} more in the full report.</p>{% endif %}
+  {% endif %}
+
+  <div class="actions-row">
+    <a class="primary button" href="/api/v1/qc/jobs/{{ job.job_id }}/report.html" target="_blank">Open HTML report ↗</a>
+    {% if has_pdf %}<a class="button" href="/api/v1/qc/jobs/{{ job.job_id }}/report.pdf">PDF</a>{% endif %}
+    <a class="button" href="/api/v1/qc/jobs/{{ job.job_id }}/report">JSON</a>
+    <span class="dim mono">Job folder: {{ job.output_dir }}
+      <button type="button" class="icon-button copy" data-copy="{{ job.output_dir }}" title="Copy folder path">⧉</button></span>
+  </div>
+
+{% elif job.status == 'failed' %}
+  <div class="banner banner-danger"><span>◆</span>
+    <div>
+      {% if job.error_reason == 'interrupted_by_restart' %}
+        The QC service restarted while this job was running, so it was stopped for safety. Resubmit to run it again.
+      {% elif job.error_reason == 'timeout' %}
+        {{ job.error_message }}
+      {% else %}
+        {{ job.error_message or 'The pipeline could not finish this job.' }}
+      {% endif %}
+    </div>
+  </div>
+  <form method="post" action="/submit">
+    <input type="hidden" name="input_path" value="{{ job.input_path }}">
+    <input type="hidden" name="preset" value="{{ job.preset_id }}@{{ job.preset_version }}">
+    <input type="hidden" name="requested_by" value="{{ job.requested_by }}">
+    <input type="hidden" name="resubmit_of" value="{{ job.job_id }}">
+    <button class="button">Resubmit</button>
+  </form>
+
+{% elif job.status == 'cancelled' %}
+  <p>Cancelled{% if job.cancelled_by %} by {{ job.cancelled_by }}{% endif %}
+     {% if job.finished_at %}at <span class="mono">{{ job.finished_at[:16]|replace('T', ' ') }}</span>{% endif %}.</p>
+{% endif %}
+
+{% if job.progress and job.status not in ('running',) %}
+<details class="log-tail">
+  <summary class="dim">Stage log ({{ job.progress|length }} events)</summary>
+  <pre class="mono">{% for event in job.progress %}{{ event.at }}  {{ event.label }}
+{% endfor %}</pre>
+</details>
+{% endif %}
+</div>
+{% endblock %}

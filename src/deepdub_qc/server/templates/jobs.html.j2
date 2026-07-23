@@ -1,0 +1,49 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import verdict_badge, job_chip %}
+{% set nav = 'jobs' %}
+{% block title %}Jobs — Deepdub QC{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Jobs</h1>
+  <a class="primary button" href="/">New QC job ▶</a>
+</div>
+
+{% if jobs %}
+<div id="jobs-region" data-poll="/jobs?page={{ page }}">
+<table class="data-table">
+  <thead>
+    <tr><th>Job</th><th>Media</th><th>Preset</th><th>By</th>
+        <th>State</th><th>Verdict</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr onclick="location.href='/jobs/{{ job.job_id }}'">
+      <td class="mono">{{ job.job_id[:8] }}…</td>
+      <td title="{{ job.input_path }}">{{ job.filename }}</td>
+      <td class="mono">{{ job.preset_id }}@{{ job.preset_version }}</td>
+      <td>{{ job.requested_by }}</td>
+      <td>{{ job_chip(job.status, job.queue_position) }}</td>
+      <td>{{ verdict_badge(job.qc_status) }}</td>
+      <td class="dim">›</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="table-foot">
+  <span>
+    {% if pages > 1 %}
+      {% for p in range(1, pages + 1) %}
+        {% if p == page %}<strong>{{ p }}</strong>{% else %}<a href="/jobs?page={{ p }}">{{ p }}</a>{% endif %}
+      {% endfor %}
+    {% endif %}
+  </span>
+  <span class="dim" id="poll-caption">Updated just now · auto-refresh</span>
+</div>
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No QC jobs yet. Run your first from the Submit page.</p>
+  <a class="button" href="/">Go to Submit</a>
+</div>
+{% endif %}
+{% endblock %}

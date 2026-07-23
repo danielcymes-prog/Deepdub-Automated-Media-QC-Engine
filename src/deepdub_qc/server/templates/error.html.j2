@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ title }} — Deepdub QC{% endblock %}
+{% block content %}
+<div class="centered-panel">
+  <div class="panel">
+    <div class="badge badge-error badge-lg">◆</div>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    {% if advice %}<p class="dim">{{ advice }}</p>{% endif %}
+    <a class="button" href="/jobs">Back to Jobs</a>
+  </div>
+</div>
+{% endblock %}

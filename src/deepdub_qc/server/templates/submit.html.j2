@@ -1,0 +1,79 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import preset_status_pill %}
+{% set nav = 'submit' %}
+{% block title %}Submit a QC job — Deepdub QC{% endblock %}
+{% block content %}
+<div class="form-column">
+  <h1>Submit a QC job</h1>
+
+  {% if duplicate %}
+  <div class="banner banner-warning">
+    <span>⚠</span>
+    <div>
+      This exact file and preset are already {{ duplicate.status.value }} as job
+      <a href="/jobs/{{ duplicate.job_id }}" class="mono">{{ duplicate.job_id[:8] }}</a>.
+      Submit anyway?
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/submit" id="submit-form">
+    <label for="input_path">Media file</label>
+    <div class="path-row">
+      <input class="mono" type="text" id="input_path" name="input_path"
+             value="{{ form.get('input_path', '') }}" autocomplete="off"
+             placeholder="\\server\share\deliveries\episode.mov">
+      <button type="button" class="icon-button" id="browse-button" title="Browse media roots">📁</button>
+    </div>
+    <p class="field-help">Paste a path or browse. Media is read directly from the share — nothing is uploaded.</p>
+    <p class="field-check mono" id="path-check"></p>
+    {% if errors.get('input_path') %}<p class="field-error">{{ errors['input_path'] }}</p>{% endif %}
+
+    <label for="preset">Client preset</label>
+    <select id="preset" name="preset" required>
+      <option value="" {% if not form.get('preset') %}selected{% endif %} disabled>Choose a preset…</option>
+      {% for client, entries in catalog|groupby('client') %}
+      <optgroup label="{{ client }}">
+        {% for p in entries %}
+        <option value="{{ p.preset_id }}@{{ p.version }}"
+                data-status="{{ p.status }}" data-title="{{ p.title }}"
+                data-content="{{ p.content_type }}" data-date="{{ p.effective_date }}"
+                {% if form.get('preset') == p.preset_id ~ '@' ~ p.version %}selected{% endif %}>
+          {{ p.title }} (v{{ p.version }}){% if p.status != 'approved' %} — {{ p.status }}{% endif %}
+        </option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+    <div class="preset-card" id="preset-card" hidden>
+      <div><span class="mono" id="preset-card-id"></span> <span id="preset-card-status"></span></div>
+      <div class="dim" id="preset-card-meta"></div>
+      <div class="field-help" id="preset-card-caption"></div>
+    </div>
+    {% if errors.get('preset') %}<p class="field-error">{{ errors['preset'] }}</p>{% endif %}
+
+    <label for="requested_by">Requested by</label>
+    <input type="text" id="requested_by" name="requested_by"
+           value="{{ form.get('requested_by', '') }}">
+    <p class="field-help">Shown on the shared job list.</p>
+    {% if errors.get('requested_by') %}<p class="field-error">{{ errors['requested_by'] }}</p>{% endif %}
+
+    <p class="dim mono output-hint">Output: {{ jobs_root }}\&lt;job-id&gt;\</p>
+
+    {% if duplicate %}<input type="hidden" name="duplicate_override" value="true">{% endif %}
+    <div class="form-actions">
+      <button type="submit" class="primary">{% if duplicate %}Submit anyway ▶{% else %}Run QC ▶{% endif %}</button>
+    </div>
+  </form>
+</div>
+
+<dialog id="browser-modal">
+  <div class="modal-head">
+    <strong>Select media file</strong>
+    <button type="button" class="icon-button" id="browser-close">✕</button>
+  </div>
+  <p class="field-help">Showing allowed media locations only.</p>
+  <div class="mono dim" id="browser-crumb"></div>
+  <ul id="browser-list" class="browser-list"></ul>
+</dialog>
+{% endblock %}

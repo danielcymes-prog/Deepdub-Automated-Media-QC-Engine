@@ -1,0 +1,53 @@
+{# App shell (gui-design-spec section 3). Brand tokens are PLACEHOLDERS
+   pending approval (handoff section 30). #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Deepdub QC{% endblock %}</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="shell-header">
+  <a class="wordmark" href="/">▐DD▌ <span>Deepdub QC</span></a>
+  <nav>
+    <a href="/" class="{{ 'active' if nav == 'submit' }}">Submit</a>
+    <a href="/jobs" class="{{ 'active' if nav == 'jobs' }}">Jobs</a>
+    <a href="/presets" class="{{ 'active' if nav == 'presets' }}">Presets</a>
+  </nav>
+  <span class="health" id="health-dot" title="Service health">●</span>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<footer class="shell-footer mono">deepdub-qc v{{ version }} · Phase 3.5 console</footer>
+<script src="/static/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
+
+{% macro verdict_badge(status, size='sm') %}
+{%- set icons = {'PASS': '✓', 'WARNING': '⚠', 'FAIL': '✕', 'ERROR': '◆'} -%}
+{%- if status -%}
+<span class="badge badge-{{ status|lower }} badge-{{ size }}"
+  {%- if status == 'ERROR' %} title="The pipeline could not finish — this is not a media verdict. Check the job log."{% endif -%}
+>{{ icons.get(status, '') }} {{ status }}</span>
+{%- else -%}<span class="dim">—</span>{%- endif -%}
+{% endmacro %}
+
+{% macro job_chip(status, position=None, total=None) %}
+{%- if status == 'pending' -%}
+<span class="chip">○ Queued{% if position %} · #{{ position }}{% endif %}</span>
+{%- elif status == 'running' -%}
+<span class="chip chip-running"><span class="spinner"></span> Running</span>
+{%- elif status == 'completed' -%}
+<span class="chip">● Done</span>
+{%- elif status == 'failed' -%}
+<span class="chip chip-failed">◆ Job failed</span>
+{%- elif status == 'cancelled' -%}
+<span class="chip">⊘ Cancelled</span>
+{%- endif -%}
+{% endmacro %}
+
+{% macro preset_status_pill(status) %}
+<span class="pill pill-{{ status }}">{{ status }}</span>
+{% endmacro %}
