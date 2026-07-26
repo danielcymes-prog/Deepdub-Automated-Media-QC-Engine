@@ -22,6 +22,8 @@ Principles, in priority order:
 
 Single source: one `:root` block in `app.css`. Engineering agent: implement tokens exactly; changing a token must restyle the whole console.
 
+> **RESOLVED 2026-07-23:** tokens replaced with the Deepdub brand package (marketing/Claude Design source, same system as the report template): bg #0A0A0A, accent magenta #FE338F, violet #E25DFF for ERROR, status colors #25D472/#FFB020/#FF2123, Onest + JetBrains Mono, real wordmark SVG. Original placeholder note kept below for history.
+>
 > **BRAND PLACEHOLDER — requires approval.** Accent and logo values below are provisional (Deepdub's public identity: dark surfaces, violet accent). The brand team must confirm `--dd-accent`, the wordmark/logo asset, and the icon before release. Everything else (neutrals, status colors, type scale) is proposed as final.
 
 ### 2.1 Color
