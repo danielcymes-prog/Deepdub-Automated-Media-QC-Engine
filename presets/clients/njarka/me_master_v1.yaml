@@ -1,0 +1,168 @@
+# M&E (Music & Effects) master: ProRes video + 4 x mono PCM tracks.
+# Structure derived from a real delivery
+# (TheRealHousewivesOfAtlanta_CRC03_..._ENG_ME.mov, docs/VALIDATION.md):
+# ProRes 422 HQ 1920x1080 23.976p; tracks = M&E stereo pair + effects pair.
+#
+# NOTE: client name "njarka" taken from the delivery folder - correct it if
+# this vendor/client is named differently. ALL LEVEL THRESHOLDS ARE
+# PLACEHOLDERS pending human approval (handoff section 30): M&E stems are
+# not dialogue-normalized, so loudness bounds are deliberately wide and
+# informational. Structural checks are blocking.
+schema_version: 1.0.0
+
+preset:
+  id: njarka_me_master
+  version: 1.0.0
+  client: njarka
+  content_type: me_master
+  title: njarka — M&E Master (ProRes + 4x mono)
+  description: >-
+    Music & Effects master: ProRes 422 video with four mono PCM tracks
+    (M&E pair + effects pair). Structural checks blocking; level checks
+    informational pending spec approval.
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-23
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mov
+    display_name: Container Format
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: prores
+    display_name: Video Codec
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+    display_name: Frame Width
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+    display_name: Frame Height
+
+  - rule_id: audio-stream-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 4
+    display_name: Audio Track Count
+    severity: critical
+
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: equals
+    expected:
+      value: pcm_s24le
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Audio Codec (PCM 24-bit)
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Sample Rate
+
+  - rule_id: audio-channel-count
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Mono Tracks
+
+  - rule_id: av-duration-delta
+    parameter_id: audio.video_duration_delta
+    operator: between
+    expected:
+      min: -0.5
+      max: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: A/V Duration Match
+
+  # Informational level checks (placeholders; M&E stems have no dialogue
+  # normalization target - confirm the spec before tightening).
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -45.0
+      max: -15.0
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Integrated Loudness
+    severity: warning
+    blocking: false
+
+  - rule_id: true-peak
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1.0
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: True Peak
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Clipping (Flat Factor)
+    severity: warning
+    blocking: false
+
+  - rule_id: tail-silence
+    parameter_id: audio.tail_silence_duration
+    operator: less_than_or_equal
+    expected:
+      value: 30.0
+      unit: s
+    display_name: Tail Silence
+    severity: warning
+    blocking: false
+
+report:
+  include_passed_checks: true
+  include_raw_measurements: false
+  include_evidence: true
+  include_suggested_actions: true
