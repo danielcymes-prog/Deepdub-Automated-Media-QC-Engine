@@ -78,9 +78,12 @@ class TestAudioTranslation:
         codec = next(r for r in result.rules if r["rule_id"] == "audio-codec")
         assert codec["applies_to"] == {"stream_type": "audio", "quantifier": "all"}
 
-    def test_uncovered_checks_are_recorded_not_dropped(self) -> None:
+    def test_dual_mono_translates_to_duplicate_channel_rule(self) -> None:
         result = translate_template(template(AUDIO_GROUP))
-        assert any("DualMonoDetection" in item for item in result.uncovered)
+        rule = next(r for r in result.rules if r["rule_id"] == "dual-mono")
+        assert rule["parameter_id"] == "audio.duplicate_channel_risk"
+        assert rule["expected"]["value"] is False
+        assert not any("DualMonoDetection" in item for item in result.uncovered)
 
     def test_multi_track_selectors_convert_to_zero_based_indices(self) -> None:
         two_tracks = AUDIO_GROUP.replace(

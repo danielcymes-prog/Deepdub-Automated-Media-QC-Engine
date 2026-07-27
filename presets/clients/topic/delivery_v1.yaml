@@ -7,7 +7,6 @@
 # parameter yet - see docs/vidchecker-import.md):
 #   - Dropout: analogue dropout detection is not implemented
 #   - CorruptFrame: video.corrupt_frame_event is planned, no detector yet (backlog #36)
-#   - DualMonoDetection: audio.duplicate_channel_risk is planned, no detector yet
 schema_version: 1.0.0
 
 preset:
@@ -16,7 +15,7 @@ preset:
   client: topic
   content_type: av_delivery
   title: TOPIC-Delivery
-  description: "Imported from the Vidchecker template 'TOPIC-Delivery'. 3 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template 'TOPIC-Delivery'. 2 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -161,5 +160,18 @@ rules:
       stream_type: audio
       quantifier: all
     display_name: "Min Level (Windowed RMS)"
+    severity: warning
+    blocking: false
+
+  - rule_id: dual-mono
+    parameter_id: audio.duplicate_channel_risk
+    operator: equals
+    expected:
+      value: false
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Dual Mono"
+    description: "Vidchecker's windowed variant (10 s window) is approximated by a whole-stream measure - see the parameter limitations."
     severity: warning
     blocking: false

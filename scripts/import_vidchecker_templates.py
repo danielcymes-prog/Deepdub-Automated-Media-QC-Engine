@@ -115,7 +115,6 @@ UNCOVERED_CHECKS = {
     "ClosedCaps708Test": "closed-caption (CEA-708) presence is not inspected",
     "ContainerDropFrameTest": "container drop-frame flag is not rule-addressable",
     "ContainerEssenceConsistencyTest": "container/essence consistency is not inspected",
-    "DualMonoDetectionTest": "audio.duplicate_channel_risk is planned, no detector yet",
     "EnhancedSyntaxTest": "codec bitstream syntax is not inspected",
     "GopLengthTest": "GOP length is not inspected (no bitstream detector)",
     "ITunesCompatibilityTest": "iTunes package conformance is not implemented",
@@ -546,9 +545,27 @@ def _translate_audio_test(  # noqa: PLR0912, PLR0915 - one branch per Vidchecker
             }
         )
 
+    dual_mono = group.find("DualMonoDetectionTest")
+    if not _is_nil(dual_mono):
+        assert dual_mono is not None
+        window = _text(dual_mono, "Window")
+        add(
+            {
+                "rule_id": "dual-mono",
+                "parameter_id": _implemented("audio.duplicate_channel_risk"),
+                "operator": "equals",
+                "expected": {"value": False},
+                "applies_to": applies_to,
+                "display_name": "Dual Mono",
+                "description": f"Vidchecker's windowed variant ({window} s window) is "
+                "approximated by a whole-stream measure - see the parameter "
+                "limitations.",
+                **_severity(dual_mono),
+            }
+        )
+
     for check, reason in (
         ("AudioPhaseTest", UNCOVERED_CHECKS["AudioPhaseTest"]),
-        ("DualMonoDetectionTest", UNCOVERED_CHECKS["DualMonoDetectionTest"]),
         ("AudioTransientTest", UNCOVERED_CHECKS["AudioTransientTest"]),
         ("AudioBitrateTest", UNCOVERED_CHECKS["AudioBitrateTest"]),
     ):
