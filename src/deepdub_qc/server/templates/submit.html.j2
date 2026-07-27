@@ -69,8 +69,14 @@
 
 <dialog id="browser-modal">
   <div class="modal-head">
-    <strong>Select media file</strong>
-    <button type="button" class="icon-button" id="browser-close">✕</button>
+    <div class="modal-head-left">
+      {# Hidden at the allowed-locations root (nowhere to go back to); app.js
+         reveals it once the operator descends into a folder. #}
+      <button type="button" class="icon-button" id="browser-back" hidden
+              aria-label="Back to previous folder" title="Back">‹ Back</button>
+      <strong>Select media file</strong>
+    </div>
+    <button type="button" class="icon-button" id="browser-close" aria-label="Close browser">✕</button>
   </div>
   <p class="field-help">Showing allowed media locations only.</p>
   <div class="mono dim" id="browser-crumb"></div>

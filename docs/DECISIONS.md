@@ -61,7 +61,11 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
 
 ## ADR-008: Determinism policy — pinned tools, content-derived IDs, declared volatile fields
 
-- **Status:** Accepted (2026-07-22)
+- **Status:** Accepted (2026-07-22). **Implemented by ADR-022 (2026-07-26):**
+  point 1 below described the intended policy, but until ADR-022 the Dockerfile
+  used a floating tag and unversioned `apt-get install ffmpeg`, so nothing was
+  actually pinned. `environment.lock` now holds the declaration and the build
+  enforces it.
 - **Context:** The Definition of Done requires "the same input and preset produce identical canonical findings." Random UUIDs, timestamps, and unpinned FFmpeg versions all break this silently.
 - **Decision:**
   1. FFmpeg/ffprobe versions are pinned in the Docker image; every `QCResult` records an `environment` block (tool versions, platform). Docker is the canonical execution environment; native runs are best-effort.
@@ -135,3 +139,371 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   product; persistence arrives earlier than ADR-005 planned but only for
   queue state; Phase 7 extraction becomes a re-deployment of an existing
   API shape rather than a redesign.
+
+## ADR-015: Console typefaces are self-hosted, not fetched from a CDN
+
+- **Status:** Accepted (2026-07-26)
+- **Context:** `static/app.css` declared `--font-ui: 'Onest', …` and
+  `--font-mono: 'JetBrains Mono', …` but never loaded either face, so the
+  console silently rendered in the system fallback (Segoe UI on the Windows RDP
+  host) next to an SVG wordmark drawn in the real Deepdub typeface. Meanwhile
+  `reports/templates/report.html.j2` pulls the same two families from Google
+  Fonts via `@import`. Both are defects on the Phase 3.5 deployment target: the
+  console had no font at all, and the report's CDN fetch cannot succeed on an
+  air-gapped broadcast network — it degrades to system fonts without warning,
+  which silently changes PDF text metrics and therefore page pagination.
+  ADR-014 already commits to "no CDN" for the GUI; the report template predates
+  and violates it.
+- **Alternatives:** (a) add the Google Fonts `@import` to the console, matching
+  the report — zero repo weight, but inherits the air-gap failure and makes
+  rendering depend on egress rules we do not control; (b) drop the brand faces
+  and standardise on a system stack — maximally robust, but abandons brand
+  typography and still leaves report/console PDF metrics host-dependent;
+  (c) vendor woff2 files into `static/fonts/` with local `@font-face` rules.
+- **Decision:** (c), using the **variable-weight** builds (one file per family
+  per unicode subset, `font-weight: 100 900`). Variable axes are not a nicety
+  here: the existing type scale specifies weights 550 and 650, which static
+  instances cannot render and would round to 600 or synthesise. Scope is
+  latin + latin-ext (~120 KB total, SIL OFL, licences committed alongside).
+  Fonts are `<link rel=preload>`ed in the shell so first paint does not flash.
+- **Consequences:** The console renders identically on any host, online or not,
+  which matters more for the PDF path than the screen path — deterministic text
+  metrics are a precondition for reproducible report pagination (ADR-002,
+  ADR-012). Binary assets now live in the repo and must be refreshed manually
+  on upstream font updates; the pinned files are the reproducibility guarantee,
+  so this is the intended trade. Hatchling already ships non-Python files under
+  `src/deepdub_qc`, so no packaging change was required.
+- **Follow-up:** `reports/templates/report.html.j2` still `@import`s from Google
+  Fonts and should be migrated to the same local faces before any air-gapped
+  PDF delivery is trusted. Tracked in docs/BACKLOG.md.
+
+## ADR-016: Shell chrome derives from layout tokens; accent colours are reserved
+
+- **Status:** Accepted (2026-07-26)
+- **Context:** The console shell had accumulated coupled magic numbers and a
+  colour collision. `.shell-header` was `height: 60px` while
+  `.data-table th` was `position: sticky; top: 60px` — two independent
+  literals that must agree or sticky table headers slide under the app bar.
+  The header used `padding: 0 28px` while `main` used
+  `max-width: 1200px; margin: 0 auto`, so header content never aligned with
+  page content at any viewport above 1256 px. Separately, the active nav
+  underline used violet, which `--qc-error` also uses to mean "the pipeline
+  could not finish" — spending a reserved status colour on navigation chrome.
+- **Alternatives:** (a) leave the literals and document the coupling in a
+  comment; (b) compute sticky offsets in JS from the measured header height;
+  (c) declare `--shell-header-h`, `--content-max`, `--content-pad` in `:root`
+  and derive every dependent rule from them.
+- **Decision:** (c), plus a `.shell-header-inner` container that shares
+  `--content-max`/`--content-pad` with `main` so the bar spans the viewport
+  while its contents sit on the content column. The active nav state is
+  `--dd-accent` magenta **and** a 500→600 weight step, so it is not signalled
+  by colour alone. Violet remains reserved for the ERROR verdict; the status
+  palette is never used for chrome.
+- **Consequences:** Header height changes in one place. The verdict palette
+  keeps a 1:1 colour-to-meaning mapping, which is the property that lets an
+  operator read a verdict at a glance without consulting a legend. Option (b)
+  was rejected as it reintroduces layout-dependent JS into a shell that
+  ADR-014 requires to work without it.
+
+## ADR-017: QC coverage grows through the pinned FFmpeg binary, not a source build
+
+- **Status:** Proposed (2026-07-26)
+- **Context:** Evaluated incorporating the FFmpeg source repository
+  (github.com/FFmpeg/FFmpeg) into the build for "additional tools". The repo
+  is the source for the binaries we already ship, not a separate toolbox.
+  Verified capabilities of the pinned build (`ffmpeg 5.1.9-0+deb12u1` from
+  Debian bookworm, per the Dockerfile): QC-relevant filters we do **not** yet
+  use are present — `axcorrelate`, `asdr`, `photosensitivity`, `idet`,
+  `cropdetect`, `blockdetect`, `blurdetect`, `scdet`, `siti`, `ssim`, `psnr`,
+  `entropy`, `bitplanenoise` — plus the `framemd5`/`streamhash` muxers and
+  the full `-err_detect` flag set. **Not** present: `libvmaf` (compiled out
+  of the Debian build) and `apsnr`/`asisdr` (added upstream in FFmpeg 6.1).
+- **Alternatives:** (a) build FFmpeg from source — heavy C build, LGPL/GPL
+  compliance obligations for a shipped image, we inherit Debian's security-
+  patch burden, and it complicates rather than helps the ADR-008 pinning
+  story; (b) link `libav*` in-process (PyAV) — marginal performance win
+  (detectors already batch filters into shared graphs) at the cost of the
+  subprocess audit discipline (argument arrays, timeouts, preserved raw
+  stderr); (c) keep the pinned distro binary and widen filter usage, swapping
+  to a different *pre-built* pinned distribution (e.g. BtbN static builds
+  with libvmaf) only if VMAF becomes a requirement.
+- **Decision:** (c). New detectors (ADR-018–020) require zero build changes.
+- **Consequences:** VMAF full-reference scoring is deferred; adopting it — or
+  any 6.1+ filter such as `apsnr` — means changing the FFmpeg binary, which
+  is a release event with a full golden-corpus re-run per ADR-008. The filter
+  inventory above was verified against the exact pinned build, not
+  documentation; re-verify on any FFmpeg upgrade.
+
+## ADR-018: Decode-integrity detector (full-decode error census)
+
+- **Status:** Proposed (2026-07-26)
+- **Context:** A file can carry compliant metadata and loudness yet fail to
+  decode cleanly (truncated GOPs, embedded-CRC failures, bitstream
+  corruption). Vidchecker counts decode errors; we currently have no
+  equivalent, and our existing analysis decodes run at FFmpeg's default
+  error tolerance, which silently conceals exactly this class of defect.
+- **Alternatives:** (a) piggyback error parsing onto the existing audio/video
+  analysis runs — couples unrelated failure modes and would change those
+  detectors' decode behavior, breaking golden files; (b) a dedicated
+  detector: one full decode of all streams with
+  `-err_detect crccheck+bitstream+buffer -v error -f null -`, counting
+  stderr error lines and recording the first-error position; (c) also emit
+  `framemd5` per-frame hashes as reproducibility evidence.
+- **Decision:** (b). Measurements: `media.decode_error_count` and
+  `media.decode_first_error` (nullable timecode/offset string). Raw stderr
+  preserved at `raw/decode_integrity.log`. Whether N errors is blocking is a
+  preset threshold — human-approved per handoff §30; the detector emits
+  counts only (ADR-001).
+- **Consequences:** One additional full decode per job, bounded by the
+  existing timeout discipline. Catches the corruption class that metadata
+  checks structurally cannot. Option (c) deferred until a use-case consumes
+  frame hashes; the muxer is confirmed available in the pinned build.
+
+## ADR-019: Dub-vs-source audio comparison via `axcorrelate`/`asdr`
+
+- **Status:** Proposed (2026-07-26)
+- **Context:** The delivered dub must stay sync- and level-consistent with
+  the source master; this is the QC check most specific to Deepdub's actual
+  product. The comparison module today diffs *reports* (ours vs Vidchecker,
+  same file bytes); it has no media-vs-media capability. The pinned build
+  provides `axcorrelate` (windowed normalized cross-correlation of two audio
+  streams) and `asdr` (signal-to-distortion ratio against a reference).
+- **Alternatives:** (a) external alignment tools (audio-offset-finder,
+  chromaprint) — new dependencies, new ADRs, overkill for nominally-aligned
+  masters; (b) FFmpeg two-input filter graph: mono-downmix both files,
+  `axcorrelate` streamed to stdout as PCM, Python reduces it to per-window
+  correlation measurements; `asdr` for a scalar level/distortion figure;
+  (c) defer entirely until a client demands it.
+- **Decision:** (b), as a new *two-input* detector class. This extends the
+  pipeline contract: `QCContext` gains an optional `reference_path`, and
+  reference-requiring detectors are skipped (not failed) when no reference
+  is supplied. Measurements: `comparison.audio_correlation_min`,
+  `comparison.audio_correlation_windows_below` (count under a fixed
+  measurement constant, not a client threshold), `comparison.audio_sdr_db`.
+  Sustained low correlation localizes desync/content-mismatch regions.
+- **Consequences:** First detector that reads two inputs — the schema,
+  registry `is_applicable`, and CLI must grow a reference-file argument
+  (schema regeneration required). Absolute lag *estimation* (e.g. FFT
+  cross-correlation to report "dub is +40 ms") is explicitly out of scope
+  for v1: `axcorrelate` measures similarity over time, not global offset;
+  estimating offset well needs a Python-side DSP dependency and its own ADR.
+
+## ADR-020: Broadcast-compliance video detectors (`photosensitivity`, `idet`, `cropdetect`)
+
+- **Status:** Proposed (2026-07-26)
+- **Context:** Three delivery-blocking defect classes are invisible to the
+  current video detector (black/freeze/luma): photosensitive-epilepsy flash
+  risk (Harding-style, mandated by UK/JP broadcasters), interlaced content
+  mislabeled as progressive (ffprobe reports the *declared* field order, not
+  the actual one), and active-picture errors (unintended letterbox/pillarbox
+  or dirty edges).
+- **Alternatives:** (a) license commercial PSE analysis (Harding FPA) —
+  cost, licensing, and a non-deterministic external dependency; (b) extend
+  the existing `video.incidents.ffmpeg` filter chain — one decode, but any
+  addition perturbs its raw-log golden files and couples five defect classes
+  to one detector version; (c) a second video detector with its own chain:
+  `photosensitivity,idet,cropdetect,metadata=print:file=-`, reusing the
+  single-decode / raw-log pattern of the existing video detector.
+- **Decision:** (c). Measurements: `video.pse_frames_over_badness`
+  (photosensitivity filter's per-frame badness census — explicitly *not* a
+  Harding certification, and reports must never claim it is),
+  `video.interlace_detected_ratio` (idet TFF+BFF vs progressive frame
+  counts) cross-checked against the ffprobe-declared field order, and
+  `video.active_picture_bbox` (modal cropdetect rectangle vs coded
+  dimensions). All thresholds preset-governed per handoff §30.
+- **Consequences:** One additional video decode per job (acceptable; audio
+  and video detectors already run separate decodes). PSE output is a
+  screening signal, not a legal compliance certificate — the report wording
+  must say so, which is a renderer contract-test item. Filters confirmed
+  present in the pinned 5.1.9 build.
+
+## ADR-021: The parameter catalogue is a first-class registry in `models/`
+
+- **Status:** Accepted (2026-07-26)
+- **Context:** Handoff §15 requires a parameter catalogue plus a
+  machine-readable registry; neither existed. Consequently nothing validated
+  that a preset's `parameter_id` corresponds to a parameter any detector
+  emits. A typo'd or aspirational `parameter_id` passed `presets validate`
+  cleanly and produced a `SKIPPED` finding at runtime. For a *blocking* rule
+  the aggregation in `rules/engine.py` escalates that to `ERROR` and it is
+  caught — but a **non-blocking** rule silently became `SKIPPED`, presenting
+  the operator with a complete-looking report for a check that never ran.
+  That is the one silent-pass path in the system, and preset authoring is
+  explicitly the extension point for non-engineers (ADR-003).
+- **Alternatives:**
+  (a) Derive the valid parameter set from the detector registry at preset-load
+  time. Rejected: it makes `presets/` depend on `detectors/`, and the
+  ARCHITECTURE §4 graph deliberately keeps them siblings. It also means the
+  legal preset vocabulary changes with which detectors happen to be
+  registered, so a preset's validity would depend on load order.
+  (b) A hand-maintained markdown catalogue with no code binding. Rejected:
+  guaranteed drift, same failure mode ADR-004 rejected for schemas.
+  (c) A declarative catalogue in `models/` — the layer ARCHITECTURE §4 already
+  designates "the only shared vocabulary" — that both `detectors/` and
+  `presets/` are validated *against*, with the markdown and JSON artifacts
+  generated from it.
+- **Decision:** (c). `models/parameters.py` holds a `ParameterDefinition` per
+  parameter with the twelve fields handoff §15 requires, plus an
+  implementation status (`implemented` / `planned`) and a validation status
+  that may only claim `validated` where `docs/VALIDATION.md` actually backs
+  it. Three bindings make it load-bearing rather than decorative:
+  1. `presets/loader.py` rejects any rule whose `parameter_id` is absent from
+     the catalogue, with a `difflib` close-match suggestion.
+  2. A contract test asserts every detector's declared `parameters` tuple is a
+     subset of the catalogue, and that every `implemented` parameter is
+     claimed by exactly one detector — so adding a detector parameter without
+     cataloguing it fails CI, and vice versa.
+  3. `scripts/export_parameters.py` generates `docs/parameter-catalogue.md`
+     and `schemas/parameter-catalogue.json` with a `--check` drift mode,
+     mirroring ADR-004's export-and-diff pattern.
+- **Consequences:** Preset typos fail at load with an actionable message
+  instead of degrading into a silent skip. The catalogue becomes the reviewable
+  place where "what can we measure" is stated, which is also what Composer
+  needs to populate a preset editor later. Cost: adding a parameter now means
+  editing two places (detector + catalogue), enforced by the contract test —
+  deliberate friction, since an uncatalogued parameter is unusable by presets
+  anyway. Rules referencing `planned` parameters are rejected too, which is
+  stricter than the status quo and may require correcting existing draft
+  presets; that is the bug being fixed, not a regression.
+
+## ADR-022: The canonical environment is pinned and the canonical test run happens inside it
+
+- **Status:** Accepted (2026-07-26)
+- **Context:** ADR-008 makes determinism testable in principle, and
+  `tests/integration/test_analyze_e2e.py:111` implements the repeat-run
+  byte-comparison correctly. But `ci.yml` never installed FFmpeg, so every
+  integration test — determinism, audio, video, batch, server, EBU
+  conformance — was guarded by `skipif(which("ffmpeg") is None)` and skipped
+  on every merge, while `pytest -q` reported green. Separately, ADR-008,
+  `RISKS.md` R1, `ARCHITECTURE.md` §6 and `README.md` all asserted FFmpeg was
+  pinned in Docker; `Dockerfile` used a floating tag and unversioned
+  `apt-get install ffmpeg`, with a comment deferring the pin to "release
+  time". The project's two central claims — reproducible measurements and a
+  fixed toolchain — were therefore documented more strongly than enforced.
+- **Alternatives for the toolchain pin:**
+  (a) `apt-get install ffmpeg=<exact version>`. Rejected: Debian drops
+  superseded versions from the mirror on security updates, so this converts
+  drift into a hard build failure at an arbitrary future date, with no signal
+  about what changed.
+  (b) Vendor a static FFmpeg build. Rejected: large maintenance surface, and
+  loses Debian's security patching.
+  (c) Pin the base image by digest (fixing the OS and Python layers exactly),
+  and treat the FFmpeg version as a *declared expectation asserted at build
+  time* — the same guard pattern already used at runtime by
+  `server/config.py:222-234` (`expected_ffmpeg_version`).
+- **Decision:** (c), plus moving the canonical test run into the image.
+  1. `FROM python:3.13-slim-bookworm@sha256:fcbd8dfc…` — pinned by digest.
+  2. `environment.lock` at the repo root is the single declaration of the
+     canonical toolchain (base digest, expected FFmpeg version). The Docker
+     build asserts the installed FFmpeg matches and fails loudly on
+     divergence, so an upgrade is a visible, reviewed event per R1 rather
+     than silent behavior change.
+  3. CI gains an `integration` job that builds the image and runs the full
+     suite inside it, and the quality job installs FFmpeg so nothing skips
+     silently. A designated CI job that cannot find FFmpeg must fail, not
+     skip.
+- **Consequences:** The determinism guarantee moves from asserted to
+  continuously verified, in the environment ADR-008 designates as canonical.
+  CI gets slower (an image build plus real media analysis per run) — accepted:
+  a QC tool whose own end-to-end behavior is untested cannot ask a broadcast
+  engineer to trust it. FFmpeg upgrades now require a deliberate
+  `environment.lock` edit accompanied by a golden-corpus re-run, which is
+  exactly the release discipline R1 prescribes. The four documents that
+  misstated the pin are corrected as part of this change.
+- **Note on the EBU set:** `test_ebu_conformance.py` still skips when the
+  fixtures are absent, because the EBU Loudness test set cannot be
+  redistributed in-repo. It stays a skip locally but must be a hard failure in
+  any job designated as the conformance gate; wiring that gate is follow-up
+  work, tracked in `BACKLOG.md`.
+
+
+## ADR-023: Client-side console behaviour is tested in jsdom, outside `make check`
+
+- **Status:** Accepted (2026-07-27) — CI runs the suite; the skip path is local-only
+- **Context:** The console's polling logic had a defect that every existing test
+  layer was structurally incapable of catching. `app.js` refreshed the polled
+  region with `region.innerHTML = fresh.innerHTML` every two seconds. On the job
+  detail page that region contains the Cancel button, so an operator who tabbed
+  to it lost focus to `<body>` on the next tick and could never activate it from
+  the keyboard. Route tests returned 200. Template tests saw valid markup. The
+  defect lived entirely in the interaction between a script and a live DOM, and
+  the project had no layer that executed client code at all.
+- **Alternatives:** (a) accept static source assertions only — cheap and
+  dependency-free, but they can only check that the *shape* of the code looks
+  right; nothing proves focus survives, which is the actual requirement;
+  (b) Playwright, already a dependency for Windows PDF rendering (ADR-014) —
+  real browser fidelity, but needs a downloaded browser binary and a running
+  server, making it slow and heavy for what is a pure DOM question;
+  (c) jsdom via Node, executing `app.js` against a synthetic document with
+  `fetch` and timers under test control.
+- **Decision:** both (a) and (c), at different costs. The static assertions live
+  in `tests/unit/test_server_interaction_contract.py` and run everywhere with no
+  new dependencies. The behavioural suite lives in `tests/js/console.test.mjs`,
+  is wrapped by `tests/integration/test_console_behaviour.py`, and **skips** with
+  an actionable message when Node or jsdom is missing — a missing optional
+  toolchain must never read as a passing test. It is excluded from `make check`
+  and available as `make js-tests`. Playwright is still the right tool for
+  anything needing layout or paint; jsdom is chosen because focus, event
+  dispatch and DOM identity are exactly what it models well.
+- **Consequences:** The repository gains a second language toolchain in a test
+  directory only — no production dependency, and `tests/js/node_modules` is
+  gitignored. The suite is proven to discriminate: it reports 25 passes against
+  the fixed script and 16 failures against the previous one, including
+  `activeElement=BODY` on the Cancel button. Risk: because it is outside
+  `make check`, it can silently stop being run. Mitigated by
+  `test_js_suite_is_declared_correctly`, which runs without Node and fails if
+  the entrypoint is renamed or the manifest drifts — a permanent skip would
+  otherwise read as green.
+- **Open question for review:** whether CI should install Node and run
+  `make js-tests`, making the skip path dead code in CI while remaining a
+  convenience locally. Recommended, but it adds a toolchain to the pipeline and
+  that is a maintenance decision, not a technical one.
+- **Resolution (2026-07-27):** yes — the review of this change found the suite
+  skipping silently in both CI jobs, the exact failure mode ADR-022 exists to
+  kill. Three mechanisms close it: the `quality` job installs jsdom
+  (`npm install --prefix tests/js`) so the pytest wrapper executes the suite;
+  the Docker `test` stage installs Node/npm and jsdom, since its own contract
+  is that nothing may skip; and the `node_with_jsdom` fixture now fails —
+  not skips — under `DEEPDUB_QC_REQUIRE_TOOLCHAIN=1`, mirroring
+  `weasyprint_native`, so removing either install breaks the gate loudly.
+
+## ADR-024: Console review remediation — fail-closed guards and shape-aware patching
+
+- **Status:** Accepted (2026-07-27)
+- **Context:** A recall-focused review of the console found four defects in
+  `app.js` and three fail-open/driftable mechanisms elsewhere. The common
+  thread: guards that existed as markup or convention rather than mechanism.
+  (1) The `data-confirm` cancel guard failed OPEN if `app.js` did not load.
+  (2) `patchElement` index-patched on equal child *counts* alone, so a
+  pending→running transition under held focus spliced stage text into the
+  wrong elements and stripped the live region's aria attributes; it also never
+  synced attributes, leaving a focused form's `data-confirm` stale.
+  (3) Per-button copy listeners re-bound after every focus-preserving patch,
+  stacking one duplicate per poll tick. (4) The media browser rendered
+  `/browse` error responses as an empty folder and pushed the failed
+  destination onto the back stack. (5) New jobs were appended to the bottom of
+  the newest-first table. (6) The Dockerfile carried a second, driftable copy
+  of the base digest as an ARG default. (7) `install-service.ps1` documented
+  `--no-dev` but accepted any venv containing the entrypoint.
+- **Decision:** Make every guard mechanical and fail closed. Cancel buttons
+  ship `disabled` with `data-requires-js`; `app.js` enables them only after
+  the confirmation delegation is bound, and re-enables replacements arriving
+  via polls. `patchElement` requires matching tag shape per index (not just
+  counts) before positional patching, syncs attributes on every patched child
+  (safe even on the focused path), and never swaps nodes, preserving live
+  regions and focus identity. Copy buttons use one delegated document-level
+  listener, like `data-confirm`. The browser checks `r.ok`, renders the
+  server's error in the listing, and mutates the history stack only on
+  successful navigations. `patchRows` walks the server's row order with an
+  insertion cursor. The Dockerfile declares `BASE_IMAGE`/`BASE_DIGEST` with no
+  defaults, so `environment.lock` is the single source and a plain
+  `docker build .` fails at `FROM` instead of building a divergent base.
+  The Windows installer runs `uv sync --frozen --no-dev` itself. Integration
+  modules declare `pytest.mark.requires_toolchain`, derived in
+  `tests/conftest.py` from `REQUIRED_TOOLS`, replacing per-module
+  `shutil.which` guards that had already drifted.
+- **Consequences:** Without JavaScript the Cancel button is inert rather than
+  unguarded — acceptable for a console that is JS-dependent throughout. The
+  jsdom suite grew regression cases for each defect (46 checks) and crashes
+  loudly against the pre-fix script. A deliberately narrower guard remains in
+  `test_ebu_conformance.py` (ffmpeg only), now annotated as intentional.

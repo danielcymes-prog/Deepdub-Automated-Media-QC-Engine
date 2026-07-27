@@ -1,0 +1,29 @@
+# Canonical execution environment (ADR-008, ADR-022).
+#
+# This file is the single declaration of the pinned toolchain. It is read by
+# the Docker build (as build args) and by CI. Changing any value here is a
+# release event: FFmpeg filter output (ebur128, blackdetect, silencedetect,
+# astats) shifts between versions, so an upgrade requires a full golden-corpus
+# re-run and a fresh VALIDATION.md entry. See docs/RISKS.md R1.
+#
+# Format: KEY=value, shell-sourceable, no spaces around '='.
+
+# Base image pinned by manifest-list digest, resolved 2026-07-26 from
+# registry tag python:3.13-slim-bookworm (pushed 2026-06-24).
+BASE_IMAGE=python:3.13-slim-bookworm
+BASE_DIGEST=sha256:fcbd8dfc2605ba7c2eca646846c5e892b2931e41f6227985154a596f26ab8ed7
+
+# Expected FFmpeg version string, asserted during the image build.
+#
+# Empty means "record, do not assert": the build prints and stores the
+# resolved version but will not fail on drift. Fill this in with the value
+# captured by `make pin-ffmpeg` on a machine with Docker, then commit it —
+# from that point on, any Debian FFmpeg bump fails the build loudly instead of
+# silently changing measurements.
+#
+# It is matched as a substring of the first line of `ffmpeg -version`, the
+# same comparison server/config.py uses for the runtime guard, so a value like
+# "5.1.6-0+deb12u1" or just "5.1.6" both work.
+#
+# Pinned 2026-07-27 via `make pin-ffmpeg` against the BASE_DIGEST above.
+EXPECTED_FFMPEG_VERSION=5.1.9-0+deb12u1

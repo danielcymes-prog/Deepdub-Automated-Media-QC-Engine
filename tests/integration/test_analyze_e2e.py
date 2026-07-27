@@ -5,7 +5,6 @@ generated once per session by scripts/generate_test_media.py.
 """
 
 import json
-import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -27,10 +26,9 @@ TIER1_PRESET = REPO_ROOT / "tests" / "fixtures" / "presets" / "tier1_metadata_v1
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(
-        shutil.which("ffprobe") is None or shutil.which("ffmpeg") is None,
-        reason="ffmpeg/ffprobe not available",
-    ),
+    # Skips locally / aborts a gate job when REQUIRED_TOOLS are missing; the
+    # tool list lives in tests/conftest.py so it cannot drift per module.
+    pytest.mark.requires_toolchain,
 ]
 
 runner = CliRunner()

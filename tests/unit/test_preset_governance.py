@@ -1,17 +1,22 @@
 """Preset governance: approval lock and immutability verification (ADR-013)."""
 
+import logging
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from deepdub_qc.cli import app
+from deepdub_qc.exceptions import PresetError
 from deepdub_qc.exit_codes import ExitCode
 from deepdub_qc.presets.governance import (
     LOCK_FILENAME,
     build_lock,
+    read_lock,
     verify_approved,
     write_lock,
 )
+from deepdub_qc.server.catalog import build_catalog
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 runner = CliRunner()
@@ -93,6 +98,78 @@ class TestLock:
         (root / "clients" / "testclient" / "p_v1.yaml").unlink()
         problems = verify_approved(root)
         assert any("file is missing" in p for p in problems)
+
+
+def _break_preset_parameter(root: Path) -> Path:
+    """Make the preset reference a parameter the catalogue does not implement,
+    without touching its approved status — the accidental-breakage scenario."""
+    target = root / "clients" / "testclient" / "p_v1.yaml"
+    target.write_text(
+        target.read_text(encoding="utf-8").replace(
+            "parameter_id: video.width", "parameter_id: video.does_not_exist"
+        ),
+        encoding="utf-8",
+    )
+    return target
+
+
+class TestSwallowedPresetErrorsAreVisible:
+    """Regression: PresetError was caught with a bare `continue`, so a preset
+    that stopped loading vanished from the lock (and the catalog) silently."""
+
+    def test_build_lock_logs_skipped_presets(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        root = make_preset_dir(tmp_path)
+        _break_preset_parameter(root)
+        with caplog.at_level(logging.WARNING, logger="deepdub_qc.presets.governance"):
+            assert build_lock(root) == {}
+        assert any("p_v1.yaml" in record.message for record in caplog.records)
+
+    def test_write_lock_refuses_to_drop_a_locked_preset_that_stopped_loading(
+        self, tmp_path: Path
+    ) -> None:
+        root = make_preset_dir(tmp_path)
+        write_lock(root)
+        _break_preset_parameter(root)
+        before = read_lock(root)
+        with pytest.raises(PresetError, match="no longer loads"):
+            write_lock(root)
+        assert read_lock(root) == before, "a refused regeneration must not touch the lock"
+
+    def test_write_lock_still_allows_deliberate_demotion(self, tmp_path: Path) -> None:
+        """A demoted preset loads fine; dropping it is a reviewable decision,
+        not silent breakage, so regeneration must keep working."""
+        root = make_preset_dir(tmp_path)
+        write_lock(root)
+        target = root / "clients" / "testclient" / "p_v1.yaml"
+        target.write_text(
+            target.read_text(encoding="utf-8").replace("status: approved", "status: draft"),
+            encoding="utf-8",
+        )
+        write_lock(root)
+        assert read_lock(root) == {}
+
+    def test_write_lock_still_allows_deleted_preset(self, tmp_path: Path) -> None:
+        """Deletion is visible in the lock diff and flagged by verify_approved;
+        regeneration itself must not crash on it."""
+        root = make_preset_dir(tmp_path)
+        write_lock(root)
+        (root / "clients" / "testclient" / "p_v1.yaml").unlink()
+        write_lock(root)
+        assert read_lock(root) == {}
+
+    def test_build_catalog_logs_skipped_presets(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        root = make_preset_dir(tmp_path)
+        _break_preset_parameter(root)
+        with caplog.at_level(logging.WARNING, logger="deepdub_qc.server.catalog"):
+            assert build_catalog(root) == []
+        assert any(
+            "p_v1.yaml" in record.message and "video.does_not_exist" in record.message
+            for record in caplog.records
+        ), "the loader's actionable message must reach the log"
 
 
 class TestGovernanceCli:

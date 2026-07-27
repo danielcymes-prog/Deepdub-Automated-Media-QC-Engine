@@ -1,6 +1,55 @@
 /* Deepdub QC Console — Deepdub brand package (marketing/Claude Design source,
    same tokens as the report template). Replaces the placeholder tokens from
    gui-design-spec section 2; the brand question there is now resolved. */
+
+/* ---- typefaces ----
+   Self-hosted from static/fonts/. The console is deployed on-prem inside
+   broadcast networks with no outbound internet, so a Google Fonts @import
+   (as used by reports/templates/report.html.j2) would silently fall back to
+   system fonts. Variable-weight axes are required: the type scale below asks
+   for 550 and 650, which static instances cannot render and would round to
+   600 or synthesise. Both families are SIL OFL — see LICENSE-*.txt. */
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/onest-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Onest';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/onest-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   /* Surfaces — Deepdub dark */
   --dd-bg: #0A0A0A;
@@ -26,6 +75,13 @@
 
   --font-ui: 'Onest', Inter, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, 'Courier New', monospace;
+
+  /* Layout — single source of truth for the shell. .data-table sticky offsets
+     and the header/footer/main gutters all derive from these, so changing the
+     header height in one place keeps sticky table headers correct. */
+  --shell-header-h: 60px;
+  --content-max: 1200px;
+  --content-pad: 28px;
 }
 
 * { box-sizing: border-box; }
@@ -36,34 +92,118 @@ body {
 }
 .mono { font-family: var(--font-mono); font-size: 12.5px; }
 .dim { color: var(--dd-text-dim); }
+/* Available to screen readers, removed from the visual layout. Used for table
+   captions, icon-only column headers, and the per-row link description — a bare
+   "a3f9c1d2…" tells a screen-reader user nothing about where the link goes. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 20px; }
 h2 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; }
 a { color: var(--dd-accent); text-decoration: none; }
 a:hover { color: var(--dd-accent-hover); }
 :focus-visible { outline: 2px solid var(--dd-accent); outline-offset: 2px; border-radius: 4px; }
 
-/* ---- shell ---- */
+/* ---- shell ----
+   The header bar spans the full viewport width (so its border-bottom reads as a
+   true rule across the window) but its *contents* are constrained by an inner
+   container sharing --content-max/--content-pad with main. Without this the
+   wordmark sits 28px from the viewport edge while page content starts at the
+   centred 1200px column, so nothing in the header lines up with anything below. */
 .shell-header {
-  height: 60px; display: flex; align-items: center; gap: 40px; padding: 0 28px;
-  background: var(--dd-bg); border-bottom: 1px solid var(--dd-border);
+  height: var(--shell-header-h);
+  background: var(--dd-surface); border-bottom: 1px solid var(--dd-border);
   position: sticky; top: 0; z-index: 10;
 }
-.wordmark { display: flex; align-items: center; gap: 10px; color: var(--dd-text);
-  font-weight: 650; font-size: 15px; }
-.wordmark img, .wordmark svg { height: 20px; display: block; }
-.wordmark .qc-tag { color: var(--dd-text-dim); font-weight: 500; }
-.shell-header nav { display: flex; gap: 4px; flex: 1; }
-.shell-header nav a {
-  color: var(--dd-text-2); padding: 8px 14px; border-radius: 8px; font-weight: 500;
+.shell-header-inner {
+  max-width: var(--content-max); width: 100%; margin: 0 auto; height: 100%;
+  padding: 0 var(--content-pad);
+  display: flex; align-items: center; gap: 36px;
 }
-.shell-header nav a:hover { color: var(--dd-text); background: var(--dd-surface); }
-.shell-header nav a.active { color: var(--dd-text); background: var(--dd-surface-2); }
-.health { color: var(--qc-pass); font-size: 11px; }
-.health.down { color: var(--qc-fail); }
-main { max-width: 1200px; width: 100%; margin: 0 auto; padding: 32px 28px; flex: 1; }
+
+/* Wordmark lockup. wordmark.svg ships intrinsic em dimensions (6.625em x 1.5em,
+   a 4.417:1 ratio) which are relative to the *parent* font-size, not to the
+   height we set here — so constraining height alone left width at 6.625 x 15px
+   = 99px against a correct 88px, stretching the logo ~13% horizontally.
+   width: auto + aspect-ratio pins it to the viewBox ratio at any height. */
+.wordmark {
+  display: flex; align-items: center; gap: 9px; color: var(--dd-text);
+  font-size: 15px; line-height: 1;
+}
+.wordmark img, .wordmark svg {
+  display: block; height: 19px; width: auto; aspect-ratio: 106 / 24;
+}
+/* "QC" is a qualifier on the Deepdub mark, not part of it: separated by a
+   hairline rule, set smaller with open tracking, and cap-height aligned rather
+   than baseline-aligned so it optically centres against the wordmark's x-height. */
+.wordmark .qc-tag {
+  display: inline-flex; align-items: center;
+  padding-left: 9px; border-left: 1px solid var(--dd-border-strong);
+  align-self: stretch;
+  color: var(--dd-text-2); font-weight: 600; font-size: 12.5px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.wordmark:hover .qc-tag { color: var(--dd-text); }
+
+.shell-header nav { display: flex; gap: 2px; flex: 1; height: 100%; }
+/* Active state is a magenta underline flush with the header's bottom border.
+   Rendered via a pseudo-element so the inactive items reserve the same space
+   and labels never shift vertically between pages. Violet is deliberately not
+   used here — it is reserved for the ERROR verdict. */
+.shell-header nav a {
+  position: relative; display: inline-flex; align-items: center;
+  padding: 0 14px; color: var(--dd-text-dim); font-weight: 500;
+  transition: color 0.15s;
+}
+.shell-header nav a::after {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: -1px;
+  height: 2px; border-radius: 2px 2px 0 0;
+  background: transparent; transition: background 0.15s;
+}
+.shell-header nav a:hover { color: var(--dd-text); }
+.shell-header nav a:hover::after { background: var(--dd-border-strong); }
+.shell-header nav a.active { color: var(--dd-text); font-weight: 600; }
+.shell-header nav a.active::after { background: var(--dd-accent); }
+/* The underline is the primary affordance but colour alone is not sufficient,
+   hence the weight change above; keep focus rings square so they don't clip it. */
+.shell-header nav a:focus-visible { border-radius: 6px; }
+
+.health {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--dd-text-2); font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.health::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--qc-pass); box-shadow: 0 0 0 3px rgba(37, 212, 114, 0.16);
+}
+.health.down { color: var(--dd-text); }
+.health.down::before {
+  background: var(--qc-fail); box-shadow: 0 0 0 3px rgba(255, 33, 35, 0.18);
+}
+
+main {
+  max-width: var(--content-max); width: 100%; margin: 0 auto;
+  padding: 32px var(--content-pad); flex: 1;
+}
+/* Footer holds a single text child, so rather than adding a wrapper element it
+   aligns to the content column by padding: the rule still spans the viewport
+   while the text lines up with main. Collapses to --content-pad below 1200px. */
 .shell-footer {
-  height: 36px; display: flex; align-items: center; padding: 0 28px;
+  min-height: 36px; display: flex; align-items: center;
+  padding-inline: max(
+    var(--content-pad),
+    calc((100% - var(--content-max)) / 2 + var(--content-pad))
+  );
   color: var(--dd-text-dim); border-top: 1px solid var(--dd-border); font-size: 11.5px;
+}
+
+@media (max-width: 720px) {
+  :root { --content-pad: 16px; }
+  .shell-header-inner { gap: 16px; }
+  .shell-header nav a { padding: 0 10px; }
+  .shell-header nav a::after { left: 10px; right: 10px; }
+  .health span { display: none; }  /* dot only; the title attribute carries meaning */
 }
 
 /* ---- badges (verdicts) & chips (orchestration) ---- */
@@ -95,18 +235,89 @@ main { max-width: 1200px; width: 100%; margin: 0 auto; padding: 32px 28px; flex:
 /* ---- tables ---- */
 .data-table { width: 100%; border-collapse: separate; border-spacing: 0;
   background: var(--dd-surface); border: 1px solid var(--dd-border);
-  border-radius: 12px; overflow: hidden; }
+  border-radius: 12px; }
+/* No `overflow: hidden` here. It makes the table its own sticky containing block,
+   so the sticky column-header offset (top set from --shell-header-h, in the header
+   cell rule below) is measured from the table's own top edge instead of the
+   viewport — a ~60px dead band above the column headers at rest, and headers that
+   stick to the table box rather than the viewport on scroll, defeating the ADR-016
+   intent. The rounded corners are clipped per-cell instead (needs no overflow
+   context), so both the radius and true viewport-sticky headers hold. */
+.data-table thead th:first-child { border-top-left-radius: 12px; }
+.data-table thead th:last-child { border-top-right-radius: 12px; }
+.data-table tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+.data-table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+/* top offset must track the sticky shell header, hence the token rather than 60px */
 .data-table th { text-align: left; font-weight: 600; font-size: 12px;
   color: var(--dd-text-2); padding: 12px 14px; background: var(--dd-surface-2);
-  border-bottom: 1px solid var(--dd-border); position: sticky; top: 60px; }
+  border-bottom: 1px solid var(--dd-border);
+  position: sticky; top: var(--shell-header-h); z-index: 1; }
 .data-table td { padding: 12px 14px; border-bottom: 1px solid var(--dd-border); }
 .data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover { background: var(--dd-surface-2); cursor: pointer; }
-.data-table tr.group-row td { font-weight: 650; background: var(--dd-bg);
-  color: var(--dd-accent); cursor: default; font-size: 12.5px;
-  text-transform: uppercase; letter-spacing: 0.06em; }
-.table-foot { display: flex; justify-content: space-between; padding: 12px 6px;
-  font-size: 12.5px; }
+/* Row highlight aids horizontal tracking in a wide table and is applied to every
+   data table. The pointer cursor is NOT — it belongs only to tables whose rows
+   actually navigate (.rows-linked), otherwise the presets table advertises a
+   click that does nothing. */
+.data-table tbody tr:hover { background: var(--dd-surface-2); }
+
+/* ---- row navigation ----
+   Rows navigate via a real anchor in the first cell, stretched over the row by a
+   pseudo-element. Replaces `<tr onclick="location.href=…">`, which was invisible
+   to the keyboard, swallowed ⌘/middle-click, and would be blocked by any CSP.
+   Trade-off: the stretched overlay makes dragging to select text in a row
+   awkward. Accepted — the operator action here is "open this job", and the
+   detail page carries an explicit copy button for the full media path. */
+.data-table.rows-linked tbody tr { position: relative; }
+.data-table.rows-linked tbody tr:hover { cursor: pointer; }
+.data-table.rows-linked tbody tr.group-row { cursor: default; }
+.row-link { color: inherit; text-decoration: none; }
+.row-link::after {
+  content: ''; position: absolute; inset: 0;
+  /* below cell content so badges/chips keep their own hover and title tooltips */
+  z-index: 0;
+}
+.data-table.rows-linked tbody tr:hover .row-link { color: var(--dd-accent); }
+/* Focus ring hugs the row rather than the 8-character id, so keyboard position is
+   obvious in a dense table. outline-offset is negative to stay inside the row. */
+.row-link:focus-visible { outline: none; }
+.row-link:has(:focus-visible), tr:focus-within { outline: none; }
+.data-table.rows-linked tbody tr:focus-within {
+  background: var(--dd-surface-2);
+  outline: 2px solid var(--dd-accent); outline-offset: -2px;
+}
+.row-chevron { color: var(--dd-text-dim); }
+.data-table tr.group-row th { text-align: left; font-weight: 650;
+  background: var(--dd-bg); color: var(--dd-accent); cursor: default;
+  font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 12px 14px; border-bottom: 1px solid var(--dd-border);
+  /* group headers scroll with the body; only column headers are sticky */
+  position: static; }
+.data-table tbody tr.group-row:hover { background: var(--dd-bg); }
+/* Secondary line inside a cell — a preset description that used to live only in
+   a title attribute, unreachable by keyboard and invisible on touch. */
+.cell-caption { display: block; color: var(--dd-text-dim); font-size: 12px;
+  margin-top: 3px; max-width: 46ch; }
+.table-foot { display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 6px; font-size: 12.5px; gap: 16px; }
+.pagination { display: flex; align-items: center; gap: 2px; }
+.pagination a, .pagination .page-current {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 28px; padding: 0 6px; border-radius: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.pagination a { color: var(--dd-text-2); }
+.pagination a:hover { background: var(--dd-surface-2); color: var(--dd-text); }
+/* Current page is a span, not a link — there is nowhere to navigate to. Marked
+   with aria-current rather than <strong>, which conveys emphasis, not location. */
+.pagination .page-current {
+  background: var(--dd-surface-2); color: var(--dd-text); font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--dd-border-strong);
+}
+/* Freshness caption. .stale fires on the FIRST failed poll, not the third —
+   an operator must never read a frozen queue as a quiet one. */
+.poll-caption { font-variant-numeric: tabular-nums; transition: color 0.2s; }
+.poll-caption.stale { color: var(--qc-warning); }
+.poll-caption.stale::before { content: '⚠ '; }
 .flash { animation: cellflash 0.3s ease-out; }
 @keyframes cellflash { from { background: var(--dd-surface-2); } }
 .empty-state { text-align: center; color: var(--dd-text-dim); padding: 80px 0; }
@@ -132,6 +343,10 @@ input.mono { font-family: var(--font-mono); font-size: 13px; }
 input.error, select.error { border-color: var(--qc-fail); }
 .preset-card { margin-top: 10px; padding: 14px 16px; background: var(--dd-surface);
   border: 1px solid var(--dd-border); border-radius: 12px; display: grid; gap: 4px; }
+/* `[hidden]` is a UA `display: none`, but the author `display: grid` above wins the
+   cascade (author beats UA regardless of specificity), so the card rendered as an
+   empty box under the preset select until a preset was chosen. Restore the hide. */
+.preset-card[hidden] { display: none; }
 .output-hint { margin-top: 28px; }
 .form-actions { display: flex; justify-content: flex-end; margin-top: 28px; }
 
@@ -147,6 +362,9 @@ button:hover, .button:hover { background: #2A2A2A; color: var(--dd-text); }
 .primary:disabled { opacity: 0.4; cursor: not-allowed; }
 .danger-outline { background: transparent; border-color: var(--qc-fail); color: var(--qc-fail); }
 .danger-outline:hover { background: var(--qc-fail); color: #fff; }
+/* [data-requires-js] controls ship disabled until app.js arms their guard. */
+.danger-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+.danger-outline:disabled:hover { background: transparent; color: var(--qc-fail); }
 .icon-button { padding: 7px 11px; min-height: 34px; }
 
 /* ---- job detail ---- */
@@ -163,6 +381,9 @@ button:hover, .button:hover { background: #2A2A2A; color: var(--dd-text); }
 .stage-list li:last-child { border-bottom: none; }
 .stage-list li .mono { margin-left: auto; }
 .stage-done { color: var(--qc-pass); }
+/* Single-line live region for stage progress. Visible as well as announced —
+   the stage list above it is a history, this is the current state. */
+.stage-status { color: var(--dd-text-2); font-size: 13px; margin: 0 0 20px; }
 .summary-line { font-size: 15px; color: var(--dd-text-2); }
 .finding-row { border-left: 3px solid var(--qc-fail); background: var(--dd-surface);
   border-top: 1px solid var(--dd-border); border-right: 1px solid var(--dd-border);
@@ -196,10 +417,15 @@ dialog { width: 720px; max-width: 90vw; height: 480px; background: var(--dd-surf
   border-radius: 16px; padding: 20px; overflow: auto; }
 dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
 .modal-head { display: flex; justify-content: space-between; align-items: center; }
+/* Groups the back button with the title so .modal-head keeps its two-child
+   space-between layout (title group on the left, close on the right). */
+.modal-head-left { display: flex; align-items: center; gap: 12px; }
 .browser-list { list-style: none; padding: 0; margin: 10px 0; }
 .browser-list li { display: flex; justify-content: space-between; padding: 8px 10px;
   border-radius: 8px; cursor: pointer; }
 .browser-list li:hover { background: var(--dd-surface-2); }
+.browser-list li.browser-error { color: var(--qc-fail); cursor: default; }
+.browser-list li.browser-error:hover { background: transparent; }
 .page-head { display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 20px; }
 .page-head h1 { margin: 0; }

@@ -35,6 +35,19 @@ dev = [
     "types-pyyaml>=6.0",
 ]
 
+# Deliberately NOT in `dev`, and therefore not installed by a bare `uv sync` or
+# `uv run`. The Windows delivery host builds its environment from this lockfile
+# (docs/windows-deployment.md section 7) and may have no PyPI access, so a
+# lint-only tool must never sit in the dependency path of `deepdub-qc serve`.
+# Used by `make layers` and CI via `--group lint`.
+#
+# import-linter mechanizes the ARCHITECTURE section 4 layering rules
+# (ADR-010, backlog #30); risk R6 predicts boundary erosion under deadline
+# pressure, and review alone does not catch a single added import.
+lint = [
+    "import-linter>=2.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/deepdub_qc"]
 
@@ -92,8 +105,100 @@ testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: tests that exercise multiple subsystems together",
+    "requires_toolchain: needs every tool in tests/conftest.py REQUIRED_TOOLS; skips locally, aborts collection under DEEPDUB_QC_REQUIRE_TOOLCHAIN=1",
 ]
 
 [[tool.mypy.overrides]]
 module = "playwright.*"
 ignore_missing_imports = true
+
+# --- Layering enforcement (ADR-010, backlog #30) -----------------------------
+# ARCHITECTURE.md section 4 states the import rules and notes they are
+# "enforced by review and, later, import-linter". This is that enforcement.
+# Risk R6 predicts these boundaries erode under deadline pressure — the exact
+# failure mode that makes Vidchecker-class tools unmaintainable — and a code
+# review does not reliably catch a single added import.
+#
+# Run with `make layers` or `uv run lint-imports`.
+[tool.importlinter]
+root_package = "deepdub_qc"
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture (ARCHITECTURE.md section 4)"
+type = "layers"
+# Higher layers may import lower ones, never the reverse. Modules separated by
+# ':' share a layer and are independent: they may not import each other.
+#
+# Deviation from the ARCHITECTURE.md diagram, recorded here deliberately:
+# cli and server are separate layers rather than peers, because the `serve`
+# command legitimately constructs the server app (cli.py:287-294). server sits
+# below cli and above orchestration.
+layers = [
+    "deepdub_qc.cli",
+    "deepdub_qc.server",
+    "deepdub_qc.orchestration",
+    "deepdub_qc.detectors : deepdub_qc.rules : deepdub_qc.reports : deepdub_qc.evidence : deepdub_qc.comparison",
+    "deepdub_qc.presets",
+    "deepdub_qc.models",
+    "deepdub_qc.utils",
+]
+
+# The layers contract above already implies the following, but these named
+# contracts exist because they are the project's load-bearing invariants and a
+# violation should fail with an error that says which rule was broken, not just
+# "illegal import".
+[[tool.importlinter.contracts]]
+name = "Detectors know nothing about thresholds or clients (ADR-001, ADR-003)"
+type = "forbidden"
+source_modules = ["deepdub_qc.detectors"]
+forbidden_modules = ["deepdub_qc.presets", "deepdub_qc.rules"]
+
+[[tool.importlinter.contracts]]
+name = "The rule engine knows nothing about how measurements were produced"
+type = "forbidden"
+source_modules = ["deepdub_qc.rules"]
+forbidden_modules = ["deepdub_qc.detectors", "deepdub_qc.evidence"]
+
+[[tool.importlinter.contracts]]
+name = "Renderers consume only the canonical result model (ADR-002)"
+type = "forbidden"
+source_modules = ["deepdub_qc.reports"]
+forbidden_modules = [
+    "deepdub_qc.detectors",
+    "deepdub_qc.rules",
+    "deepdub_qc.presets",
+    "deepdub_qc.orchestration",
+]
+
+[[tool.importlinter.contracts]]
+name = "Models are the shared vocabulary and depend on no application code"
+type = "forbidden"
+source_modules = ["deepdub_qc.models"]
+# utils is omitted: the ARCHITECTURE.md graph places models above utils, so
+# that import is permitted by design. It is currently unused.
+forbidden_modules = [
+    "deepdub_qc.cli",
+    "deepdub_qc.server",
+    "deepdub_qc.orchestration",
+    "deepdub_qc.detectors",
+    "deepdub_qc.rules",
+    "deepdub_qc.reports",
+    "deepdub_qc.evidence",
+    "deepdub_qc.presets",
+    "deepdub_qc.comparison",
+]
+
+[[tool.importlinter.contracts]]
+name = "The core is importable as a library without CLI or server deps (ADR-010)"
+type = "forbidden"
+source_modules = [
+    "deepdub_qc.orchestration",
+    "deepdub_qc.detectors",
+    "deepdub_qc.rules",
+    "deepdub_qc.presets",
+    "deepdub_qc.reports",
+    "deepdub_qc.evidence",
+    "deepdub_qc.models",
+    "deepdub_qc.utils",
+]
+forbidden_modules = ["deepdub_qc.cli", "deepdub_qc.server"]

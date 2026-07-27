@@ -9,12 +9,15 @@ Side effects: none (reads files).
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from deepdub_qc.exceptions import PresetError
+from deepdub_qc.exceptions import PresetError, preset_error_detail
 from deepdub_qc.presets.governance import discover_presets
 from deepdub_qc.presets.loader import load_preset
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -36,13 +39,21 @@ def build_catalog(presets_root: Path) -> list[PresetInfo]:
     """All loadable presets under the root, sorted by client then title.
 
     Presets that fail validation are skipped (they cannot be submitted
-    anyway); the caller logs them.
+    anyway) and logged HERE, at the swallow point: an unloadable preset
+    otherwise vanishes from the picker and /api/v1/presets with no trace,
+    and the loader's actionable message (including its did-you-mean
+    parameter suggestions) is discarded.
     """
     entries = []
     for path in discover_presets(presets_root):
         try:
             preset = load_preset(path)
-        except PresetError:
+        except PresetError as exc:
+            logger.warning(
+                "preset skipped from catalog: %s failed to load: %s",
+                path,
+                preset_error_detail(exc),
+            )
             continue
         meta = preset.preset
         entries.append(

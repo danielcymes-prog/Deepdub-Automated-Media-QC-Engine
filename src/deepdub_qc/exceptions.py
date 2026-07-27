@@ -33,3 +33,17 @@ class PresetValidationError(PresetError):
     def __init__(self, message: str, errors: list[str] | None = None) -> None:
         super().__init__(message)
         self.errors: list[str] = errors or []
+
+
+def preset_error_detail(exc: PresetError) -> str:
+    """One-line rendering including any per-rule validation messages.
+
+    `str(exc)` on a PresetValidationError is only the summary; the actionable
+    part (which rule, which parameter, did-you-mean suggestions) is in
+    `errors`. Log sites that swallow the exception must use this, or the
+    detail is discarded exactly where it is most needed.
+    """
+    errors = getattr(exc, "errors", None)
+    if errors:
+        return f"{exc}: {'; '.join(errors)}"
+    return str(exc)

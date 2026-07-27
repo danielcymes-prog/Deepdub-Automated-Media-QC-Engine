@@ -1,0 +1,12 @@
+# Keep host-local state out of the build context. tests/js/node_modules in
+# particular: the test stage runs its own `npm install`, and a macOS-built
+# tree copied into the Linux image would shadow it.
+.git
+.venv
+.gstack
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.import_linter_cache
+tests/js/node_modules
+tests/js/package-lock.json

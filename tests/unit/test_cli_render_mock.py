@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from deepdub_qc.cli import app
@@ -18,13 +19,17 @@ class TestRenderMock:
         assert not (tmp_path / "report.pdf").exists()
         assert "FAIL" in result.output  # overall status surfaced to the operator
 
+    @pytest.mark.usefixtures("weasyprint_native")
     def test_writes_pdf_when_backend_available(self, tmp_path: Path) -> None:
-        try:
-            import weasyprint  # noqa: F401, PLC0415
-        except (ImportError, OSError):
-            import pytest  # noqa: PLC0415
+        """Uses the shared `weasyprint_native` fixture (tests/conftest.py).
 
-            pytest.skip("WeasyPrint native libraries unavailable")
+        The previous local guard only caught a failing *import*, which happens to
+        be how macOS fails but is not how a partially-installed native stack
+        fails — there the module imports and rendering raises. More importantly,
+        a local `pytest.skip` cannot honour `DEEPDUB_QC_REQUIRE_TOOLCHAIN`, so the
+        CI verification job would have skipped PDF CLI coverage while reporting
+        green. That is the drift the conftest comment warns about.
+        """
         result = runner.invoke(app, ["render-mock", "--output", str(tmp_path)])
         assert result.exit_code == 0, result.output
         assert (tmp_path / "report.pdf").is_file()

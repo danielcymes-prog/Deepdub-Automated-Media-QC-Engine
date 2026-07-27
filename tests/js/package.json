@@ -1,0 +1,13 @@
+{
+  "name": "deepdub-qc-console-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Behavioural tests for the QC console's client-side polling. Run via `make js-tests` or pytest -m integration; see ADR-023.",
+  "type": "module",
+  "scripts": {
+    "test": "node console.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
