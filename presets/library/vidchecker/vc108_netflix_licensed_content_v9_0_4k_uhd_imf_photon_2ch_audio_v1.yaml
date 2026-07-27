@@ -7,13 +7,10 @@
 # parameter yet - see docs/vidchecker-import.md):
 #   - ImfConformance: IMF conformance (Photon) is not implemented
 #   - NetflixPhoton: IMF conformance (Photon) is not implemented
-#   - PixelAspectRatio: video.sample_aspect_ratio is planned, no detector yet
-#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
-#   - VideoBitrate: video.bitrate is planned, no detector yet
 #   - GopLength: GOP length is not inspected (no bitstream detector)
+#   - Field Order (flagged UnknownFieldOrder): no field-order mapping
 #   - Letterboxing: video.letterbox_detected is planned, no detector yet
 #   - ColourBars: colour-bars detection is not implemented
-#   - FieldOrder: video.field_order is planned, no detector yet
 #   - CorruptFrame: video.corrupt_frame_event is planned, no detector yet (backlog #36)
 #   - MediaOffline: media-offline slate detection is not implemented
 #   - AudioTransient: clicks-and-pops detection is not implemented
@@ -25,7 +22,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio"
-  description: "Imported from the Vidchecker template ' - Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio'. 12 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template ' - Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio'. 9 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -86,18 +83,51 @@ rules:
     display_name: "Chroma Subsampling (444)"
     description: "Checked via the pixel-format token (e.g. yuv422p10le)."
 
-  - rule_id: video-bit-depth
-    parameter_id: video.pixel_format
-    operator: regex
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
     expected:
-      pattern: "p10(le|be)$"
+      value: "1:1"
     applies_to:
       stream_type: video
       quantifier: all
-    display_name: "Video Bit Depth (10-bit, via pixel format)"
-    description: "video.bit_depth is planned; the pixel-format token encodes component depth in the meantime."
+    display_name: "Pixel Aspect Ratio (1:1)"
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
+
+  - rule_id: video-bit-depth
+    parameter_id: video.bit_depth
+    operator: equals
+    expected:
+      value: 10
+      unit: bit
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (10-bit)"
     severity: warning
     blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 7e+08
+      max: 1.6e+09
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (700-1600 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
 
   - rule_id: black-frames
     parameter_id: video.black_frame_event

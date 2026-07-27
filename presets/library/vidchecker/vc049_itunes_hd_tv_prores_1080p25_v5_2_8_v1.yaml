@@ -7,11 +7,8 @@
 # parameter yet - see docs/vidchecker-import.md):
 #   - ContainerEssenceConsistency: container/essence consistency is not inspected
 #   - EnhancedSyntax: codec bitstream syntax is not inspected
-#   - PixelAspectRatio: video.sample_aspect_ratio is planned, no detector yet
 #   - ITunesCompatibility: iTunes package conformance is not implemented
 #   - VideoBitRateMode: CBR/VBR mode is not rule-addressable
-#   - VideoBitrate: video.bitrate is planned, no detector yet
-#   - FieldOrder: video.field_order is planned, no detector yet
 #   - Cadence: cadence analysis is not implemented
 schema_version: 1.0.0
 
@@ -21,7 +18,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "iTunes HD TV - ProRes 1080p25 v5.2.8"
-  description: "Imported from the Vidchecker template '- iTunes HD TV - ProRes 1080p25 v5.2.8'. 8 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- iTunes HD TV - ProRes 1080p25 v5.2.8'. 5 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -74,6 +71,18 @@ rules:
     severity: warning
     blocking: false
 
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
   - rule_id: frame-rate
     parameter_id: video.frame_rate
     operator: approximately_equals
@@ -85,5 +94,33 @@ rules:
       stream_type: video
       quantifier: all
     display_name: "Frame Rate (25 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 8.8e+07
+      max: 2.2e+08
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (88-220 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: progressive
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (progressive)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
     severity: warning
     blocking: false

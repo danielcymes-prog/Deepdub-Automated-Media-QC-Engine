@@ -78,6 +78,20 @@ VIDEO_CODECS = {
 
 CONTAINERS = {"Mov": "mov", "Mxf": "mxf", "Imf": "mxf"}
 
+#: Vidchecker profile/level names -> ffprobe's reported strings (see the
+#: video.profile / video.level catalogue limitations).
+VIDEO_PROFILES = {
+    "H264High422Intra": "High 4:2:2 Intra",
+    "Mpeg2422": "4:2:2",
+    "Mpeg2Main": "Main",
+    "ProResHq": "HQ",
+}
+VIDEO_LEVELS = {
+    "H264Level41": "41",
+    "Mpeg2LevelHigh": "4",
+    "Mpeg2LevelMain": "8",
+}
+
 CHANNEL_LAYOUTS: dict[tuple[str, ...], list[str]] = {
     ("Left", "Right"): ["stereo"],
     ("Center",): ["mono"],
@@ -103,20 +117,15 @@ UNCOVERED_CHECKS = {
     "ContainerEssenceConsistencyTest": "container/essence consistency is not inspected",
     "DualMonoDetectionTest": "audio.duplicate_channel_risk is planned, no detector yet",
     "EnhancedSyntaxTest": "codec bitstream syntax is not inspected",
-    "FileBitrateTest": "container.overall_bitrate is planned, no detector yet",
-    "FrameAspectRatioTest": "video.display_aspect_ratio is planned, no detector yet",
     "GopLengthTest": "GOP length is not inspected (no bitstream detector)",
     "ITunesCompatibilityTest": "iTunes package conformance is not implemented",
     "ImfConformanceTest": "IMF conformance (Photon) is not implemented",
     "MxfOpTest": "MXF operational pattern is not inspected",
     "MxfTest": "MXF structural checks are not implemented",
     "NetflixPhotonTest": "IMF conformance (Photon) is not implemented",
-    "PixelAspectRatioTest": "video.sample_aspect_ratio is planned, no detector yet",
     "SingleSampleDescriptionTest": "QuickTime sample description count is not inspected",
     "SpsPpsTest": "H.264 SPS/PPS conformance is not inspected",
-    "StartTimecodeTest": "container.timecode_start is planned, no detector yet",
     "VideoBitRateModeTest": "CBR/VBR mode is not rule-addressable",
-    "VideoBitrateTest": "video.bitrate is planned, no detector yet",
     "VideoDropFrameTest": "video drop-frame flag is not rule-addressable",
     # VideoTest sub-tests
     "BlackLevelTest": "legal-level analysis (video.signal_range_event) is planned",
@@ -129,7 +138,6 @@ UNCOVERED_CHECKS = {
     "DeadPixelTest": "dead-pixel analysis is not implemented",
     "DigitalDropoutTest": "digital dropout detection is not implemented",
     "DropoutTest": "analogue dropout detection is not implemented",
-    "FieldOrderTest": "video.field_order is planned, no detector yet",
     "FlashTest": "PSE/flashing analysis is not implemented",
     "HdrTest": "HDR metadata checks are planned, no detector yet",
     "LetterboxingTest": "video.letterbox_detected is planned, no detector yet",
@@ -617,8 +625,31 @@ def _translate_video_incidents(container: ET.Element, out: Translation) -> None:
             rule |= {"operator": "not_exists"}
         out.rules.append(rule)
 
+    field_order = container.find("FieldOrderTest")
+    if not _is_nil(field_order):
+        assert field_order is not None
+        flagged = _text(field_order, "FlaggedFieldOrder") or "UnknownFieldOrder"
+        expected = {"Progressive": "progressive", "TopFieldFirst": "tff"}.get(flagged)
+        if expected is None:
+            out.uncovered.append(f"Field Order (flagged {flagged}): no field-order mapping")
+        else:
+            out.rules.append(
+                {
+                    "rule_id": "field-order",
+                    "parameter_id": _implemented("video.field_order"),
+                    "operator": "equals",
+                    "expected": {"value": expected},
+                    "applies_to": {"stream_type": "video", "quantifier": "all"},
+                    "display_name": f"Field Order ({expected})",
+                    "description": "Checks the declared stream flags; baseband "
+                    "field-dominance analysis is not implemented.",
+                    **_severity(field_order),
+                }
+            )
+
+    handled = ("BlackFrameTest", "FreezeFrameTest", "FieldOrderTest")
     for child in container:
-        if _is_nil(child) or child.tag in ("BlackFrameTest", "FreezeFrameTest"):
+        if _is_nil(child) or child.tag in handled:
             continue
         if child.tag in DIRECTIVES:
             continue
@@ -674,11 +705,42 @@ def _translate_flat_test(element: ET.Element, out: Translation) -> None:  # noqa
             )
         profile = _text(element, "VideoProfile") or "VideoProfileNone"
         level = _text(element, "VideoLevel") or "VideoLevelNone"
-        if profile != "VideoProfileNone" or level != "VideoLevelNone":
-            out.uncovered.append(
-                f"Video Profile/Level {profile}/{level}: video.profile and "
-                "video.level are planned, no detector yet"
-            )
+        if profile != "VideoProfileNone":
+            ffprobe_profile = VIDEO_PROFILES.get(profile)
+            if ffprobe_profile is None:
+                out.uncovered.append(f"Video Profile {profile}: no ffprobe profile mapping")
+            else:
+                out.rules.append(
+                    {
+                        "rule_id": "video-profile",
+                        "parameter_id": _implemented("video.profile"),
+                        "operator": "equals",
+                        "expected": {"value": ffprobe_profile},
+                        "applies_to": {"stream_type": "video", "quantifier": "all"},
+                        "display_name": f"Video Profile ({profile})",
+                        "description": "Compared against ffprobe's profile string - "
+                        "see the video.profile catalogue limitations.",
+                        **_severity(element),
+                    }
+                )
+        if level != "VideoLevelNone":
+            ffprobe_level = VIDEO_LEVELS.get(level)
+            if ffprobe_level is None:
+                out.uncovered.append(f"Video Level {level}: no ffprobe level mapping")
+            else:
+                out.rules.append(
+                    {
+                        "rule_id": "video-level",
+                        "parameter_id": _implemented("video.level"),
+                        "operator": "equals",
+                        "expected": {"value": ffprobe_level},
+                        "applies_to": {"stream_type": "video", "quantifier": "all"},
+                        "display_name": f"Video Level ({level})",
+                        "description": "ffprobe reports numeric level codes - "
+                        "see the video.level catalogue limitations.",
+                        **_severity(element),
+                    }
+                )
 
     elif tag == "FramesizeTest":
         width = int(_float(element, "HorizontalSize") or 0)
@@ -740,21 +802,104 @@ def _translate_flat_test(element: ET.Element, out: Translation) -> None:  # noqa
         )
 
     elif tag == "VideoBitDepthTest":
-        depth = _text(element, "BitDepth") or ""
-        pattern = "p$" if depth == "8" else f"p{depth}(le|be)$"
+        depth = int(_float(element, "BitDepth") or 0)
         out.rules.append(
             {
                 "rule_id": "video-bit-depth",
-                "parameter_id": _implemented("video.pixel_format"),
-                "operator": "regex",
-                "expected": {"pattern": pattern},
+                "parameter_id": _implemented("video.bit_depth"),
+                "operator": "equals",
+                "expected": {"value": depth, "unit": "bit"},
                 "applies_to": {"stream_type": "video", "quantifier": "all"},
-                "display_name": f"Video Bit Depth ({depth}-bit, via pixel format)",
-                "description": "video.bit_depth is planned; the pixel-format token "
-                "encodes component depth in the meantime.",
+                "display_name": f"Video Bit Depth ({depth}-bit)",
                 **_severity(element),
             }
         )
+
+    elif tag == "FrameAspectRatioTest":
+        numerator = int(_float(element, "FrameAspectRatioNumerator") or 0)
+        denominator = int(_float(element, "FrameAspectRatioDenominator") or 1)
+        out.rules.append(
+            {
+                "rule_id": "display-aspect-ratio",
+                "parameter_id": _implemented("video.display_aspect_ratio"),
+                "operator": "equals",
+                "expected": {"value": f"{numerator}:{denominator}"},
+                "applies_to": {"stream_type": "video", "quantifier": "all"},
+                "display_name": f"Display Aspect Ratio ({numerator}:{denominator})",
+                **_severity(element),
+            }
+        )
+
+    elif tag == "PixelAspectRatioTest":
+        numerator = int(_float(element, "PixelAspectRatioNumerator") or 0)
+        denominator = int(_float(element, "PixelAspectRatioDenominator") or 1)
+        out.rules.append(
+            {
+                "rule_id": "sample-aspect-ratio",
+                "parameter_id": _implemented("video.sample_aspect_ratio"),
+                "operator": "equals",
+                "expected": {"value": f"{numerator}:{denominator}"},
+                "applies_to": {"stream_type": "video", "quantifier": "all"},
+                "display_name": f"Pixel Aspect Ratio ({numerator}:{denominator})",
+                **_severity(element),
+            }
+        )
+
+    elif tag == "VideoBitrateTest":
+        lower = _float(element, "VideoBitrateLower") or 0.0
+        upper = _float(element, "VideoBitrateUpper") or 0.0
+        out.rules.append(
+            {
+                "rule_id": "video-bitrate",
+                "parameter_id": _implemented("video.bitrate"),
+                "operator": "between",
+                "expected": {"min": lower * 1_000_000, "max": upper * 1_000_000, "unit": "bit/s"},
+                "applies_to": {"stream_type": "video", "quantifier": "all"},
+                "display_name": f"Video Bitrate ({lower:g}-{upper:g} Mbit/s)",
+                "description": "Declared stream bitrate; streams without a declared "
+                "bit rate skip this rule - see the video.bitrate catalogue "
+                "limitations.",
+                **_severity(element),
+            }
+        )
+
+    elif tag == "FileBitrateTest":
+        lower = _float(element, "FileBitrateLower") or 0.0
+        upper = _float(element, "FileBitrateUpper") or 0.0
+        out.rules.append(
+            {
+                "rule_id": "overall-bitrate",
+                "parameter_id": _implemented("container.overall_bitrate"),
+                "operator": "between",
+                "expected": {"min": lower * 1_000_000, "max": upper * 1_000_000, "unit": "bit/s"},
+                "display_name": f"Overall Bitrate ({lower:g}-{upper:g} Mbit/s)",
+                **_severity(element),
+            }
+        )
+
+    elif tag == "StartTimecodeTest":
+        hours = int(_float(element, "Hours") or 0)
+        minutes = int(_float(element, "Minutes") or 0)
+        seconds = int(_float(element, "Seconds") or 0)
+        frames = int(_float(element, "Frames") or 0)
+        timecode = f"{hours:02d}:{minutes:02d}:{seconds:02d}:{frames:02d}"
+        tolerance = int(_float(element, "FramesTolerance") or 0)
+        rule = {
+            "rule_id": "start-timecode",
+            "parameter_id": _implemented("container.timecode_start"),
+            "operator": "equals",
+            "expected": {"value": timecode},
+            "display_name": f"Start Timecode ({timecode})",
+            "description": "Drop-frame material reports its timecode with a ';' "
+            "separator; adjust the expected value for drop-frame deliverables.",
+            **_severity(element),
+        }
+        if tolerance:
+            out.notes.append(
+                f"Vidchecker allowed a {tolerance}-frame start-timecode tolerance; "
+                "this rule requires an exact match."
+            )
+        out.rules.append(rule)
 
     elif tag == "AudioTracksTest":
         count = int(_float(element, "NumTracks") or 0)

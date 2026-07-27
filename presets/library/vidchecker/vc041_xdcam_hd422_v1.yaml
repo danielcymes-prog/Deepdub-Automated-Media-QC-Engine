@@ -6,13 +6,7 @@
 # Vidchecker checks NOT covered by this preset (no implemented
 # parameter yet - see docs/vidchecker-import.md):
 #   - MXF structural checks (0 sub-tests): MXF structural checks are not implemented
-#   - Video Profile/Level Mpeg2422/Mpeg2LevelHigh: video.profile and video.level are planned, no
-#   - detector yet
-#   - PixelAspectRatio: video.sample_aspect_ratio is planned, no detector yet
-#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
 #   - VideoBitRateMode: CBR/VBR mode is not rule-addressable
-#   - VideoBitrate: video.bitrate is planned, no detector yet
-#   - FileBitrate: container.overall_bitrate is planned, no detector yet
 schema_version: 1.0.0
 
 preset:
@@ -21,7 +15,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "XDCAM HD422"
-  description: "Imported from the Vidchecker template '- XDCAM HD422'. 7 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- XDCAM HD422'. 2 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -49,6 +43,32 @@ rules:
       stream_type: video
       quantifier: all
     display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: "4:2:2"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (Mpeg2422)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-level
+    parameter_id: video.level
+    operator: equals
+    expected:
+      value: "4"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Level (Mpeg2LevelHigh)"
+    description: "ffprobe reports numeric level codes - see the video.level catalogue limitations."
     severity: warning
     blocking: false
 
@@ -88,5 +108,55 @@ rules:
       quantifier: all
     display_name: "Chroma Subsampling (422)"
     description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 4.9e+07
+      max: 5.1e+07
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (49-51 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: overall-bitrate
+    parameter_id: container.overall_bitrate
+    operator: between
+    expected:
+      min: 4.8e+07
+      max: 5.2e+07
+      unit: bit/s
+    display_name: "Overall Bitrate (48-52 Mbit/s)"
     severity: warning
     blocking: false

@@ -7,14 +7,9 @@
 # parameter yet - see docs/vidchecker-import.md):
 #   - MXF structural checks (50 sub-tests): MXF structural checks are not implemented
 #   - MxfOp: MXF operational pattern is not inspected
-#   - Video Profile/Level Mpeg2422/Mpeg2LevelHigh: video.profile and video.level are planned, no
-#   - detector yet
-#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
-#   - VideoBitrate: video.bitrate is planned, no detector yet
 #   - AdvancedGopLength: GOP structure is not inspected (no bitstream detector)
 #   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
 #   - RgbGamut: legal-level analysis (video.signal_range_event) is planned
-#   - FieldOrder: video.field_order is planned, no detector yet
 #   - AudioBitrate: audio stream bitrate is not measured
 #
 # NOTE: Vidchecker configures multiple audio check groups on the same track; they are flattened
@@ -27,7 +22,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2"
-  description: "Imported from the Vidchecker template '- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2'. Vidchecker note: This template covers the general requirements for file based HD content to the ARD_ZDF_HDF01a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html 10 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2'. Vidchecker note: This template covers the general requirements for file based HD content to the ARD_ZDF_HDF01a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html 6 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -58,6 +53,32 @@ rules:
     severity: warning
     blocking: false
 
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: "4:2:2"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (Mpeg2422)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-level
+    parameter_id: video.level
+    operator: equals
+    expected:
+      value: "4"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Level (Mpeg2LevelHigh)"
+    description: "ffprobe reports numeric level codes - see the video.level catalogue limitations."
+    severity: warning
+    blocking: false
+
   - rule_id: chroma-subsampling
     parameter_id: video.pixel_format
     operator: contains
@@ -68,6 +89,18 @@ rules:
       quantifier: all
     display_name: "Chroma Subsampling (422)"
     description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
     severity: warning
     blocking: false
 
@@ -86,15 +119,30 @@ rules:
     blocking: false
 
   - rule_id: video-bit-depth
-    parameter_id: video.pixel_format
-    operator: regex
+    parameter_id: video.bit_depth
+    operator: equals
     expected:
-      pattern: "p$"
+      value: 8
+      unit: bit
     applies_to:
       stream_type: video
       quantifier: all
-    display_name: "Video Bit Depth (8-bit, via pixel format)"
-    description: "video.bit_depth is planned; the pixel-format token encodes component depth in the meantime."
+    display_name: "Video Bit Depth (8-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 4.9e+07
+      max: 5.1e+07
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (49-51 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
     severity: warning
     blocking: false
 
@@ -104,6 +152,19 @@ rules:
     expected:
       value: 8
     display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: tff
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (tff)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
     severity: warning
     blocking: false
 

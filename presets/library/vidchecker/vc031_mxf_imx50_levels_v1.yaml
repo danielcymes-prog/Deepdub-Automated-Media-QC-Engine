@@ -6,7 +6,6 @@
 # Vidchecker checks NOT covered by this preset (no implemented
 # parameter yet - see docs/vidchecker-import.md):
 #   - MXF structural checks (0 sub-tests): MXF structural checks are not implemented
-#   - FileBitrate: container.overall_bitrate is planned, no detector yet
 #   - LossOfChroma: loss-of-chroma detection is not implemented
 #   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
 #   - BlackLevel: legal-level analysis (video.signal_range_event) is planned
@@ -19,7 +18,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "MXF IMX50 Levels"
-  description: "Imported from the Vidchecker template '- MXF IMX50 Levels'. 6 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- MXF IMX50 Levels'. 5 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -47,6 +46,17 @@ rules:
       stream_type: video
       quantifier: all
     display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: overall-bitrate
+    parameter_id: container.overall_bitrate
+    operator: between
+    expected:
+      min: 4.8e+07
+      max: 5.2e+07
+      unit: bit/s
+    display_name: "Overall Bitrate (48-52 Mbit/s)"
     severity: warning
     blocking: false
 

@@ -5,11 +5,7 @@
 #
 # Vidchecker checks NOT covered by this preset (no implemented
 # parameter yet - see docs/vidchecker-import.md):
-#   - Video Profile/Level ProResHq/VideoLevelNone: video.profile and video.level are planned, no
-#   - detector yet
 #   - EnhancedSyntax: codec bitstream syntax is not inspected
-#   - PixelAspectRatio: video.sample_aspect_ratio is planned, no detector yet
-#   - StartTimecode: container.timecode_start is planned, no detector yet
 #   - Black Frame (required black segments): positional requirements are not expressible; only
 #   - maximum-duration caps are
 #   - ColourBars: colour-bars detection is not implemented
@@ -22,7 +18,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "Amazon v5.0 - ProRes422HQ MOV - 8Ch"
-  description: "Imported from the Vidchecker template '- Amazon v5.0 - ProRes422HQ MOV - 8Ch'. Vidchecker note: This template provides a basis for testing to the Amazon Studios specification, dated 16/03/2015. 7 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- Amazon v5.0 - ProRes422HQ MOV - 8Ch'. Vidchecker note: This template provides a basis for testing to the Amazon Studios specification, dated 16/03/2015. 4 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -48,6 +44,17 @@ rules:
       stream_type: video
       quantifier: all
     display_name: "Video Codec (ProRes)"
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: HQ
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (ProResHq)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
 
   - rule_id: video-width
     parameter_id: video.width
@@ -84,6 +91,18 @@ rules:
     severity: warning
     blocking: false
 
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
   - rule_id: frame-rate
     parameter_id: video.frame_rate
     operator: approximately_equals
@@ -99,15 +118,15 @@ rules:
     blocking: false
 
   - rule_id: video-bit-depth
-    parameter_id: video.pixel_format
-    operator: regex
+    parameter_id: video.bit_depth
+    operator: equals
     expected:
-      pattern: "p10(le|be)$"
+      value: 10
+      unit: bit
     applies_to:
       stream_type: video
       quantifier: all
-    display_name: "Video Bit Depth (10-bit, via pixel format)"
-    description: "video.bit_depth is planned; the pixel-format token encodes component depth in the meantime."
+    display_name: "Video Bit Depth (10-bit)"
     severity: warning
     blocking: false
 
@@ -117,6 +136,14 @@ rules:
     expected:
       value: 8
     display_name: "Audio Track Count"
+
+  - rule_id: start-timecode
+    parameter_id: container.timecode_start
+    operator: equals
+    expected:
+      value: "00:59:30:00"
+    display_name: "Start Timecode (00:59:30:00)"
+    description: "Drop-frame material reports its timecode with a ';' separator; adjust the expected value for drop-frame deliverables."
 
   - rule_id: audio-codec-t1
     parameter_id: audio.codec

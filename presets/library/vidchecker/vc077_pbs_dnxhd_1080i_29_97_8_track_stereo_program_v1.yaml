@@ -8,11 +8,7 @@
 #   - MxfOp: MXF operational pattern is not inspected
 #   - ContainerEssenceConsistency: container/essence consistency is not inspected
 #   - EnhancedSyntax: codec bitstream syntax is not inspected
-#   - PixelAspectRatio: video.sample_aspect_ratio is planned, no detector yet
-#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
-#   - VideoBitrate: video.bitrate is planned, no detector yet
 #   - ClosedCaps708: closed-caption (CEA-708) presence is not inspected
-#   - StartTimecode: container.timecode_start is planned, no detector yet
 #   - ContainerDropFrame: container drop-frame flag is not rule-addressable
 #   - VideoDropFrame: video drop-frame flag is not rule-addressable
 #   - Black Frame (required black segments): positional requirements are not expressible; only
@@ -22,7 +18,6 @@
 #   - BlackLevel: legal-level analysis (video.signal_range_event) is planned
 #   - RgbGamut: legal-level analysis (video.signal_range_event) is planned
 #   - SingleColor: single-colour frame detection is not implemented
-#   - FieldOrder: video.field_order is planned, no detector yet
 #   - AudioPhase: audio.phase_correlation is planned, no detector yet
 #   - AudioTransient: clicks-and-pops detection is not implemented
 #   - AudioPhase: audio.phase_correlation is planned, no detector yet
@@ -38,7 +33,7 @@ preset:
   client: vidchecker-library
   content_type: av_delivery
   title: "PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program"
-  description: "Imported from the Vidchecker template '- PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program'. Vidchecker note: This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition. 21 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template '- PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program'. Vidchecker note: This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition. 16 Vidchecker check(s) are not yet covered; see the preset file header."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -108,6 +103,30 @@ rules:
     severity: warning
     blocking: false
 
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
+    severity: warning
+    blocking: false
+
   - rule_id: frame-rate
     parameter_id: video.frame_rate
     operator: approximately_equals
@@ -122,12 +141,50 @@ rules:
     severity: warning
     blocking: false
 
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 1.3e+08
+      max: 2.4e+08
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (130-240 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
   - rule_id: audio-track-count
     parameter_id: audio.stream_count
     operator: equals
     expected:
       value: 8
     display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: start-timecode
+    parameter_id: container.timecode_start
+    operator: equals
+    expected:
+      value: "00:59:45:00"
+    display_name: "Start Timecode (00:59:45:00)"
+    description: "Drop-frame material reports its timecode with a ';' separator; adjust the expected value for drop-frame deliverables."
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: tff
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (tff)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
     severity: warning
     blocking: false
 

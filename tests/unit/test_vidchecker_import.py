@@ -96,6 +96,64 @@ class TestAudioTranslation:
         assert indices == [0, 1]
 
 
+TIER1_VIDEO = """
+<FileTests>
+  <FileBitrateTest><FileBitrateLower>48</FileBitrateLower><FileBitrateUpper>52</FileBitrateUpper>
+    <RejectOnError>false</RejectOnError></FileBitrateTest>
+  <StartTimecodeTest><RangeMethod>StartTcAt</RangeMethod>
+    <Hours>0</Hours><Minutes>59</Minutes><Seconds>30</Seconds><Frames>0</Frames>
+    <FramesTolerance>0</FramesTolerance><RejectOnError>true</RejectOnError></StartTimecodeTest>
+</FileTests>
+<VideoTests>
+  <VideoCodecTest><VideoCodec>ProRes</VideoCodec><VideoProfile>ProResHq</VideoProfile>
+    <VideoLevel>VideoLevelNone</VideoLevel><RejectOnError>true</RejectOnError></VideoCodecTest>
+  <VideoBitDepthTest><BitDepth>10</BitDepth><RejectOnError>false</RejectOnError></VideoBitDepthTest>
+  <FrameAspectRatioTest><FrameAspectRatioNumerator>16</FrameAspectRatioNumerator>
+    <FrameAspectRatioDenominator>9</FrameAspectRatioDenominator>
+    <RejectOnError>false</RejectOnError></FrameAspectRatioTest>
+  <VideoBitrateTest><VideoBitrateLower>100</VideoBitrateLower>
+    <VideoBitrateUpper>110</VideoBitrateUpper><RejectOnError>false</RejectOnError></VideoBitrateTest>
+</VideoTests>
+"""
+
+
+class TestTierOneTranslations:
+    def test_file_bitrate_converted_to_bits_per_second(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "overall-bitrate")
+        assert rule["expected"]["min"] == 48_000_000
+        assert rule["expected"]["max"] == 52_000_000
+
+    def test_start_timecode_formats_smpte(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "start-timecode")
+        assert rule["expected"]["value"] == "00:59:30:00"
+
+    def test_video_profile_maps_to_ffprobe_string(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "video-profile")
+        assert rule["expected"]["value"] == "HQ"
+        assert not any(r["rule_id"] == "video-level" for r in result.rules), (
+            "VideoLevelNone must not produce a level rule"
+        )
+
+    def test_bit_depth_uses_real_parameter(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "video-bit-depth")
+        assert rule["parameter_id"] == "video.bit_depth"
+        assert rule["expected"]["value"] == 10
+
+    def test_display_aspect_ratio(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "display-aspect-ratio")
+        assert rule["expected"]["value"] == "16:9"
+
+    def test_video_bitrate_range(self) -> None:
+        result = translate_template(template(TIER1_VIDEO))
+        rule = next(r for r in result.rules if r["rule_id"] == "video-bitrate")
+        assert rule["expected"] == {"min": 100_000_000, "max": 110_000_000, "unit": "bit/s"}
+
+
 class TestFailLoudly:
     def test_unknown_check_raises_instead_of_dropping(self) -> None:
         unknown = template("<VideoTests><BrandNewShinyTest/></VideoTests>")
