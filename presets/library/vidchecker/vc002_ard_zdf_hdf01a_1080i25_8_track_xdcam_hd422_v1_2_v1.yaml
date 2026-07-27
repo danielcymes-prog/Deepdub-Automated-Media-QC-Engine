@@ -1,0 +1,211 @@
+# Generated from the Vidchecker 8.2.2 template '- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2' (template id 2) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (50 sub-tests): MXF structural checks are not implemented
+#   - MxfOp: MXF operational pattern is not inspected
+#   - Video Profile/Level Mpeg2422/Mpeg2LevelHigh: video.profile and video.level are planned, no
+#   - detector yet
+#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
+#   - VideoBitrate: video.bitrate is planned, no detector yet
+#   - AdvancedGopLength: GOP structure is not inspected (no bitstream detector)
+#   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
+#   - RgbGamut: legal-level analysis (video.signal_range_event) is planned
+#   - FieldOrder: video.field_order is planned, no detector yet
+#   - AudioBitrate: audio stream bitrate is not measured
+#
+# NOTE: Vidchecker configures multiple audio check groups on the same track; they are flattened
+# NOTE: conjunctively here and need review before approval.
+schema_version: 1.0.0
+
+preset:
+  id: vc002_ard_zdf_hdf01a_1080i25_8_track_xdcam_hd422_v1_2
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2"
+  description: "Imported from the Vidchecker template '- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2'. Vidchecker note: This template covers the general requirements for file based HD content to the ARD_ZDF_HDF01a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html 10 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: mpeg2video
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "422"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (422)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 25
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (25 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bit-depth
+    parameter_id: video.pixel_format
+    operator: regex
+    expected:
+      pattern: "p$"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (8-bit, via pixel format)"
+    description: "video.bit_depth is planned; the pixel-format token encodes component depth in the meantime."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-track-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 8
+    display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-video-length-t1
+    parameter_id: audio.video_duration_delta
+    operator: approximately_equals
+    expected:
+      value: 0
+      tolerance: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio/Video Duration Match"
+    description: "Tolerance 0.5 s is a placeholder; Vidchecker's template carries no explicit tolerance."
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g2
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g2
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -3
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false

@@ -1,0 +1,49 @@
+# Generated from the Vidchecker 8.2.2 template '- Loudness ATSC correct' (template id 24) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+schema_version: 1.0.0
+
+preset:
+  id: vc024_loudness_atsc_correct
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: audio_delivery
+  title: "Loudness ATSC correct"
+  description: "Imported from the Vidchecker template '- Loudness ATSC correct'."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false

@@ -1,0 +1,80 @@
+# Generated from the Vidchecker 8.2.2 template 'Audio-Stereo-Test' (template id 112) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - DualMonoDetection: audio.duplicate_channel_risk is planned, no detector yet
+schema_version: 1.0.0
+
+preset:
+  id: deepdub_audio_stereo_test
+  version: 1.0.0
+  client: deepdub-internal
+  content_type: audio_delivery
+  title: Audio-Stereo-Test
+  description: "Imported from the Vidchecker template 'Audio-Stereo-Test'. 2 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 25
+      unit: s
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -95 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false

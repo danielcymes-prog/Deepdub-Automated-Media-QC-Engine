@@ -1,0 +1,105 @@
+# Generated from the Vidchecker 8.2.2 template 'Vanda-20-Audio' (template id 114) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - DualMonoDetection: audio.duplicate_channel_risk is planned, no detector yet
+schema_version: 1.0.0
+
+preset:
+  id: vanda_20_audio
+  version: 1.0.0
+  client: vanda
+  content_type: audio_delivery
+  title: Vanda-20-Audio
+  description: "Imported from the Vidchecker template 'Vanda-20-Audio'. 1 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: audio-codec
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Clipping (Flat Factor)"
+    description: "Vidchecker clipping sensitivity: Low. Whole-stream indicator, not per-event (audio.clipping_event is planned)."
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-peak-level
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -0.1
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Clipping (Sample Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 25
+      unit: s
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -95 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false

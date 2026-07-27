@@ -1,0 +1,64 @@
+# Generated from the Vidchecker 8.2.2 template '- XDCAM HD' (template id 40) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (0 sub-tests): MXF structural checks are not implemented
+#   - Video Profile/Level Mpeg2Main/VideoLevelNone: video.profile and video.level are planned,
+#   - no detector yet
+#   - FrameAspectRatio: video.display_aspect_ratio is planned, no detector yet
+#   - VideoBitrate: video.bitrate is planned, no detector yet
+#   - FileBitrate: container.overall_bitrate is planned, no detector yet
+schema_version: 1.0.0
+
+preset:
+  id: vc040_xdcam_hd
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "XDCAM HD"
+  description: "Imported from the Vidchecker template '- XDCAM HD'. 5 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: mpeg2video
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "420"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (420)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
