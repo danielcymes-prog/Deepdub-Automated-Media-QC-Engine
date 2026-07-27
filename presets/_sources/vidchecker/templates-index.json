@@ -1,0 +1,356 @@
+﻿[
+    {
+        "Id":  1,
+        "Name":  "-  File Info",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  2,
+        "Name":  "- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  3,
+        "Name":  "- ARD_ZDF_HDF01b 1080i25 16 Track XDCAM HD422 V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  4,
+        "Name":  "- ARD_ZDF_HDF02a 1080i25 8 Track AVC-I V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  5,
+        "Name":  "- ARD_ZDF_HDF02b 1080i25 16 Track AVC-I V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  6,
+        "Name":  "- ARD_ZDF_HDF03a 720p50 8 Track AVC-I V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  7,
+        "Name":  "- ARD_ZDF_HDF03b 720p50 16 Track AVC-I V1.2",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  8,
+        "Name":  "- ARD_ZDF_SDF01 576i25 1 Track D10 IMX50 V1.0",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  9,
+        "Name":  "- ARD_ZDF_SDF02 576i25 8 Track DV-BASED 50 V1.0",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  10,
+        "Name":  "- AS-10 50Mbps 1080i50 HIGH_HD_2014",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  11,
+        "Name":  "- AS-10 50Mbps 1080p25 HIGH_HD_2014",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  12,
+        "Name":  "- AS-11 UK DPP V4.3 HD AVC-I 16 Track Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  13,
+        "Name":  "- AS-11 UK DPP V4.3 HD AVC-I 4 Track Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  14,
+        "Name":  "- AS-11 UK DPP V4.3 SD IMX Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  19,
+        "Name":  "- AS-11 X1 UK DPP UHD",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  20,
+        "Name":  "- Chroma 75% color bars",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  21,
+        "Name":  "- DDV2 NPO MXF IMX-D10 v0.93",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  22,
+        "Name":  "- DDV2 NPO MXF XDCAM HD422 v0.94",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  23,
+        "Name":  "- IMX NTSC",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  24,
+        "Name":  "- Loudness ATSC correct",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  25,
+        "Name":  "- Loudness EBU correct",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  26,
+        "Name":  "- Loudness EBU r128s1 Momentary",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  27,
+        "Name":  "- Loudness EBU r128s1 Short-term",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  28,
+        "Name":  "- MPEG2 SD NTSC",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  29,
+        "Name":  "- MPEG2 SD PAL",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  30,
+        "Name":  "- MXF AVC-I 100",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  31,
+        "Name":  "- MXF IMX50 Levels",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  37,
+        "Name":  "- ProRes HQ HD",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  39,
+        "Name":  "- Video Levels re-encode",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  40,
+        "Name":  "- XDCAM HD",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  41,
+        "Name":  "- XDCAM HD422",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  42,
+        "Name":  "- AS-11 X9 NABA DPP HD, PCM audio (work in progress)",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  43,
+        "Name":  "- AS-11 UK DPP V5.0 HD AVC-I 16 Track Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  44,
+        "Name":  "- AS-11 UK DPP V5.0 HD AVC-I 4 Track Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  45,
+        "Name":  "- AS-11 UK DPP V5.0 SD IMX Single Part",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  46,
+        "Name":  "- Amazon v5.0 - ProRes422HQ MOV - 8Ch",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  47,
+        "Name":  "- iTunes HD TV - ProRes 1080i2997",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  48,
+        "Name":  "- iTunes HD TV - ProRes 1080p2398 v5.2.8",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  49,
+        "Name":  "- iTunes HD TV - ProRes 1080p25 v5.2.8",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  50,
+        "Name":  "- iTunes HD TV - ProRes 1080p2997",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  73,
+        "Name":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  76,
+        "Name":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Surround Program",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  77,
+        "Name":  "- PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  78,
+        "Name":  "- PBS - DNxHD 1080i 29.97 - 8 Track Surround Program",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  88,
+        "Name":  " - Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  104,
+        "Name":  " - Netflix - Licensed Content v9.0 - HD IMF (Photon)  - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  105,
+        "Name":  " - Netflix - Licensed Content v9.0 - SD ProResHQ - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  106,
+        "Name":  " - Netflix - Licensed Content v9.0 - 2K IMF (Photon)  - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  107,
+        "Name":  " - Netflix - Licensed Content v9.0 - 4k (UHD) ProResHQ - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  108,
+        "Name":  " - Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  109,
+        "Name":  " - Netflix - Licensed Content v9.0 - 2K ProResHQ - 2Ch Audio",
+        "UserNoteCount":  1,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  110,
+        "Name":  "TOPIC-Delivery",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  111,
+        "Name":  "New Template",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  112,
+        "Name":  "Audio-Stereo-Test",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  113,
+        "Name":  "Vanda-51-Audio",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  114,
+        "Name":  "Vanda-20-Audio",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  115,
+        "Name":  "Deliver-Audio",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  116,
+        "Name":  "Delivery",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    },
+    {
+        "Id":  117,
+        "Name":  "Delivery-51-Audio",
+        "UserNoteCount":  0,
+        "SystemNoteCount":  0
+    }
+]

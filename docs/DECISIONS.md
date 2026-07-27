@@ -507,3 +507,46 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   jsdom suite grew regression cases for each defect (46 checks) and crashes
   loudly against the pre-fix script. A deliberately narrower guard remains in
   `test_ebu_conformance.py` (ffmpeg only), now annotated as intentional.
+
+## ADR-025: Vidchecker template library imported as generated draft presets
+
+- **Status:** Accepted (2026-07-27)
+- **Context:** The production Vidchecker 8.2.2 instance holds 59 templates —
+  7 Deepdub-authored (TOPIC, Vanda, marimba, internal) and ~50 Telestream
+  factory templates (ARD/ZDF, DPP/AS-11, PBS, NPO, Netflix, Amazon, iTunes).
+  Replacing Vidchecker requires these to exist here as selectable presets.
+  Hand-translation (the marimba precedent) does not scale to 59, and many
+  Vidchecker checks (MXF structure, GOP/SPS-PPS, IMF/Photon, PSE, dual mono,
+  clicks-and-pops) have no implemented detector yet. Alternatives considered:
+  (a) hand-translate on demand — slow, and the library is never visible;
+  (b) import everything with rules over planned parameters — rejected,
+  presets referencing unimplemented parameters are validation errors by
+  design (ADR-021); (c) generate presets from the template export, restricted
+  to implemented parameters, documenting every gap.
+- **Decision:** (c). The raw SOAP export (`templates-combined.xml`, index,
+  notes) is committed under `presets/_sources/vidchecker/` as the
+  authoritative source artifact. `scripts/import_vidchecker_templates.py`
+  translates each template into one draft preset: Deepdub-authored templates
+  land under their clients (`topic`, `vanda`, `marimba`, `deepdub-internal` —
+  attribution confirmed by the operator), factory templates under
+  `presets/library/vidchecker/` with client `vidchecker-library`, which the
+  existing client-grouped picker renders as its own optgroup with no UI
+  change. Translation policy: `RejectOnError=true` → blocking error, else
+  non-blocking warning; 1-based track selectors → 0-based stream indices,
+  with the single-group-on-track-1 idiom widened to all audio streams
+  (marimba precedent); bit depth and chroma subsampling checked via the
+  codec/pixel-format tokens until their parameters are implemented. Checks
+  with no implemented counterpart are written into the preset header and the
+  generated coverage report (`docs/vidchecker-import.md`) — never silently
+  dropped, and an unknown check type crashes the importer. Templates 115/116
+  keep their refined hand translations; zero-rule templates are skipped and
+  listed. The importer never overwrites an existing preset without `--force`,
+  so post-generation human refinement survives re-runs.
+- **Consequences:** 52 generated presets (all `status: draft`; thresholds
+  remain human-reserved per handoff section 30) join the picker immediately.
+  The coverage report doubles as the detector-gap backlog for real Vidchecker
+  parity. Factory presets exercise only the implemented subset of their
+  source templates — the header makes the gap explicit on every file, so a
+  passing verdict cannot be mistaken for full spec conformance. The XML
+  archive (840 kB) lives in the repo; acceptable for a text artifact that
+  regeneration and audits depend on.

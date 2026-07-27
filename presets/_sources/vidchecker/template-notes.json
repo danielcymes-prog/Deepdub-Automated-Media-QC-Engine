@@ -1,0 +1,212 @@
+﻿[
+    {
+        "Template":  "- ARD_ZDF_HDF01a 1080i25 8 Track XDCAM HD422 V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF01a MXF Profile with XDCAM HD422, 1080i/25 and 8 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:51:02",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF01a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_HDF01b 1080i25 16 Track XDCAM HD422 V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF01b MXF Profile with XDCAM HD422, 1080i/25 and 16 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:54:05",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF01b Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_HDF02a 1080i25 8 Track AVC-I V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF02a MXF Profile with AVC-I 100, 1080i/25 and 8 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:55:10",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF02a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_HDF02b 1080i25 16 Track AVC-I V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF02b MXF Profile with AVC-I 100, 1080i/25 and 16 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:56:18",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF02b Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_HDF03a 720p50 8 Track AVC-I V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF03a MXF Profile with AVC-I 100, 720p/50 and 8 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:58:18",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF03a Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_HDF03b 720p50 16 Track AVC-I V1.2",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_HDF03b MXF Profile with AVC-I 100, 720p/50 and 16 mono AES3 audio tracks Version 1.2",
+        "Created":  "2018-06-20T10:59:05",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_HDF03b Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_SDF01 576i25 1 Track D10 IMX50 V1.0",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_SDF01 MXF Profile with D10, 576i/25 and one 8-channel AES3 audio track Version 1.0",
+        "Created":  "2018-06-20T11:01:40",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_SDF01 Technical Guidelines v1.0.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- ARD_ZDF_SDF02 576i25 8 Track DV-BASED 50 V1.0",
+        "Kind":  "UserNotes",
+        "Title":  "ARD_ZDF_SDF02 MXF Profile with DVbased50, 576i/25 and 8 mono AES3 audio tracks Version 1.0",
+        "Created":  "2018-06-20T11:02:50",
+        "Text":  "This template covers the general requirements for file based HD content to the ARD_ZDF_SDF02 Technical Guidelines v1.0.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html"
+    },
+    {
+        "Template":  "- AS-11 UK DPP V4.3 HD AVC-I 16 Track Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V4.3 HD AVC-I 16 Track Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based HD content to the AS-11 UK DPP Technical Standards V4.3.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 UK DPP V4.3 HD AVC-I 4 Track Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V4.3 HD AVC-I 4 Track Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based HD content to the AS-11 UK DPP Technical Standards V4.3.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 UK DPP V4.3 SD IMX Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V4.3 SD IMX Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based SD content to the AS-11 UK DPP Technical Standards V4.3.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 X1 UK DPP UHD",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 X1 UK DPP UHD (work in progress)",
+        "Created":  "2017-05-23T00:00:00",
+        "Text":  ""
+    },
+    {
+        "Template":  "- DDV2 NPO MXF IMX-D10 v0.93",
+        "Kind":  "UserNotes",
+        "Title":  "DDV2 NPO MXF IMX-D10 v0.9",
+        "Created":  "2015-06-15T11:01:31",
+        "Text":  "This template covers the general requirements for file based content for DDV2 NPO MXF IMX-D10 v0.93. Note that the audio checks need to be configured for the required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- DDV2 NPO MXF XDCAM HD422 v0.94",
+        "Kind":  "UserNotes",
+        "Title":  "DDV2 NPO MXF XDCAM HD422 v0.9",
+        "Created":  "2015-06-15T10:47:00",
+        "Text":  "This template covers the general requirements for file based HD content for DDV2 NPO MXF XDCAM HD422 v0.94. Note that the audio checks need to be configured for the required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 X9 NABA DPP HD, PCM audio (work in progress)",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 X9 NABA DPP HD, PCM audio (work in progress)",
+        "Created":  "2017-05-23T00:00:00",
+        "Text":  ""
+    },
+    {
+        "Template":  "- AS-11 UK DPP V5.0 HD AVC-I 16 Track Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V5.0 HD AVC-I 16 Track Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based HD content to the AS-11 UK DPP Technical Standards V5.0.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 UK DPP V5.0 HD AVC-I 4 Track Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V5.0 HD AVC-I 4 Track Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based HD content to the AS-11 UK DPP Technical Standards V5.0.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- AS-11 UK DPP V5.0 SD IMX Single Part",
+        "Kind":  "UserNotes",
+        "Title":  "AS-11 UK DPP V5.0 SD IMX Single Part",
+        "Created":  "2014-03-18T00:00:00",
+        "Text":  "This template covers the general requirements for file based SD content to the AS-11 UK DPP Technical Standards V5.0.  Please see the Digital Production Partnership website for specific versions for UK broadcasters. Note that the audio checks need to be configured for the broadcasters required stereo and surround sound audio tracks and channel layout."
+    },
+    {
+        "Template":  "- Amazon v5.0 - ProRes422HQ MOV - 8Ch",
+        "Kind":  "UserNotes",
+        "Title":  "Amazon v5.0 - ProRes422HQ MOV - 8Ch",
+        "Created":  "2017-05-25T12:35:35",
+        "Text":  "This template provides a basis for testing to the Amazon Studios specification, dated 16/03/2015."
+    },
+    {
+        "Template":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program",
+        "Kind":  "UserNotes",
+        "Title":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program",
+        "Created":  "2019-05-21T16:30:35",
+        "Text":  "This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition."
+    },
+    {
+        "Template":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Surround Program",
+        "Kind":  "UserNotes",
+        "Title":  "- PBS - XDCAM 422 1080i 29.97 - 8 Track Surround Program",
+        "Created":  "2019-05-21T16:31:03",
+        "Text":  "This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition."
+    },
+    {
+        "Template":  "- PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program",
+        "Kind":  "UserNotes",
+        "Title":  "- PBS - DNxHD 1080i 29.97 - 8 Track Stereo Program",
+        "Created":  "2019-05-21T16:27:26",
+        "Text":  "This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition."
+    },
+    {
+        "Template":  "- PBS - DNxHD 1080i 29.97 - 8 Track Surround Program",
+        "Kind":  "UserNotes",
+        "Title":  "- PBS - DNxHD 1080i 29.97 - 8 Track Surround Program",
+        "Created":  "2019-05-21T16:30:49",
+        "Text":  "This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for ProRes 422 HQ HD 1920x1080. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - HD IMF (Photon)  - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for IMF (Photon) containing J2K essence. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - SD ProResHQ - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for ProRes 422 HQ SD 720x576. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - 2K IMF (Photon)  - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for2K (2048x1080)  IMF (Photon) containing J2K essence. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - 4k (UHD) ProResHQ - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for ProRes 422 HQ 4K 3840x2160. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for IMF (Photon) containing 4k (UHD) J2K essence. Various audio configurations accepted."
+    },
+    {
+        "Template":  "- Netflix - Licensed Content v9.0 - 2K ProResHQ - 2Ch Audio",
+        "Kind":  "UserNotes",
+        "Title":  "- Netflix - Licensed Content v9.0 - HD ProResHQ - 2Ch Audio",
+        "Created":  "2020-06-08T13:35:47",
+        "Text":  "General requirements of Netflix Licensed Content Technical Delivery Specifications Version 9.0 and Apple iTunes Package Asset Specification for ProRes 422 HQ 2K 2048x1080. Various audio configurations accepted."
+    }
+]
