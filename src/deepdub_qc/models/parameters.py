@@ -902,8 +902,23 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         parameter_id="audio.duplicate_channel_risk",
         display_name="Duplicate Channel Risk",
         category=Category.AUDIO,
-        description="Whether two channels are identical, indicating a dual-mono error.",
+        description=(
+            "Whether two channels of the stream carry the same signal, "
+            "indicating a dual-mono error. Flagged pairs are listed in "
+            "measurement metadata."
+        ),
         data_type=DataType.BOOLEAN,
+        detector_id="audio.dualmono.ffmpeg",
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "Whole-stream measure: a pair is a duplicate when its difference "
+            "signal stays at or below -80 dB RMS AND at least one channel "
+            "carries content above -60 dB RMS (silent pairs are not flagged); "
+            "brief divergence anywhere in the programme clears the flag, "
+            "unlike Vidchecker's windowed variant. Streams wider than 8 "
+            "channels compare only their first 8. Mono streams report false."
+        ),
     ),
     # --- Audio channel groups (backlog #35) ---------------------------------
     ParameterDefinition(
