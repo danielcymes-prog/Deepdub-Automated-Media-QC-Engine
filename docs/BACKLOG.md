@@ -25,7 +25,7 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 19 | Rule engine: operators, registry, SKIPPED/ERROR semantics, aggregation | P0 | M | 4 | M3 | Core decision logic; unit test per operator |
 | 20 | Orchestration pipeline + `analyze` command, job dir layout | P0 | M | 18,19,13 | M3 | End-to-end MVP |
 | 21 | Test-media generator script + Tier 1 golden fixtures | P1 | M | 20 | M3 | Determinism + regression safety |
-| 22 | CI determinism test (repeat run, volatile-field mask, byte compare) | P1 | S | 20,10 | M3 | Makes ADR-008 enforceable, not aspirational |
+| 22 | ~~CI determinism test~~ **DONE** (test written in M3; actually running in CI 2026-07-26): `TestDeterminism` in tests/integration/test_analyze_e2e.py; CI now installs FFmpeg and runs the suite inside the pinned image (ADR-022) | P1 | S | 20,10 | M3 | Makes ADR-008 enforceable, not aspirational |
 | 23 | Loudness detector (single-pass ebur128: I, LRA, TP) + EBU reference validation | P1 | L | 20 | M4 | Highest-value dubbing check; validation is the long pole |
 | 24 | Silence detectors (head/tail/internal) | P1 | M | 20 | M4 | Common dubbing delivery blocker |
 | 25 | Clipping + duration-delta checks | P1 | S | 20 | M4 | Cheap, high signal |
@@ -33,7 +33,7 @@ Priorities: **P0** = blocks everything downstream · **P1** = MVP path · **P2**
 | 27 | blackdetect / freezedetect / signalstats detectors | P2 | M | 20 | M5 | Timestamped video incidents |
 | 28 | Evidence engine: thumbnails (+ waveforms) | P2 | M | 27 | M5 | Reviewer trust; seek-to-issue workflow |
 | 29 | Preset immutability enforcement + approval workflow + fixtures | P2 | M | 8 | M6 | Client governance |
-| 30 | import-linter layering rules in CI | P2 | S | 3 | M1–M3 | Enforces ADR-010 boundaries mechanically |
+| 30 | ~~import-linter layering rules in CI~~ **DONE 2026-07-26**: six contracts in pyproject.toml, `make layers`, CI step; all six pass | P2 | S | 3 | M1–M3 | Enforces ADR-010 boundaries mechanically |
 | 31 | FastAPI wrapper + Postgres repository + idempotent jobs | P2 | L | M3–M6, infra decisions | M7 | Service extraction; blocked on §30 human decisions |
 | 32 | ~~Vidchecker comparison harness~~ **DONE 2026-07-23**: `deepdub-qc compare` (src/deepdub_qc/comparison/) | P2 | M | 26 | M4+ | Parity evidence on checks that matter |
 | 33 | ~~Language-code normalization~~ **DONE 2026-07-23**: utils/language.py, applied in ffprobe 1.2.0 + rule selectors (both sides normalized) | P1 | S | 18 | M4 | MOV muxers store B codes; dubbing presets will reference both — discovered in M3 integration testing |
@@ -57,3 +57,14 @@ Items 1–2 are this week's work. Items 3–11 are one coherent M1 sprint.
     Evaluate ffmpeg signalstats outlier detection / decode-error counters
     to emit video.corrupt_frame_event. Motivated by docs/VALIDATION.md
     RHOA comparison.
+
+37. **Migrate report template to self-hosted fonts.** ADR-015 vendored Onest
+    and JetBrains Mono into `server/static/fonts/` for the console, but
+    `reports/templates/report.html.j2` still `@import`s both from Google
+    Fonts. On an air-gapped delivery host that import fails silently and the
+    renderer falls back to system fonts, changing text metrics and therefore
+    PDF pagination — so the same report.json can paginate differently on two
+    machines, which breaks the reproducibility guarantee in ADR-002. Fix:
+    reference the same local woff2 files (base64-inline them for WeasyPrint,
+    which resolves relative URLs against the document base). Add a rendering
+    test asserting no outbound network request is attempted.
