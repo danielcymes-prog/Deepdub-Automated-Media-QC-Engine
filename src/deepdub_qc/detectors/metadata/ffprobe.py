@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from fractions import Fraction
 from typing import Any
 
@@ -61,6 +62,63 @@ def normalize_container_format(format_name: str | None, extension: str) -> str |
     if extension in parts:
         return extension
     return parts[0]
+
+
+#: ffprobe field_order flags normalized by coded order (raw kept in metadata).
+_FIELD_ORDER_NORMALIZED = {
+    "progressive": "progressive",
+    "tt": "tff",
+    "tb": "tff",
+    "bb": "bff",
+    "bt": "bff",
+}
+
+_PIX_FMT_DEPTH = re.compile(r"(\d{1,2})(?:le|be)?$")
+
+
+def derive_bit_depth(stream: dict[str, Any]) -> int | None:
+    """Bits per colour component, preferring ffprobe's own declaration.
+
+    bits_per_raw_sample when present; otherwise the pixel-format token
+    (yuv422p10le -> 10, yuv420p -> 8). None when neither is conclusive.
+    """
+    declared = _as_int(stream.get("bits_per_raw_sample"))
+    if declared:
+        return declared
+    pix_fmt = stream.get("pix_fmt")
+    if not pix_fmt:
+        return None
+    match = _PIX_FMT_DEPTH.search(pix_fmt)
+    if match:
+        depth = int(match.group(1))
+        # Trailing digits like yuv420p's "420" never reach here (the regex
+        # requires the digits to end the token or precede le/be), but guard
+        # against absurd values from unusual format names.
+        if 8 <= depth <= 32:
+            return depth
+    if pix_fmt.endswith("p") or pix_fmt in ("rgb24", "bgr24", "gray"):
+        return 8
+    return None
+
+
+def normalize_field_order(raw: str | None) -> str | None:
+    """ffprobe field_order -> 'progressive' / 'tff' / 'bff' (None if unknown)."""
+    if raw is None:
+        return None
+    return _FIELD_ORDER_NORMALIZED.get(raw)
+
+
+def find_timecode(parsed: dict[str, Any]) -> str | None:
+    """First 'timecode' tag: container first, then streams in index order."""
+    tags = parsed.get("format", {}).get("tags") or {}
+    timecode = tags.get("timecode")
+    if timecode:
+        return str(timecode)
+    for stream in parsed.get("streams", []):
+        timecode = (stream.get("tags") or {}).get("timecode")
+        if timecode:
+            return str(timecode)
+    return None
 
 
 def build_media_summary(parsed: dict[str, Any]) -> dict[str, Any]:
@@ -137,7 +195,8 @@ class FfprobeDetector(Detector):
     """Container and stream metadata via ffprobe."""
 
     detector_id = "metadata.ffprobe"
-    detector_version = "1.2.0"  # 1.2.0: normalized language tags (backlog #33)
+    detector_version = "1.3.0"  # 1.3.0: Tier 1 metadata batch (bitrates, aspect
+    # ratios, bit depth, profile/level, field order, colour flags, timecode)
     parameters = (
         "audio.duration",
         "audio.video_duration_delta",
@@ -147,12 +206,27 @@ class FfprobeDetector(Detector):
         "filename.pattern",
         "container.format",
         "container.duration",
+        "container.overall_bitrate",
+        "container.start_time",
+        "container.timecode_present",
+        "container.timecode_start",
         "video.stream_count",
         "video.codec",
         "video.width",
         "video.height",
         "video.frame_rate",
         "video.pixel_format",
+        "video.bit_depth",
+        "video.bitrate",
+        "video.profile",
+        "video.level",
+        "video.display_aspect_ratio",
+        "video.sample_aspect_ratio",
+        "video.field_order",
+        "video.scan_type",
+        "video.color_primaries",
+        "video.color_space",
+        "video.transfer_characteristics",
         "audio.stream_count",
         "audio.codec",
         "audio.sample_rate",
@@ -248,6 +322,34 @@ class FfprobeDetector(Detector):
             out.append(
                 self._measurement(context, "container.duration", Category.CONTAINER, duration, "s")
             )
+        overall_bitrate = _as_int(fmt.get("bit_rate"))
+        if overall_bitrate is not None:
+            out.append(
+                self._measurement(
+                    context,
+                    "container.overall_bitrate",
+                    Category.CONTAINER,
+                    overall_bitrate,
+                    "bit/s",
+                )
+            )
+        start_time = _as_float(fmt.get("start_time"))
+        if start_time is not None:
+            out.append(
+                self._measurement(
+                    context, "container.start_time", Category.CONTAINER, start_time, "s"
+                )
+            )
+        timecode = find_timecode(parsed)
+        out.append(
+            self._measurement(
+                context, "container.timecode_present", Category.CONTAINER, timecode is not None
+            )
+        )
+        if timecode is not None:
+            out.append(
+                self._measurement(context, "container.timecode_start", Category.CONTAINER, timecode)
+            )
         return out
 
     def _stream_measurements(self, context: QCContext, parsed: dict[str, Any]) -> list[Measurement]:
@@ -319,6 +421,7 @@ class FfprobeDetector(Detector):
                     stream_index=index,
                 )
             )
+            out.extend(self._video_metadata_measurements(context, stream, index))
 
         fmt_duration = _as_float(parsed.get("format", {}).get("duration"))
         # A/V delta only exists when a video stream exists; container duration
@@ -401,6 +504,83 @@ class FfprobeDetector(Detector):
                         context, "audio.language", Category.AUDIO, language, stream_index=index
                     )
                 )
+        return out
+
+    def _video_metadata_measurements(
+        self, context: QCContext, stream: dict[str, Any], index: int | None
+    ) -> list[Measurement]:
+        """Tier 1 declared-metadata facts; absent fields emit no measurement."""
+        out: list[Measurement] = []
+
+        bit_depth = derive_bit_depth(stream)
+        if bit_depth is not None:
+            out.append(
+                self._measurement(
+                    context,
+                    "video.bit_depth",
+                    Category.VIDEO,
+                    bit_depth,
+                    "bit",
+                    stream_index=index,
+                    metadata={"pix_fmt": stream.get("pix_fmt")},
+                )
+            )
+        bitrate = _as_int(stream.get("bit_rate"))
+        if bitrate is not None:
+            out.append(
+                self._measurement(
+                    context, "video.bitrate", Category.VIDEO, bitrate, "bit/s", stream_index=index
+                )
+            )
+        profile = stream.get("profile")
+        if profile:
+            out.append(
+                self._measurement(
+                    context, "video.profile", Category.VIDEO, profile, stream_index=index
+                )
+            )
+        level = _as_int(stream.get("level"))
+        if level is not None and level > 0:
+            out.append(
+                self._measurement(
+                    context, "video.level", Category.VIDEO, str(level), stream_index=index
+                )
+            )
+        for parameter_id, key in (
+            ("video.display_aspect_ratio", "display_aspect_ratio"),
+            ("video.sample_aspect_ratio", "sample_aspect_ratio"),
+            ("video.color_primaries", "color_primaries"),
+            ("video.color_space", "color_space"),
+            ("video.transfer_characteristics", "color_transfer"),
+        ):
+            value = stream.get(key)
+            if value and value != "0:1":  # 0:1 is ffprobe's "no aspect declared"
+                out.append(
+                    self._measurement(
+                        context, parameter_id, Category.VIDEO, value, stream_index=index
+                    )
+                )
+        field_order = normalize_field_order(stream.get("field_order"))
+        if field_order is not None:
+            out.append(
+                self._measurement(
+                    context,
+                    "video.field_order",
+                    Category.VIDEO,
+                    field_order,
+                    stream_index=index,
+                    metadata={"field_order_raw": stream.get("field_order")},
+                )
+            )
+            out.append(
+                self._measurement(
+                    context,
+                    "video.scan_type",
+                    Category.VIDEO,
+                    "progressive" if field_order == "progressive" else "interlaced",
+                    stream_index=index,
+                )
+            )
         return out
 
     def _measurement(

@@ -6,7 +6,7 @@
 
 The vocabulary of measurable facts. A `parameter_id` is the contract between a detector, which produces measurements, and a preset, which writes rules about them (ADR-021).
 
-**43 implemented**, 53 planned, 96 catalogued in total.
+**58 implemented**, 38 planned, 96 catalogued in total.
 
 ## How to read this
 
@@ -32,26 +32,32 @@ The vocabulary of measurable facts. A `parameter_id` is the contract between a d
 |---|---|---|---|---|---|---|---|
 | `container.duration` | Container Duration | float | s | file | metadata.ffprobe | — | Total programme duration reported by the container. |
 | `container.format` | Container Format | string | — | file | metadata.ffprobe | — | Container format normalized to a single token (mov, mp4, mkv, wav). |
-| `container.overall_bitrate` | Overall Bitrate | integer | bit/s | file | *planned* | — | Total bitrate across all streams. |
-| `container.start_time` | Container Start Time | float | s | file | *planned* | — | Start time offset of the container timeline. |
-| `container.timecode_present` | Timecode Track Present | boolean | — | file | *planned* | — | Whether the container carries a timecode track. |
-| `container.timecode_start` | Start Timecode | string | — | file | *planned* | — | First timecode value, as SMPTE HH:MM:SS:FF. |
+| `container.overall_bitrate` | Overall Bitrate | integer | bit/s | file | metadata.ffprobe | — | Total bitrate across all streams. |
+| `container.start_time` | Container Start Time | float | s | file | metadata.ffprobe | — | Start time offset of the container timeline. |
+| `container.timecode_present` | Timecode Track Present | boolean | — | file | metadata.ffprobe | — | Whether the container carries a timecode track. |
+| `container.timecode_start` | Start Timecode | string | — | file | metadata.ffprobe | — | First timecode value, as SMPTE HH:MM:SS:FF. |
 | `container.truncated` | Container Truncated | boolean | — | file | *planned* | — | Whether the file appears cut short relative to its declared duration. |
+
+### Container caveats
+
+- `container.overall_bitrate` — Only emitted when the container declares an overall bit rate; some formats omit it.
+- `container.timecode_present` — Found via the container or stream 'timecode' tag (MOV tmcd track, MXF material package). Embedded VITC/ancillary timecode without a tag is not detected.
+- `container.timecode_start` — Only emitted when a 'timecode' tag exists; drop-frame timecodes keep their semicolon separator as reported.
 
 ## Video
 
 | Parameter | Name | Type | Unit | Scope | Detector | Accuracy | Description |
 |---|---|---|---|---|---|---|---|
-| `video.bit_depth` | Video Bit Depth | integer | bit | file | *planned* | — | Bits per colour component. |
-| `video.bitrate` | Video Bitrate | integer | bit/s | file | *planned* | — | Video stream bitrate. |
+| `video.bit_depth` | Video Bit Depth | integer | bit | stream | metadata.ffprobe | — | Bits per colour component. |
+| `video.bitrate` | Video Bitrate | integer | bit/s | stream | metadata.ffprobe | — | Video stream bitrate. |
 | `video.black_frame_count` | Black Frame Event Count | integer | — | stream | video.incidents.ffmpeg | — | Number of black spans detected in the stream. |
 | `video.black_frame_event` | Black Frame Event | float | s | stream, timed | video.incidents.ffmpeg | — | Duration of one detected black span. Emitted once per span, with start and end seconds. |
 | `video.codec` | Video Codec | string | — | stream | metadata.ffprobe | — | Video codec name per stream (prores, h264, ...). |
-| `video.color_primaries` | Colour Primaries | string | — | file | *planned* | — | Colour primaries (bt709, bt2020, ...). |
-| `video.color_space` | Colour Space | string | — | file | *planned* | — | Matrix coefficients / colour space. |
+| `video.color_primaries` | Colour Primaries | string | — | stream | metadata.ffprobe | — | Colour primaries (bt709, bt2020, ...). |
+| `video.color_space` | Colour Space | string | — | stream | metadata.ffprobe | — | Matrix coefficients / colour space. |
 | `video.corrupt_frame_event` | Corrupt Frame Event | float | s | file, timed | *planned* | — | A frame with decode errors or statistical outliers. Backlog #36: Vidchecker flagged such a frame on the RHOA M&E master that we localized only indirectly, via a one-frame gap between black spans. |
-| `video.display_aspect_ratio` | Display Aspect Ratio | string | — | file | *planned* | — | Display aspect ratio as declared by the stream. |
-| `video.field_order` | Field Order | string | — | file | *planned* | — | Field order for interlaced material (tff, bff). |
+| `video.display_aspect_ratio` | Display Aspect Ratio | string | — | stream | metadata.ffprobe | — | Display aspect ratio as declared by the stream (e.g. '16:9'). |
+| `video.field_order` | Field Order | string | — | stream | metadata.ffprobe | — | Field order: 'progressive', 'tff' or 'bff'. |
 | `video.frame_rate` | Frame Rate | float | fps | stream | metadata.ffprobe | — | Average frame rate, normalized to three decimal places. |
 | `video.frame_rate_mode` | Frame Rate Mode | string | — | file | *planned* | — | Constant or variable frame rate. |
 | `video.freeze_frame_count` | Freeze Frame Event Count | integer | — | stream | video.incidents.ffmpeg | — | Number of frozen spans detected in the stream. |
@@ -59,24 +65,35 @@ The vocabulary of measurable facts. A `parameter_id` is the contract between a d
 | `video.hdr_metadata_present` | HDR Metadata Present | boolean | — | file | *planned* | — | Whether HDR static or dynamic metadata is present. |
 | `video.height` | Video Height | integer | px | stream | metadata.ffprobe | — | Coded frame height. |
 | `video.letterbox_detected` | Letterbox Detected | boolean | — | file | *planned* | — | Whether the active picture is pillarboxed or letterboxed. |
-| `video.level` | Video Level | string | — | file | *planned* | — | Codec level. |
+| `video.level` | Video Level | string | — | stream | metadata.ffprobe | — | Codec level as reported by ffprobe, stringified. |
 | `video.luma_avg` | Luma Average | float | — | stream | video.incidents.ffmpeg | — | Mean Y value across the stream (signalstats). |
 | `video.luma_max` | Luma Maximum | float | — | stream | video.incidents.ffmpeg | — | Maximum Y value observed across the stream (signalstats). |
 | `video.luma_min` | Luma Minimum | float | — | stream | video.incidents.ffmpeg | — | Minimum Y value observed across the stream (signalstats). |
 | `video.pixel_format` | Pixel Format | string | — | stream | metadata.ffprobe | — | Pixel format name (yuv422p10le, yuv420p, ...). |
-| `video.profile` | Video Profile | string | — | file | *planned* | — | Codec profile (e.g. ProRes 422 HQ, High). |
-| `video.sample_aspect_ratio` | Sample Aspect Ratio | string | — | file | *planned* | — | Pixel aspect ratio as declared by the stream. |
-| `video.scan_type` | Scan Type | string | — | file | *planned* | — | Progressive or interlaced. |
+| `video.profile` | Video Profile | string | — | stream | metadata.ffprobe | — | Codec profile as reported by ffprobe (e.g. 'HQ', 'High 4:2:2 Intra'). |
+| `video.sample_aspect_ratio` | Sample Aspect Ratio | string | — | stream | metadata.ffprobe | — | Pixel aspect ratio as declared by the stream (e.g. '1:1'). |
+| `video.scan_type` | Scan Type | string | — | stream | metadata.ffprobe | — | 'progressive' or 'interlaced', derived from the declared field order. |
 | `video.signal_range_event` | Signal Range Event | float | s | file, timed | *planned* | — | Span where luma or chroma exceeds the legal broadcast range. |
 | `video.stream_count` | Video Stream Count | integer | — | file | metadata.ffprobe | — | Number of video streams in the file. |
-| `video.transfer_characteristics` | Transfer Characteristics | string | — | file | *planned* | — | Transfer function (bt709, pq, hlg, ...). |
+| `video.transfer_characteristics` | Transfer Characteristics | string | — | stream | metadata.ffprobe | — | Transfer function (bt709, pq, hlg, ...). |
 | `video.width` | Video Width | integer | px | stream | metadata.ffprobe | — | Coded frame width. |
 
 ### Video caveats
 
+- `video.bit_depth` — From bits_per_raw_sample when ffprobe reports it, else derived from the pixel-format token (yuv422p10le -> 10, plain 'p' suffix -> 8); streams reporting neither emit no measurement.
+- `video.bitrate` — Only emitted when the stream declares a bit rate; many MXF/MOV essence streams do not.
 - `video.black_frame_event` — ffmpeg blackdetect thresholds (0.5 s minimum, 0.10 pixel threshold) are detector constants, not preset-configurable. Spans shorter than the minimum are not reported.
+- `video.color_primaries` — Declared metadata only; unflagged streams emit no measurement.
+- `video.color_space` — Declared metadata only; unflagged streams emit no measurement.
+- `video.display_aspect_ratio` — Declared metadata only; not measured from the picture.
+- `video.field_order` — Normalized from ffprobe's flags (tt/tb -> tff by coded order, bb/bt -> bff); the raw value is preserved in measurement metadata. Streams with unknown field order emit no measurement.
 - `video.frame_rate` — Rational rates (24000/1001) are rounded for comparison; use the approximately_equals operator with a tolerance rather than equals.
 - `video.freeze_frame_event` — ffmpeg freezedetect thresholds (-60 dB noise, 1.0 s minimum) are detector constants. Legitimate static content (title cards, letterboxed slates) registers as frozen.
+- `video.level` — ffprobe reports numeric level codes: H.264 4.1 is '41'; MPEG-2 uses enum values ('4' High, '6' High-1440, '8' Main, '10' Low).
+- `video.profile` — Profile strings are ffprobe's names, which differ from vendor spec sheets (ProRes 422 HQ reports as 'HQ').
+- `video.sample_aspect_ratio` — Declared metadata only; not measured from the picture.
+- `video.scan_type` — Derived from stream flags, not baseband cadence analysis: progressive-segmented or telecined material reports its flagged value.
+- `video.transfer_characteristics` — Declared metadata only; unflagged streams emit no measurement.
 
 ## Audio
 
