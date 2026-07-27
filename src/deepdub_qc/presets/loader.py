@@ -19,10 +19,48 @@ import yaml
 from pydantic import ValidationError
 
 from deepdub_qc.exceptions import PresetNotFoundError, PresetParseError, PresetValidationError
+from deepdub_qc.models import parameters
 from deepdub_qc.models.preset import QCPreset
 from deepdub_qc.utils.hashing import sha256_file
 
 logger = logging.getLogger(__name__)
+
+
+def _parameter_errors(preset: QCPreset) -> list[str]:
+    """Report rules whose `parameter_id` no detector can satisfy (ADR-021).
+
+    Why: an uncatalogued or not-yet-implemented parameter cannot produce a
+    measurement. A blocking rule over one escalates to ERROR and is noticed,
+    but a non-blocking rule degrades to a SKIPPED finding — the operator gets a
+    complete-looking report for a check that never ran. Catching it at load
+    time is the difference between a typo being a validation error and a typo
+    being a silent gap in QC coverage.
+
+    Returns one message per offending rule; empty list when the preset is sound.
+    """
+    implemented = parameters.implemented_ids()
+    errors = []
+    for rule in preset.rules:
+        if rule.parameter_id in implemented:
+            continue
+
+        definition = parameters.get(rule.parameter_id)
+        if definition is not None:
+            errors.append(
+                f"rules.{rule.rule_id}.parameter_id: {rule.parameter_id!r} is catalogued "
+                f"but not implemented yet (status: {definition.implementation.value}); "
+                "no detector produces it, so this rule could never be evaluated"
+            )
+            continue
+
+        message = (
+            f"rules.{rule.rule_id}.parameter_id: {rule.parameter_id!r} is not in the "
+            "parameter catalogue (see docs/parameter-catalogue.md)"
+        )
+        if suggestions := parameters.suggest(rule.parameter_id):
+            message += f"; did you mean {' or '.join(repr(s) for s in suggestions)}?"
+        errors.append(message)
+    return errors
 
 
 def load_preset(path: Path) -> QCPreset:
@@ -31,7 +69,8 @@ def load_preset(path: Path) -> QCPreset:
     Raises:
         PresetNotFoundError: path missing or not a file.
         PresetParseError: file is not valid YAML or not a mapping.
-        PresetValidationError: YAML parsed but violates the preset schema.
+        PresetValidationError: YAML parsed but violates the preset schema, or
+            references a `parameter_id` no detector can measure (ADR-021).
     """
     if not path.is_file():
         raise PresetNotFoundError(f"preset file not found: {path}")
@@ -53,6 +92,12 @@ def load_preset(path: Path) -> QCPreset:
         raise PresetValidationError(
             f"preset failed validation with {len(errors)} error(s): {path}", errors=errors
         ) from exc
+
+    if parameter_errors := _parameter_errors(preset):
+        raise PresetValidationError(
+            f"preset references {len(parameter_errors)} unmeasurable parameter(s): {path}",
+            errors=parameter_errors,
+        )
 
     logger.debug(
         "preset loaded",

@@ -17,7 +17,7 @@ import json
 import logging
 from pathlib import Path
 
-from deepdub_qc.exceptions import PresetError
+from deepdub_qc.exceptions import PresetError, preset_error_detail
 from deepdub_qc.models.enums import PresetStatus
 from deepdub_qc.presets.loader import load_preset
 from deepdub_qc.utils.hashing import sha256_file
@@ -35,13 +35,19 @@ def discover_presets(root: Path) -> list[Path]:
 def build_lock(root: Path) -> dict[str, str]:
     """Map (posix relative path -> sha256) for every approved preset under root.
 
-    Invalid preset files are skipped here; `presets validate` reports them.
+    Invalid preset files are skipped here (and logged, so they never vanish
+    without a trace); `presets validate` reports them with full detail.
     """
     lock: dict[str, str] = {}
     for path in discover_presets(root):
         try:
             preset = load_preset(path)
-        except PresetError:
+        except PresetError as exc:
+            logger.warning(
+                "preset skipped from approval lock: %s failed to load: %s",
+                path,
+                preset_error_detail(exc),
+            )
             continue
         if preset.preset.status is PresetStatus.APPROVED:
             lock[path.relative_to(root).as_posix()] = sha256_file(path)
@@ -49,11 +55,34 @@ def build_lock(root: Path) -> dict[str, str]:
 
 
 def write_lock(root: Path) -> Path:
-    """Write the approval lock file and return its path."""
+    """Write the approval lock file and return its path.
+
+    Refuses to drop a locked entry whose file still exists but no longer
+    loads: that preset still claims approved status, so silently removing its
+    hash would void the ADR-013 immutability guarantee as a side effect of an
+    unrelated regeneration (e.g. a catalogue change demoting a parameter it
+    uses). Deliberate demotions and deletions are different: the file loads
+    fine or is gone, and the removal is visible in the lock diff under review.
+    """
+    lock = build_lock(root)
+    for rel_path in read_lock(root):
+        if rel_path in lock:
+            continue
+        path = root / rel_path
+        if not path.is_file():
+            continue
+        try:
+            load_preset(path)
+        except PresetError as exc:
+            msg = (
+                f"refusing to regenerate {LOCK_FILENAME}: locked approved preset "
+                f"{rel_path} no longer loads ({preset_error_detail(exc)}). Fix the "
+                "preset (or the parameter catalogue entry it references) before "
+                "re-locking."
+            )
+            raise PresetError(msg) from exc
     target = root / LOCK_FILENAME
-    target.write_text(
-        json.dumps(build_lock(root), indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    target.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return target
 
 
