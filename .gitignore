@@ -31,3 +31,7 @@ htmlcov/
 # EBU test set WAVs: technical-testing licence, never commit
 tests/fixtures/ebu/*.wav
 .gstack/
+
+# Local server instance (machine-specific paths, sqlite db, job outputs)
+/server.yaml
+/data/
