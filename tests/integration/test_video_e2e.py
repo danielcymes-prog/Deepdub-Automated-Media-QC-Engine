@@ -1,6 +1,5 @@
 """M5 video incident QC end-to-end: black/freeze detection + thumbnail evidence."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -18,10 +17,9 @@ TIER3_PRESET = REPO_ROOT / "tests" / "fixtures" / "presets" / "tier3_video_v1.ya
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(
-        shutil.which("ffprobe") is None or shutil.which("ffmpeg") is None,
-        reason="ffmpeg/ffprobe not available",
-    ),
+    # Skips locally / aborts a gate job when REQUIRED_TOOLS are missing; the
+    # tool list lives in tests/conftest.py so it cannot drift per module.
+    pytest.mark.requires_toolchain,
 ]
 
 

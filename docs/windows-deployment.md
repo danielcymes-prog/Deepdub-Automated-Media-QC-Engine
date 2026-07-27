@@ -117,7 +117,11 @@ Deliverable scripts (PowerShell, in `scripts/windows/`): `install.ps1`, `upgrade
 1. Verify prerequisites: 64-bit Python 3.13+, admin rights, NSSM present (bundled with the installer artifact).
 2. Create the §2 directory tree and set ACLs (`svc-deepdub-qc`: modify on `data\`+`logs\`, read on the rest).
 3. Place pinned FFmpeg build; write `VERSION.txt`.
-4. Create `app\releases\<version>\`, unpack the application, create the venv (`uv sync --frozen` from the committed lockfile — no network resolution surprises), and run `playwright install chromium` into the release directory (Chromium is pinned by the Playwright version in `uv.lock`).
+4. Create `app\releases\<version>\`, unpack the application, create the venv with **`uv sync --frozen --no-dev`** from the committed lockfile — no network resolution surprises — and run `playwright install chromium` into the release directory (Chromium is pinned by the Playwright version in `uv.lock`).
+
+   `--no-dev` is not optional. It omits the `dev` and `lint` dependency groups (pytest, ruff, mypy, import-linter), which a delivery host has no use for and may be unable to fetch. Without it, adding a lint tool to the repo becomes a deployment failure on this host. CI proves the CLI and `serve` still work with runtime dependencies only, so this path stays honest. `install-service.ps1` runs this sync itself, so re-running the installer also corrects a venv accidentally built with a plain `uv sync`.
+
+   Note that `--frozen` only means "do not re-resolve"; it does **not** verify that the lockfile matches `pyproject.toml`. Until 2026-07-26 the committed lock was missing `fastapi`, `uvicorn`, `httpx` and `python-multipart`, so this step could not have installed the server at all. CI now runs `uv lock --check` to make that drift unmergeable — but if a release ever fails here with a missing module, suspect a stale lock first.
 5. Point `app\current` (directory junction) at the new release.
 6. Write `config\server.yaml` from template (interactive prompts or `-ConfigValues` parameter for scripted installs).
 7. Register the `DeepdubQC` service (§3) and start it.

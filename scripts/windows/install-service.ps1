@@ -53,9 +53,30 @@ if (-not (Test-Path $configPath)) {
     Write-Host "Config exists, leaving untouched: $configPath"
 }
 
-# 4. Locate the entrypoint (uv-managed venv in the repo)
+# 4. Build the runtime venv (uv-managed, in the repo)
+#
+# Runtime dependencies ONLY: --no-dev omits the dev and lint groups (pytest,
+# ruff, mypy, import-linter). A delivery host has no use for test tooling and
+# may have no PyPI access, so installing dev groups here turns a lint-only
+# dependency into a deployment failure. The installer runs the sync itself so
+# the invariant is mechanical rather than a comment: `uv sync` makes the venv
+# match the lock exactly, which also strips dev packages left behind by a
+# habitual plain `uv sync`. On a host whose venv already matches, this is an
+# offline no-op. See docs/windows-deployment.md section 7.
+if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+    throw "uv not found on PATH — install uv first; the installer uses it to build the runtime venv."
+}
+Push-Location $RepoRoot
+try {
+    & uv sync --frozen --no-dev
+    if ($LASTEXITCODE -ne 0) { throw "uv sync --frozen --no-dev failed (exit $LASTEXITCODE)" }
+} finally {
+    Pop-Location
+}
 $entry = Join-Path $RepoRoot '.venv\Scripts\deepdub-qc.exe'
-if (-not (Test-Path $entry)) { throw "Entrypoint not found: $entry — run 'uv sync' in the repo first." }
+if (-not (Test-Path $entry)) {
+    throw "Entrypoint not found after sync: $entry — is the repo checkout complete?"
+}
 
 # 5. NSSM service registration (section 3)
 & $NssmPath stop $ServiceName 2>$null | Out-Null

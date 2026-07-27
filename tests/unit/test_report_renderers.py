@@ -109,9 +109,17 @@ class TestHtmlContract:
 
 
 class TestPdfRenderer:
+    @pytest.mark.usefixtures("weasyprint_native")
     def test_pdf_renders_from_same_model(self, tmp_path: Path) -> None:
-        weasyprint = pytest.importorskip("weasyprint")
-        assert weasyprint is not None
+        """Gated by `weasyprint_native` (tests/conftest.py) on the Pango/Cairo
+        stack actually resolving.
+
+        `pytest.importorskip("weasyprint")` was insufficient: the module is a
+        declared dependency and imports cleanly, then fails at render time with
+        an `OSError` from cffi's `dlopen`. `importorskip` only catches
+        `ImportError`, so on a macOS host without Pango this failed rather than
+        skipping.
+        """
         from deepdub_qc.reports.pdf_renderer import write_pdf_report  # noqa: PLC0415
 
         target = write_pdf_report(build_mock_result(), tmp_path, FIXED_TIMESTAMP)

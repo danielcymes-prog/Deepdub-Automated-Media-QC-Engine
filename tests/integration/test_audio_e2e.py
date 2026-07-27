@@ -1,6 +1,5 @@
 """M4 audio QC end-to-end: loudness, silence, clipping on generated fixtures."""
 
-import shutil
 import sys
 from pathlib import Path
 from uuid import UUID
@@ -21,10 +20,9 @@ TIER2_PRESET = REPO_ROOT / "tests" / "fixtures" / "presets" / "tier2_audio_v1.ya
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(
-        shutil.which("ffprobe") is None or shutil.which("ffmpeg") is None,
-        reason="ffmpeg/ffprobe not available",
-    ),
+    # Skips locally / aborts a gate job when REQUIRED_TOOLS are missing; the
+    # tool list lives in tests/conftest.py so it cannot drift per module.
+    pytest.mark.requires_toolchain,
 ]
 
 

@@ -32,6 +32,8 @@ _METRIC_KEYS = {
 
 pytestmark = [
     pytest.mark.integration,
+    # Deliberately narrower than the shared requires_toolchain marker: the EBU
+    # vectors exercise the ebur128 filter only, so ffprobe is not needed here.
     pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not available"),
 ]
 

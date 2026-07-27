@@ -30,3 +30,4 @@ htmlcov/
 
 # EBU test set WAVs: technical-testing licence, never commit
 tests/fixtures/ebu/*.wav
+.gstack/

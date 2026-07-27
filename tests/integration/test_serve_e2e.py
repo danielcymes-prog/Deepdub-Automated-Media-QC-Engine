@@ -27,10 +27,9 @@ from generate_test_media import generate  # noqa: E402
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(
-        shutil.which("ffprobe") is None or shutil.which("ffmpeg") is None,
-        reason="ffmpeg/ffprobe not available",
-    ),
+    # Skips locally / aborts a gate job when REQUIRED_TOOLS are missing; the
+    # tool list lives in tests/conftest.py so it cannot drift per module.
+    pytest.mark.requires_toolchain,
 ]
 
 

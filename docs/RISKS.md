@@ -4,9 +4,11 @@ Impact/likelihood: H/M/L. Owner defaults to engineering unless noted.
 
 ## Technical risks
 
-**R1. FFmpeg version drift breaks determinism (H/H).**
-Filter outputs (`ebur128`, `blackdetect`, `silencedetect`) change subtly between FFmpeg releases; the same file can yield different measurements on different machines.
-*Mitigation:* Pin FFmpeg in Docker (ADR-008); record versions in every result; treat FFmpeg upgrades as releases with full golden-corpus re-runs; CI determinism test runs inside the pinned image.
+**R1. FFmpeg version drift breaks determinism (H/H → H/M).**
+Filter outputs (`ebur128`, `blackdetect`, `silencedetect`, `astats`) change subtly between FFmpeg releases; the same file can yield different measurements on different machines.
+*Status 2026-07-26:* the mitigation below was documented from Phase 0 but only partially built. Until ADR-022 the Dockerfile used a floating base tag and unversioned `apt-get install ffmpeg`, and CI had no FFmpeg at all, so the determinism test skipped on every merge. Now: base image pinned by digest, expected FFmpeg version declared in `environment.lock` and asserted at build time, and the full suite runs inside that image (`make docker-test`, CI `canonical` job).
+*Residual:* closed 2026-07-27 — `EXPECTED_FFMPEG_VERSION` is pinned (`5.1.9-0+deb12u1` via `make pin-ffmpeg`), the build asserts it, and the CI `canonical` job fails if the pin is ever blanked back to record-only mode.
+*Mitigation:* Pin by digest + assert the FFmpeg version (ADR-008, ADR-022); record versions in every result; treat FFmpeg upgrades as releases with full golden-corpus re-runs; determinism test runs inside the pinned image.
 
 **R2. Loudness accuracy vs. Vidchecker/Dolby disagreement (H/M -> partially retired).**
 Clients compare our LUFS numbers against Vidchecker's. Divergence past ~0.1 LU erodes trust in the whole tool.
@@ -27,9 +29,10 @@ Generated test media may miss the artifacts real deliveries exhibit (encoder qui
 
 ## Architecture risks
 
-**R6. Layering erosion (M/M).**
+**R6. Layering erosion (M/M → M/L).**
 Under deadline pressure, detectors grow threshold knowledge or the rule engine learns about clients — the exact failure mode that makes Vidchecker-class tools unmaintainable.
-*Mitigation:* import-linter rules in CI (backlog #30); ADR-001/003 as review checklist; preset schema forbids executable logic.
+*Status 2026-07-26:* mechanized. Six import-linter contracts in `pyproject.toml` encode the ARCHITECTURE section 4 rules and run in CI (`make layers`); all six pass, confirming the boundaries were intact when enforcement was added. Review alone was never going to catch a single added import.
+*Mitigation:* import-linter contracts in CI (backlog #30, done); ADR-001/003 as review checklist; preset schema forbids executable logic.
 
 **R7. Report contract instability after detectors exist (M/M).**
 Changing the `QCResult` schema post-M3 ripples through renderers, golden files, and (later) Composer.

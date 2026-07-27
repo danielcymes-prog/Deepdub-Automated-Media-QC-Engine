@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# DEEPDUB_QC_REQUIRE_TOOLCHAIN turns "FFmpeg missing, skip the integration
+# suite" into a hard failure (ADR-022). Before that guard, FFmpeg was absent
+# from CI and every integration test skipped while pytest reported green.
+env:
+  DEEPDUB_QC_REQUIRE_TOOLCHAIN: "1"
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -13,26 +19,76 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
-      - name: Install WeasyPrint native libraries (ADR-007)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
+      - name: Install system dependencies
+        # ffmpeg/ffprobe: required by the integration suite.
+        # libpango/libharfbuzz: WeasyPrint PDF rendering (ADR-007).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ffmpeg \
+            libpango-1.0-0 \
+            libpangoft2-1.0-0 \
+            libharfbuzz-subset0
+      - name: Lockfile is in step with pyproject
+        # The committed lock silently lacked fastapi, uvicorn, httpx and
+        # python-multipart from Phase 3.5 until 2026-07-26, so the Windows
+        # installer's `uv sync --frozen` could not have installed the server at
+        # all. This step makes that class of drift impossible to merge.
+        run: uv lock --check
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --dev --group lint
       - name: Format check
         run: uv run ruff format --check .
       - name: Lint
         run: uv run ruff check .
       - name: Type check
         run: uv run mypy
+      - name: Layering contracts (ADR-010, backlog #30)
+        run: uv run --group lint lint-imports
+      - name: Install console test toolchain (ADR-023)
+        # jsdom for the console behaviour suite. Node is preinstalled on
+        # ubuntu-latest; with DEEPDUB_QC_REQUIRE_TOOLCHAIN=1 the suite FAILS
+        # rather than skips if this install is ever removed.
+        run: npm install --prefix tests/js --no-audit --no-fund
       - name: Tests
-        run: uv run pytest -q
-      - name: Schema drift check
+        # -rs lists any remaining skips in the log, so a new silent guard is
+        # visible in the run output rather than invisible in a green tick.
+        run: uv run pytest -q -rs
+      - name: Schema drift check (ADR-004)
         run: uv run python scripts/export_schemas.py --check
+      - name: Parameter catalogue drift check (ADR-021)
+        run: uv run python scripts/export_parameters.py --check
+      # Must be last: it rebuilds the environment without the dev groups, which
+      # removes pytest, ruff, mypy and import-linter. Every step above needs
+      # those, so this cannot move earlier.
+      - name: Delivery-host smoke test — runtime deps only
+        # The Windows delivery host installs runtime dependencies only
+        # (docs/windows-deployment.md section 7) and may have no PyPI access.
+        # If the CLI ever stops working without the dev groups, deployment
+        # breaks; this catches it here instead of on the RDP host.
+        run: |
+          uv sync --frozen --no-dev
+          uv run --no-dev deepdub-qc version
+          uv run --no-dev deepdub-qc presets validate presets
+          uv run --no-dev deepdub-qc serve --help
 
-  docker:
+  # The canonical verification (ADR-022): the same suite inside the pinned
+  # image, so reproducibility is proven on the FFmpeg we actually ship.
+  canonical:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build image
-        run: docker build -t deepdub-qc:ci .
-      - name: Smoke test
-        run: docker run --rm deepdub-qc:ci version
+      - name: FFmpeg pin is armed (ADR-022)
+        # An empty EXPECTED_FFMPEG_VERSION puts the Dockerfile guard in
+        # record-only mode: the build prints the resolved version and passes,
+        # so a Debian FFmpeg bump would silently change measurements. The
+        # determinism claim in README/ADR-022 requires the assert branch.
+        run: grep -Eq '^EXPECTED_FFMPEG_VERSION=.+' environment.lock
+      - name: Full suite inside the pinned image
+        run: make docker-test
+      - name: Build the shipped runtime image
+        run: make docker
+      - name: Smoke test the runtime image
+        run: |
+          docker run --rm deepdub-qc:dev version
+          docker run --rm deepdub-qc:dev presets validate presets
