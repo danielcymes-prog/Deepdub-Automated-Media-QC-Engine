@@ -583,3 +583,38 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   with instance-scoped astats parsing (detector replaceability, ADR-010,
   keeps presets untouched). Parity validation against real Vidchecker
   dual-mono alerts is outstanding (docs/VALIDATION.md).
+
+## ADR-027: Watch folders as a config-declared, in-process polling watcher
+
+- **Status:** Accepted (2026-07-27); spec: docs/watch-folders-spec.md
+- **Context:** Every job requires manual console/CLI submission, but
+  file-based QC operations run on drop folders (Vidchecker's dropboxes are
+  its automation backbone). Alternatives considered: (a) OS filesystem
+  notifications — unreliable on the UNC/SMB shares the RDP host reads from;
+  (b) a separate watcher process/service — a second lifecycle to install,
+  monitor and version on the host; (c) runtime CRUD of folders via the
+  console — adds a mutating admin surface with no authentication story
+  beyond RDP login.
+- **Decision:** A single polling watcher thread inside the existing server
+  process (Worker's lifecycle twin), declared in `server.yaml` under
+  `watch_folders:` — versionable config, no new admin surface, strict
+  validation at startup (unknown preset or folder outside media_roots
+  refuses to start). Files enqueue through the normal `JobStore.enqueue`
+  path with `watch:<name>` provenance only when stable (identical size and
+  mtime across two consecutive scans plus a settle window), so files still
+  copying never trigger. A persistent `watch_seen` table (path -> size,
+  mtime) makes restarts safe and makes a changed file at the same path a
+  deliberate re-delivery, enqueued with `duplicate_override`. Failures
+  degrade per folder (unreachable directory, preset that stopped loading,
+  full queue -> deferral, parked after repeated failures) and are visible
+  in a read-only console panel; the watcher loop itself never dies. v1
+  never moves or deletes inputs; a missing directory is an error state,
+  not an empty folder — `glob` on a vanished share must not read as
+  "no files today".
+- **Consequences:** Operators get hands-off QC with the existing queue,
+  concurrency and reporting unchanged. Folder changes require a service
+  restart (accepted: config is the single source of truth on this host;
+  runtime CRUD is a future phase). Verdict-based routing and completion
+  webhooks are designed-for (reserved config keys) and land in the
+  follow-up. Cloud bucket watchers remain out of scope until the tool
+  leaves the RDP host.

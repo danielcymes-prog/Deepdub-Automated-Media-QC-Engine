@@ -291,6 +291,7 @@ def serve(
         validate_runtime,
     )
     from deepdub_qc.server.store import JobStore  # noqa: PLC0415
+    from deepdub_qc.server.watch import Watcher  # noqa: PLC0415
     from deepdub_qc.server.worker import Worker  # noqa: PLC0415
 
     try:
@@ -317,6 +318,19 @@ def serve(
     application = create_app(loaded, store=store)
     worker = Worker(store, settings)
     worker.start()
+    try:
+        watcher = Watcher(store, settings)
+    except ValueError as exc:
+        err_console.print(f"[red]Invalid watch folder configuration:[/red] {exc}")
+        worker.stop()
+        raise typer.Exit(code=ExitCode.INVALID_CONFIGURATION) from exc
+    application.state.qc.watcher = watcher
+    watcher.start()
+    if settings.watch_folders:
+        console.print(
+            f"[green]Watching {len(settings.watch_folders)} folder(s)[/green] — "
+            "see /watch for status"
+        )
     console.print(
         f"[green bold]Deepdub QC service ready[/green bold] — open "
         f"http://{settings.server.host}:{settings.server.port}"
@@ -329,6 +343,7 @@ def serve(
             log_level=settings.logging.level.value.lower(),
         )
     finally:
+        watcher.stop()
         worker.stop()
 
 

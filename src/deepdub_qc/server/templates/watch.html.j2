@@ -1,0 +1,45 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import preset_status_pill %}
+{% set nav = 'watch' %}
+{% block title %}Watch folders — Deepdub QC{% endblock %}
+{% block content %}
+<h1>Watch folders</h1>
+<p class="dim">Files dropped into these folders are QC'd automatically against the
+bound preset. Watch folders are declared in the server configuration — this
+panel is read-only (docs/watch-folders-spec.md).</p>
+{% if folders %}
+<table class="data-table">
+  <caption class="visually-hidden">
+    Configured watch folders and their scanning status. Read-only.
+  </caption>
+  <thead><tr><th scope="col">Name</th><th scope="col">Folder</th>
+             <th scope="col">Preset</th><th scope="col">State</th>
+             <th scope="col">Enqueued</th><th scope="col">Deferred</th></tr></thead>
+  <tbody>
+  {% for f in folders %}
+    <tr>
+      <td class="mono">{{ f.name }}</td>
+      <td class="mono">{{ f.path }}</td>
+      <td class="mono">{{ f.preset_id }}@{{ f.preset_version }}
+        {{ preset_status_pill(f.preset_status) }}</td>
+      <td>
+        {% if f.error %}<span class="pill pill-deprecated" title="{{ f.error }}">error</span>
+          <span class="cell-caption">{{ f.error }}</span>
+        {% elif not f.enabled %}<span class="pill">disabled</span>
+        {% else %}<span class="pill pill-approved">watching</span>{% endif %}
+      </td>
+      <td class="mono">{{ f.enqueued_total }}</td>
+      <td class="mono">{{ f.deferred_count }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <p>No watch folders configured.</p>
+  <p class="field-help">Declare them under <span class="mono">watch_folders:</span>
+     in the server configuration and restart the service —
+     see <span class="mono">docs/watch-folders-spec.md</span>.</p>
+</div>
+{% endif %}
+{% endblock %}
