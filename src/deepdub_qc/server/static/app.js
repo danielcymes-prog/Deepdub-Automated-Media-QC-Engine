@@ -3,6 +3,30 @@
 (function () {
   "use strict";
 
+  /* ---- destructive-action confirmation (bound FIRST, fail closed) ----
+     Replaces inline `onsubmit="return confirm(…)"`, which any Content-Security-
+     Policy blocks outright. Bound by delegation on document, so it also covers
+     forms introduced by a poll refresh. Whitespace in the data-confirm attribute
+     is collapsed because the templates wrap it across lines for legibility.
+
+     Controls marked [data-requires-js] ship disabled in the markup and are only
+     enabled here, AFTER the confirmation handler is registered: if this script
+     fails to load or dies earlier in this closure, the Cancel button stays
+     inert instead of submitting an unconfirmed destructive POST. */
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-confirm]");
+    if (!form) { return; }
+    var message = form.getAttribute("data-confirm").replace(/\s+/g, " ").trim();
+    if (!window.confirm(message)) { event.preventDefault(); }
+  });
+
+  function enableJsGated(root) {
+    (root || document).querySelectorAll("[data-requires-js]").forEach(function (control) {
+      control.disabled = false;
+    });
+  }
+  enableJsGated(document);
+
   /* ---- polling ----
      Refreshes the [data-poll] region from the server every POLL_SECONDS.
 
@@ -25,6 +49,26 @@
   var POLL_SECONDS = 2;
   var region = document.querySelector("[data-poll]");
 
+  /** Copy `fresh`'s attributes onto `current` without touching its children.
+   *  Attribute mutation never moves focus, so this is safe on the focused path
+   *  — it is how a focused form's data-confirm text follows a state change. */
+  function syncAttributes(current, fresh) {
+    var changed = false;
+    Array.prototype.slice.call(current.attributes).forEach(function (attr) {
+      if (!fresh.hasAttribute(attr.name)) {
+        current.removeAttribute(attr.name);
+        changed = true;
+      }
+    });
+    Array.prototype.forEach.call(fresh.attributes, function (attr) {
+      if (current.getAttribute(attr.name) !== attr.value) {
+        current.setAttribute(attr.name, attr.value);
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
   /** Replace `current`'s content with `fresh`'s, preserving focus and caret.
    *  Recurses along the path to the focused element so that a focused control
    *  (in practice: the Cancel button on a running job) is never re-created,
@@ -38,13 +82,26 @@
       current.innerHTML = fresh.innerHTML;
       return true;
     }
-    /* Structure changed under the focused node — nothing safe to do positionally,
-       so leave it; the next poll after focus moves will reconcile it. */
+    /* Positional patching is only sound when the page kept its shape: equal
+       child counts AND matching tags per index. Equal counts alone once let a
+       pending→running transition splice stage text into the wrong elements,
+       stripping the live region's aria attributes in the process. When the
+       shape changed, leave everything; the poll after focus moves reconciles. */
     if (current.children.length !== fresh.children.length) { return false; }
+    var sameShape = Array.prototype.every.call(current.children, function (child, i) {
+      return child.tagName === fresh.children[i].tagName;
+    });
+    if (!sameShape) { return false; }
     var changed = false;
     Array.prototype.forEach.call(current.children, function (child, i) {
       var other = fresh.children[i];
-      if (!other || child.innerHTML === other.innerHTML) { return; }
+      if (child.outerHTML === other.outerHTML) { return; }
+      /* Attributes first (safe even on the focused path), then content:
+         recursing toward the focused element, plain innerHTML off it. Nodes
+         are never swapped out, so live regions and the focused control keep
+         their identity. */
+      if (syncAttributes(child, other)) { changed = true; }
+      if (child.innerHTML === other.innerHTML) { return; }
       if (child.contains(active)) {
         if (patchElement(child, other)) { changed = true; }
       } else {
@@ -68,7 +125,8 @@
   }
 
   /** Reconcile the jobs table body by data-job-id: patch shared rows in place,
-   *  append new jobs, drop finished ones. Keeps focus and row identity. */
+   *  insert new jobs at their server-ordered position, drop finished ones.
+   *  Keeps focus and row identity. */
   function patchRows(currentBody, freshBody) {
     var changed = false;
     var freshRows = {};
@@ -78,10 +136,12 @@
       if (id) { freshRows[id] = row; order.push(id); }
     });
 
+    var currentRows = {};
     Array.prototype.slice.call(currentBody.rows).forEach(function (row) {
       var id = row.getAttribute("data-job-id");
       if (!id) { return; }
       if (!freshRows[id]) { row.remove(); changed = true; return; }
+      currentRows[id] = row;
       /* Only the state and verdict cells are volatile; the id, filename, preset
          and requester are fixed for the life of a job. Patching just those two
          means a hovered badge or a focused row link is never disturbed. */
@@ -96,11 +156,20 @@
           changed = true;
         }
       });
-      delete freshRows[id];
     });
 
+    /* Walk the server's order with a cursor so an unseen row lands where the
+       server put it. The list is newest-first: a plain appendChild used to
+       file another operator's brand-new job at the bottom, under older jobs. */
+    var previous = null;
     order.forEach(function (id) {
-      if (freshRows[id]) { currentBody.appendChild(freshRows[id]); changed = true; }
+      var row = currentRows[id];
+      if (!row) {
+        row = freshRows[id];
+        currentBody.insertBefore(row, previous ? previous.nextSibling : currentBody.firstChild);
+        changed = true;
+      }
+      previous = row;
     });
     return changed;
   }
@@ -162,7 +231,10 @@
           } else {
             touched = patchElement(region, fresh);
           }
-          if (touched) { bindCopy(region); }
+          /* Fresh markup arrives with [data-requires-js] controls disabled
+             (fail-closed default); re-enable them now that they are guarded.
+             Copy buttons need nothing: their click handler is delegated. */
+          if (touched) { enableJsGated(region); }
           renderCaption();
         })
         .catch(function () {
@@ -182,30 +254,25 @@
     window.addEventListener("pagehide", function () { clearInterval(timer); });
   }
 
-  /* ---- destructive-action confirmation ----
-     Replaces inline `onsubmit="return confirm(…)"`, which any Content-Security-
-     Policy blocks outright. Bound by delegation on document, so it also covers
-     forms introduced by a poll refresh. Whitespace in the data-confirm attribute
-     is collapsed because the templates wrap it across lines for legibility. */
-  document.addEventListener("submit", function (event) {
-    var form = event.target.closest("form[data-confirm]");
-    if (!form) { return; }
-    var message = form.getAttribute("data-confirm").replace(/\s+/g, " ").trim();
-    if (!window.confirm(message)) { event.preventDefault(); }
+  /* ---- copy affordances ----
+     Delegated, like the confirmation handler: per-button addEventListener
+     stacked one duplicate listener per poll tick onto buttons that survived a
+     focus-preserving patch, so one click wrote the clipboard N times and the
+     N-th restore captured "✓" as the label to restore to. Delegation binds
+     once, covers poll-introduced buttons, and cannot stack. */
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest(".copy");
+    if (!button) { return; }
+    navigator.clipboard.writeText(button.getAttribute("data-copy") || "");
+    /* Remember the resting label across rapid clicks so the restore can never
+       capture the transient checkmark. */
+    if (!button.dataset.copyLabel) { button.dataset.copyLabel = button.textContent; }
+    button.textContent = "✓";
+    setTimeout(function () {
+      button.textContent = button.dataset.copyLabel || button.textContent;
+      delete button.dataset.copyLabel;
+    }, 1500);
   });
-
-  /* ---- copy affordances ---- */
-  function bindCopy(root) {
-    (root || document).querySelectorAll(".copy").forEach(function (button) {
-      button.addEventListener("click", function () {
-        navigator.clipboard.writeText(button.getAttribute("data-copy") || "");
-        var previous = button.textContent;
-        button.textContent = "✓";
-        setTimeout(function () { button.textContent = previous; }, 1500);
-      });
-    });
-  }
-  bindCopy(document);
 
   /* ---- submit page: remembered requested_by ---- */
   var requestedBy = document.getElementById("requested_by");
@@ -310,22 +377,51 @@
       });
     };
 
+    /* A failed navigation must not masquerade as an empty folder: /browse
+       returns {"error": …} with a non-2xx status for a deleted, forbidden or
+       non-directory path, and rendering that as zero entries (plus a stack
+       push for a folder we never entered) left the operator with a blank
+       listing and a Back button that needed an extra press. Show the error in
+       the list and stay exactly where we were. */
+    var renderError = function (message) {
+      list.innerHTML = "";
+      var item = document.createElement("li");
+      item.className = "browser-error";
+      item.textContent = "⚠ " + message;
+      list.appendChild(item);
+    };
+
     /* `isBack` distinguishes a descent (push where we were) from a pop (the
        caller has already adjusted the stack), so re-entering a folder forwards
        and stepping back stay symmetric. */
     var navigate = function (path, isBack) {
       fetch("/api/v1/browse?path=" + encodeURIComponent(path || ""))
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            if (!r.ok) { throw new Error(data.error || "HTTP " + r.status); }
+            return data;
+          });
+        })
         .then(function (data) {
-          if (!isBack && currentPath !== null) { pathStack.push(currentPath); }
+          /* The stack only moves on success, so a failed navigation — forward
+             or back — leaves both the crumb and the history exactly as they
+             were. */
+          if (isBack) {
+            pathStack.pop();
+          } else if (currentPath !== null) {
+            pathStack.push(currentPath);
+          }
           currentPath = path || "";
           render(data);
+        })
+        .catch(function (error) {
+          renderError(error.message || "Could not open this location");
         });
     };
 
     backButton.addEventListener("click", function () {
       if (!pathStack.length) { return; }
-      navigate(pathStack.pop(), true);
+      navigate(pathStack[pathStack.length - 1], true);
     });
 
     browseButton.addEventListener("click", function () {

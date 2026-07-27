@@ -10,34 +10,54 @@
 
 {% if jobs %}
 <div id="jobs-region" data-poll="/jobs?page={{ page }}">
-<table class="data-table">
+{# rows-linked opts this table into row navigation and the pointer cursor; the
+   presets table deliberately omits it. data-job-id gives the poller a stable key
+   so it can patch rows in place rather than replacing the tbody, which would
+   destroy keyboard focus every two seconds. #}
+<table class="data-table rows-linked">
+  <caption class="visually-hidden">
+    QC jobs, newest first. Each row links to that job's detail page.
+  </caption>
   <thead>
-    <tr><th>Job</th><th>Media</th><th>Preset</th><th>By</th>
-        <th>State</th><th>Verdict</th><th></th></tr>
+    <tr><th scope="col">Job</th><th scope="col">Media</th><th scope="col">Preset</th>
+        <th scope="col">By</th><th scope="col">State</th><th scope="col">Verdict</th>
+        <th scope="col"><span class="visually-hidden">Open</span></th></tr>
   </thead>
   <tbody>
     {% for job in jobs %}
-    <tr onclick="location.href='/jobs/{{ job.job_id }}'">
-      <td class="mono">{{ job.job_id[:8] }}…</td>
+    <tr data-job-id="{{ job.job_id }}">
+      {# The anchor is the only navigation affordance: a real href, so it is
+         keyboard-reachable and ⌘/middle-clickable. CSS stretches it over the
+         whole row so the mouse target stays row-wide. #}
+      <td class="mono"><a class="row-link" href="/jobs/{{ job.job_id }}"
+        >{{ job.job_id[:8] }}…<span class="visually-hidden">
+        — open job for {{ job.filename }}</span></a></td>
       <td title="{{ job.input_path }}">{{ job.filename }}</td>
       <td class="mono">{{ job.preset_id }}@{{ job.preset_version }}</td>
       <td>{{ job.requested_by }}</td>
-      <td>{{ job_chip(job.status, job.queue_position) }}</td>
-      <td>{{ verdict_badge(job.qc_status) }}</td>
-      <td class="dim">›</td>
+      <td data-cell="state">{{ job_chip(job.status, job.queue_position) }}</td>
+      <td data-cell="verdict">{{ verdict_badge(job.qc_status) }}</td>
+      <td class="row-chevron" aria-hidden="true">›</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 <div class="table-foot">
-  <span>
-    {% if pages > 1 %}
-      {% for p in range(1, pages + 1) %}
-        {% if p == page %}<strong>{{ p }}</strong>{% else %}<a href="/jobs?page={{ p }}">{{ p }}</a>{% endif %}
-      {% endfor %}
-    {% endif %}
-  </span>
-  <span class="dim" id="poll-caption">Updated just now · auto-refresh</span>
+  {% if pages > 1 %}
+  <nav aria-label="Jobs pagination" class="pagination">
+    {% for p in range(1, pages + 1) %}
+      {% if p == page %}
+      <span class="page-current" aria-current="page">{{ p }}</span>
+      {% else %}
+      <a href="/jobs?page={{ p }}" aria-label="Page {{ p }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+  {% else %}<span></span>{% endif %}
+  {# Age is written by app.js from the last successful poll. The server-rendered
+     text is the honest state at first paint: it has just been rendered. #}
+  <span class="dim poll-caption" id="poll-caption" role="status" aria-live="polite"
+        data-poll-caption>Updated just now</span>
 </div>
 </div>
 {% else %}

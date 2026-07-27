@@ -10,6 +10,10 @@ Design notes:
 - WAL mode; short-lived connections; BEGIN IMMEDIATE around read-modify-
   write transitions (enqueue capacity check, claim) so a second thread
   cannot double-claim.
+- Connections are opened and closed per operation by the `_connect` context
+  manager. `sqlite3.Connection.__exit__` does NOT close a connection, only
+  ending the transaction, so relying on `with sqlite3.connect(...)` alone
+  leaks descriptors; see `_connect` for why that mattered in practice.
 - Duplicate identity for E5 is (resolved input path, size, preset id,
   preset version) - NOT the content hash: hashing a 40 GB master at submit
   time would block the form for minutes. The pipeline still records the
@@ -23,6 +27,8 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -146,12 +152,44 @@ class JobStore:
             if "degraded_note" not in columns:
                 conn.execute("ALTER TABLE jobs ADD COLUMN degraded_note TEXT")
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        """Yield a connection, committing on success and always closing it.
+
+        Why a context manager rather than a bare factory: this previously
+        returned the connection and every caller wrote
+        ``with self._connect() as conn:``. That reads as if the connection is
+        being managed, but ``sqlite3.Connection.__exit__`` only commits or rolls
+        back the *transaction* — it never closes the connection. Each call
+        therefore left an open handle (2 file descriptors under WAL, for the
+        ``-wal`` and ``-shm`` files) to be reclaimed whenever CPython's
+        refcounting happened to drop the local.
+
+        That is invisible in normal operation and brutal under two conditions:
+
+        - a test session that retains tracebacks, since each retained frame pins
+          its locals and therefore its connection. This exhausted the macOS
+          default ``ulimit -n`` of 256 and turned 1 real failure into 152.
+        - a long-running ``deepdub-qc serve`` process, which held a descriptor
+          per store call until the garbage collector intervened.
+
+        Transaction semantics are unchanged: the inner ``with conn`` block still
+        commits on success and rolls back on exception, so all callers keep
+        working untouched and the explicit ``BEGIN IMMEDIATE`` statements in the
+        read-modify-write paths behave exactly as before. Only the ``finally``
+        close is new.
+
+        Side effects: opens and closes a SQLite connection to ``self._database``.
+        """
         conn = sqlite3.connect(self._database, timeout=30.0)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+        try:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     # ------------------------------------------------------------ submission
 

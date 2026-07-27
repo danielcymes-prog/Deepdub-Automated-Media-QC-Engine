@@ -1,22 +1,45 @@
-{# App shell (gui-design-spec section 3). Brand tokens are PLACEHOLDERS
-   pending approval (handoff section 30). #}
+{# App shell (gui-design-spec section 3). Brand tokens resolved against the
+   Deepdub brand package; typefaces are self-hosted from /static/fonts/ so the
+   console renders correctly on air-gapped broadcast networks. #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Deepdub QC{% endblock %}</title>
+{# Preload the two faces actually used above the fold; both are variable-weight
+   so no per-weight requests are needed. crossorigin is required on preload for
+   fonts even same-origin, or the fetch is made twice. #}
+<link rel="preload" href="/static/fonts/onest-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/jetbrains-mono-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
 <header class="shell-header">
-  <a class="wordmark" href="/"><img src="/static/wordmark.svg" alt="Deepdub"> <span class="qc-tag">QC</span></a>
-  <nav>
-    <a href="/" class="{{ 'active' if nav == 'submit' }}">Submit</a>
-    <a href="/jobs" class="{{ 'active' if nav == 'jobs' }}">Jobs</a>
-    <a href="/presets" class="{{ 'active' if nav == 'presets' }}">Presets</a>
-  </nav>
-  <span class="health" id="health-dot" title="Service health">●</span>
+  <div class="shell-header-inner">
+    <a class="wordmark" href="/" aria-label="Deepdub QC — home"
+      ><img src="/static/wordmark.svg" alt="Deepdub" width="106" height="24"
+      ><span class="qc-tag" aria-hidden="true">QC</span></a>
+    {# One macro for all three items so the active-state markup exists in exactly
+       one place. aria-current is what conveys the current page to assistive tech;
+       the .active class only drives the magenta underline, and the font-weight
+       shift in app.css means the state is not signalled by colour alone. #}
+    {%- macro nav_link(href, key, label) -%}
+      {%- set is_active = (nav == key) -%}
+      <a href="{{ href }}"{% if is_active %} class="active" aria-current="page"{% endif %}>{{ label }}</a>
+    {%- endmacro -%}
+    <nav aria-label="Main">
+      {{ nav_link('/', 'submit', 'Submit') }}
+      {{ nav_link('/jobs', 'jobs', 'Jobs') }}
+      {{ nav_link('/presets', 'presets', 'Presets') }}
+    </nav>
+    {# The dot itself is a ::before pseudo-element so the status has a real text
+       label; app.js swaps .down and rewrites the label text. #}
+    <span class="health" id="health-dot" role="status" aria-live="polite"
+          title="QC service health"><span>Service up</span></span>
+  </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
 <footer class="shell-footer mono">deepdub-qc v{{ version }} · Phase 3.5 console</footer>

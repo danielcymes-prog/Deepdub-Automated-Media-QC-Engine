@@ -27,22 +27,43 @@
 {% if job.status == 'pending' %}
   <p>Queued — position {{ job.queue_position }} of {{ job.queue_total }}</p>
   <p class="dim">One job runs at a time. This job starts automatically.</p>
+  {# data-confirm instead of an inline onsubmit handler: inline JS is blocked by
+     any CSP, and the message belongs with the markup rather than in a string
+     literal inside an attribute. app.js binds this by delegation. The button
+     ships disabled and app.js enables it only after that delegation is bound,
+     so a failed script load can never submit an unconfirmed cancel. #}
   <form method="post" action="/jobs/{{ job.job_id }}/cancel"
-        onsubmit="return confirm('Cancel this job?')">
-    <button class="danger-outline">Cancel job</button>
+        data-confirm="Cancel this queued job? It has not started, so no analysis
+                      output will be lost.">
+    <button class="danger-outline" data-requires-js disabled>Cancel job</button>
   </form>
 
 {% elif job.status == 'running' %}
-  <ul class="stage-list" aria-live="polite">
+  {# The list itself must NOT be a live region. It was aria-live="polite" and the
+     poller replaced it wholesale every 2s, so a screen reader re-announced every
+     already-completed stage on every cycle — unusable on a long analysis. The
+     live region is now the single line below, carrying only the current stage. #}
+  <ul class="stage-list">
     {% for event in job.progress %}
-    <li><span class="stage-done">✓</span> {{ event.label }}
+    <li><span class="stage-done" aria-hidden="true">✓</span>
+        <span class="visually-hidden">Completed:</span> {{ event.label }}
         <span class="dim mono">{{ event.at[11:19] }}</span></li>
     {% endfor %}
-    <li><span class="spinner"></span> <span class="dim">working…</span></li>
+    <li><span class="spinner" aria-hidden="true"></span>
+        <span class="dim">working…</span></li>
   </ul>
+  <p class="stage-status" role="status" aria-live="polite" data-stage-status>
+    {%- if job.progress -%}
+      Stage {{ job.progress|length }} complete: {{ job.progress[-1].label }}
+    {%- else -%}
+      Analysis started
+    {%- endif -%}
+  </p>
   <form method="post" action="/jobs/{{ job.job_id }}/cancel"
-        onsubmit="return confirm('Cancelling a running job stops the analysis immediately. Partial output stays in the job folder, but no report is produced. Cancel?')">
-    <button class="danger-outline">Cancel job</button>
+        data-confirm="Cancelling a running job stops the analysis immediately.
+                      Partial output stays in the job folder, but no report is
+                      produced. Cancel this job?">
+    <button class="danger-outline" data-requires-js disabled>Cancel job</button>
   </form>
 
 {% elif job.status == 'completed' %}

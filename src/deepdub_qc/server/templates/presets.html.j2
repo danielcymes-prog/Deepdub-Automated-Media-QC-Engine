@@ -6,15 +6,31 @@
 <h1>Presets</h1>
 <p class="dim">Presets are versioned files managed in git — this list is read-only.
 To change thresholds, talk to the preset owner.</p>
+{# No `rows-linked` class: these rows do not navigate anywhere, so they must not
+   claim a pointer cursor. Row hover highlight still applies for tracking across
+   five columns. #}
+{% if catalog %}
 <table class="data-table">
-  <thead><tr><th>Title</th><th>ID / version</th><th>Content type</th>
-             <th>Status</th><th>Effective</th></tr></thead>
+  <caption class="visually-hidden">
+    Available QC presets, grouped by client. Read-only.
+  </caption>
+  <thead><tr><th scope="col">Title</th><th scope="col">ID / version</th>
+             <th scope="col">Content type</th><th scope="col">Status</th>
+             <th scope="col">Effective</th></tr></thead>
   <tbody>
   {% for client, entries in catalog|groupby('client') %}
-    <tr class="group-row"><td colspan="5">{{ client }}</td></tr>
+    {# A group header row, not a data row — announced as a row header, and the
+       colspan is derived from the header count above. #}
+    <tr class="group-row"><th scope="colgroup" colspan="5">{{ client }}</th></tr>
     {% for p in entries %}
     <tr>
-      <td title="{{ p.description }}">{{ p.title }}</td>
+      {# The description was previously title-only, which is unreachable by
+         keyboard and invisible on touch. Rendered inline as a second line. #}
+      <td>{{ p.title }}
+        {% if p.description %}
+        <span class="cell-caption">{{ p.description }}</span>
+        {% endif %}
+      </td>
       <td class="mono">{{ p.preset_id }}@{{ p.version }}</td>
       <td>{{ p.content_type }}</td>
       <td>{{ preset_status_pill(p.status) }}</td>
@@ -24,4 +40,14 @@ To change thresholds, talk to the preset owner.</p>
   {% endfor %}
   </tbody>
 </table>
+{% else %}
+{# The jobs list had an empty state; this one did not, so an empty or unreadable
+   presets_root rendered bare column headers with no explanation. #}
+<div class="empty-state">
+  <p>No presets found.</p>
+  <p class="field-help">The configured presets directory is empty or unreadable.
+     Presets are versioned files in the repository — check
+     <span class="mono">paths.presets_root</span> in the server configuration.</p>
+</div>
+{% endif %}
 {% endblock %}

@@ -362,6 +362,9 @@ button:hover, .button:hover { background: #2A2A2A; color: var(--dd-text); }
 .primary:disabled { opacity: 0.4; cursor: not-allowed; }
 .danger-outline { background: transparent; border-color: var(--qc-fail); color: var(--qc-fail); }
 .danger-outline:hover { background: var(--qc-fail); color: #fff; }
+/* [data-requires-js] controls ship disabled until app.js arms their guard. */
+.danger-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+.danger-outline:disabled:hover { background: transparent; color: var(--qc-fail); }
 .icon-button { padding: 7px 11px; min-height: 34px; }
 
 /* ---- job detail ---- */
@@ -421,6 +424,8 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
 .browser-list li { display: flex; justify-content: space-between; padding: 8px 10px;
   border-radius: 8px; cursor: pointer; }
 .browser-list li:hover { background: var(--dd-surface-2); }
+.browser-list li.browser-error { color: var(--qc-fail); cursor: default; }
+.browser-list li.browser-error:hover { background: transparent; }
 .page-head { display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 20px; }
 .page-head h1 { margin: 0; }
