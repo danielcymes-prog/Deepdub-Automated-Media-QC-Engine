@@ -29,6 +29,8 @@ class AudioStreamRef:
     ordinal: int
     duration_seconds: float | None
     sample_rate: int = DEFAULT_SAMPLE_RATE
+    #: None when ffprobe does not report a channel count.
+    channels: int | None = None
 
 
 def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
@@ -43,7 +45,7 @@ def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
         "-select_streams",
         "a",
         "-show_entries",
-        "stream=index,duration,sample_rate",
+        "stream=index,duration,sample_rate,channels",
         "-show_entries",
         "format=duration",
         "-print_format",
@@ -64,12 +66,14 @@ def list_audio_streams(input_path: Path) -> list[AudioStreamRef]:
     for ordinal, stream in enumerate(parsed.get("streams", [])):
         duration = _to_float(stream.get("duration"))
         rate = _to_float(stream.get("sample_rate"))
+        channels = _to_float(stream.get("channels"))
         streams.append(
             AudioStreamRef(
                 index=int(stream["index"]),
                 ordinal=ordinal,
                 duration_seconds=duration if duration is not None else fallback,
                 sample_rate=int(rate) if rate else DEFAULT_SAMPLE_RATE,
+                channels=int(channels) if channels is not None else None,
             )
         )
     return streams

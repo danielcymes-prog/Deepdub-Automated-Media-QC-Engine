@@ -63,11 +63,11 @@ counted below. Thresholds are placeholders pending human approval
 | 107 | - Netflix - Licensed Content v9.0 - 4k (UHD) ProResHQ - 2Ch Audio | imported: presets/library/vidchecker/vc107_netflix_licensed_content_v9_0_4k_uhd_proreshq_2ch_audio_v1.yaml | 17 | 12 |
 | 108 | - Netflix - Licensed Content v9.0 - 4K (UHD) IMF (Photon)  - 2Ch Audio | imported: presets/library/vidchecker/vc108_netflix_licensed_content_v9_0_4k_uhd_imf_photon_2ch_audio_v1.yaml | 17 | 9 |
 | 109 | - Netflix - Licensed Content v9.0 - 2K ProResHQ - 2Ch Audio | imported: presets/library/vidchecker/vc109_netflix_licensed_content_v9_0_2k_proreshq_2ch_audio_v1.yaml | 17 | 12 |
-| 110 | TOPIC-Delivery | imported: presets/clients/topic/delivery_v1.yaml | 11 | 3 |
+| 110 | TOPIC-Delivery | imported: presets/clients/topic/delivery_v1.yaml | 12 | 2 |
 | 111 | New Template | skipped: no translatable checks | 0 | 0 |
-| 112 | Audio-Stereo-Test | imported: presets/clients/deepdub-internal/audio_stereo_test_v1.yaml | 4 | 2 |
+| 112 | Audio-Stereo-Test | imported: presets/clients/deepdub-internal/audio_stereo_test_v1.yaml | 5 | 1 |
 | 113 | Vanda-51-Audio | imported: presets/clients/vanda/51_audio_v1.yaml | 5 | 0 |
-| 114 | Vanda-20-Audio | imported: presets/clients/vanda/20_audio_v1.yaml | 6 | 1 |
+| 114 | Vanda-20-Audio | imported: presets/clients/vanda/20_audio_v1.yaml | 7 | 0 |
 | 115 | Deliver-Audio | hand-translated: presets/clients/marimba/deliver_audio_v1.yaml | 0 | 0 |
 | 116 | Delivery | hand-translated: presets/clients/marimba/delivery_v1.yaml | 0 | 0 |
 | 117 | Delivery-51-Audio | imported: presets/clients/marimba/delivery_51_audio_v1.yaml | 5 | 0 |

@@ -550,3 +550,36 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   passing verdict cannot be mistaken for full spec conformance. The XML
   archive (840 kB) lives in the repo; acceptable for a text artifact that
   regeneration and audits depend on.
+
+## ADR-026: Dual-mono detection as a standalone single-purpose detector
+
+- **Status:** Accepted (2026-07-27)
+- **Context:** Five of the seven Deepdub Vidchecker templates enable Dual
+  Mono detection; `audio.duplicate_channel_risk` was planned with no
+  detector. The measurement needs per-channel taps and per-pair difference
+  signals (`pan` computing `cA-cB`), which requires an ffmpeg
+  `-filter_complex` graph — inexpressible inside the consolidated
+  `-filter:a` chain of `audio.analysis.ffmpeg` (ADR on RISKS R9 consolidated
+  three decodes into one). Folding it into that chain is possible
+  (`asplit` + a second `astats` instance) but makes every astats parse
+  instance-scoped: the existing clipping parser takes the *last* `Overall`
+  block, which a second instance would silently corrupt. Alternatives:
+  (a) refactor the consolidated detector now; (b) a standalone detector
+  with its own decode.
+- **Decision:** (b). `audio.dualmono.ffmpeg` decodes each multichannel
+  stream once through per-channel and per-pair `pan` branches merged into a
+  single probe stream measured by one `astats`, so one parse yields every
+  channel and pair RMS in deterministic order. Measurement definition
+  (detector constants, not client policy): a pair is a duplicate when its
+  difference RMS is <= -80 dB AND at least one channel exceeds -60 dB RMS
+  (silent pairs are silence, not dual mono); streams wider than 8 channels
+  compare their first 8; mono streams emit `false` so all-stream rules do
+  not degrade to SKIPPED. Whole-stream measure — Vidchecker's windowed
+  variant is documented as not replicated (parameter limitations).
+- **Consequences:** Multichannel audio is read a second time per stream.
+  The templates that enable this check are audio-only WAV deliveries, so
+  the added read is small today; if R9-class runtimes regress on large A/V
+  masters, the known follow-up is consolidating into the single-pass chain
+  with instance-scoped astats parsing (detector replaceability, ADR-010,
+  keeps presets untouched). Parity validation against real Vidchecker
+  dual-mono alerts is outstanding (docs/VALIDATION.md).

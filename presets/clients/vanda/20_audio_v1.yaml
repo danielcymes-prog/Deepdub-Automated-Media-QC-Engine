@@ -2,10 +2,6 @@
 # Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
 #
 # ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
-#
-# Vidchecker checks NOT covered by this preset (no implemented
-# parameter yet - see docs/vidchecker-import.md):
-#   - DualMonoDetection: audio.duplicate_channel_risk is planned, no detector yet
 schema_version: 1.0.0
 
 preset:
@@ -14,7 +10,7 @@ preset:
   client: vanda
   content_type: audio_delivery
   title: Vanda-20-Audio
-  description: "Imported from the Vidchecker template 'Vanda-20-Audio'. 1 Vidchecker check(s) are not yet covered; see the preset file header."
+  description: "Imported from the Vidchecker template 'Vanda-20-Audio'."
   owner: media-operations
   status: draft
   effective_date: 2026-07-27
@@ -101,5 +97,18 @@ rules:
       quantifier: all
     display_name: "Min Level (Windowed RMS)"
     description: "Vidchecker level was -95 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false
+
+  - rule_id: dual-mono
+    parameter_id: audio.duplicate_channel_risk
+    operator: equals
+    expected:
+      value: false
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Dual Mono"
+    description: "Vidchecker's windowed variant (5 s window) is approximated by a whole-stream measure - see the parameter limitations."
     severity: warning
     blocking: false

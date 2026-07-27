@@ -88,13 +88,13 @@
     {
       "category": "audio",
       "data_type": "boolean",
-      "description": "Whether two channels are identical, indicating a dual-mono error.",
-      "detector_id": null,
+      "description": "Whether two channels of the stream carry the same signal, indicating a dual-mono error. Flagged pairs are listed in measurement metadata.",
+      "detector_id": "audio.dualmono.ffmpeg",
       "display_name": "Duplicate Channel Risk",
-      "implementation": "planned",
-      "limitations": null,
+      "implementation": "implemented",
+      "limitations": "Whole-stream measure: a pair is a duplicate when its difference signal stays at or below -80 dB RMS AND at least one channel carries content above -60 dB RMS (silent pairs are not flagged); brief divergence anywhere in the programme clears the flag, unlike Vidchecker's windowed variant. Streams wider than 8 channels compare only their first 8. Mono streams report false.",
       "parameter_id": "audio.duplicate_channel_risk",
-      "stream_scoped": false,
+      "stream_scoped": true,
       "timestamped": false,
       "unit": null,
       "validation": "unvalidated"

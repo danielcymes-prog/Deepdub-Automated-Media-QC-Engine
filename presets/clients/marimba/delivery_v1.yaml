@@ -169,6 +169,20 @@ rules:
     severity: warning
     blocking: false
 
+  # Vidchecker: Dual Mono (5 s window); whole-stream approximation - see the
+  # audio.duplicate_channel_risk parameter limitations.
+  - rule_id: dual-mono
+    parameter_id: audio.duplicate_channel_risk
+    operator: equals
+    expected:
+      value: false
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Dual Mono
+    severity: warning
+    blocking: false
+
 report:
   include_passed_checks: true
   include_raw_measurements: false

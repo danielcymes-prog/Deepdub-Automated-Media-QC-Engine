@@ -6,7 +6,7 @@
 
 The vocabulary of measurable facts. A `parameter_id` is the contract between a detector, which produces measurements, and a preset, which writes rules about them (ADR-021).
 
-**58 implemented**, 38 planned, 96 catalogued in total.
+**59 implemented**, 37 planned, 96 catalogued in total.
 
 ## How to read this
 
@@ -105,7 +105,7 @@ The vocabulary of measurable facts. A `parameter_id` is the contract between a d
 | `audio.clipping_event` | Clipping Event | float | s | file, timed | *planned* | — | A timestamped clipping occurrence. Not implemented: clipping is currently surfaced as the whole-stream indicators peak_level, flat_factor and peak_count rather than located in time. |
 | `audio.codec` | Audio Codec | string | — | stream | metadata.ffprobe | — | Audio codec name per stream (pcm_s24le, aac, ...). |
 | `audio.dc_offset` | DC Offset | float | — | stream | audio.analysis.ffmpeg | — | Mean sample offset from zero (astats); should be near zero. |
-| `audio.duplicate_channel_risk` | Duplicate Channel Risk | boolean | — | file | *planned* | — | Whether two channels are identical, indicating a dual-mono error. |
+| `audio.duplicate_channel_risk` | Duplicate Channel Risk | boolean | — | stream | audio.dualmono.ffmpeg | — | Whether two channels of the stream carry the same signal, indicating a dual-mono error. Flagged pairs are listed in measurement metadata. |
 | `audio.duration` | Audio Duration | float | s | stream | metadata.ffprobe | — | Duration of the audio stream. |
 | `audio.flat_factor` | Flat Factor | float | — | stream | audio.analysis.ffmpeg | — | astats flat factor: consecutive samples pinned at peak. Greater than zero indicates clipping. |
 | `audio.group_integrated_loudness` | Group Integrated Loudness | float | LUFS | file | *planned* | — | Integrated loudness of a preset-declared channel group measured jointly with ITU-1770 weighting. This, not the per-track value, is what client filename targets such as '-27LU' refer to on multi-mono masters (backlog #35). |
@@ -132,6 +132,7 @@ The vocabulary of measurable facts. A `parameter_id` is the contract between a d
 
 ### Audio caveats
 
+- `audio.duplicate_channel_risk` — Whole-stream measure: a pair is a duplicate when its difference signal stays at or below -80 dB RMS AND at least one channel carries content above -60 dB RMS (silent pairs are not flagged); brief divergence anywhere in the programme clears the flag, unlike Vidchecker's windowed variant. Streams wider than 8 channels compare only their first 8. Mono streams report false.
 - `audio.head_silence_duration` — Silence is defined as below -60 dB for at least 0.5 s.
 - `audio.integrated_loudness` — Measured per track. On multi-mono masters a channel-group target (e.g. 5.1 measured jointly with ITU-1770 weighting) is NOT what this reports — see backlog #35 and audio.group_integrated_loudness.
 - `audio.language` — Not emitted when the stream carries no language metadata.

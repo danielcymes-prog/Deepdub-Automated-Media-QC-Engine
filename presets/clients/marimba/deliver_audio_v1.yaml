@@ -12,7 +12,8 @@
 #                                mapping; windowed-RMS detector is backlog #34.
 #                                Observed reports show violations are long
 #                                trailing silences, which tail-silence catches.)
-# Dual Mono / Clicks and Pops -> not yet implemented (future detectors)
+# Dual Mono                   -> dual-mono (audio.duplicate_channel_risk)
+# Clicks and Pops             -> not yet implemented (future detector)
 #
 # ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
 # Status stays `draft` until the post-production engineer signs off; approval
@@ -152,6 +153,20 @@ rules:
       stream_type: audio
       quantifier: all
     display_name: Min Level (Windowed RMS)
+    severity: warning
+    blocking: false
+
+  # Vidchecker: Dual Mono (5 s window); whole-stream approximation - see the
+  # audio.duplicate_channel_risk parameter limitations.
+  - rule_id: dual-mono
+    parameter_id: audio.duplicate_channel_risk
+    operator: equals
+    expected:
+      value: false
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: Dual Mono
     severity: warning
     blocking: false
 
