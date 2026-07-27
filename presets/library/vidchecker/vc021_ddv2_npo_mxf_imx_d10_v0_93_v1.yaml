@@ -1,0 +1,732 @@
+# Generated from the Vidchecker 8.2.2 template '- DDV2 NPO MXF IMX-D10 v0.93' (template id 21) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (18 sub-tests): MXF structural checks are not implemented
+#   - EnhancedSyntax: codec bitstream syntax is not inspected
+#   - GopLength: GOP length is not inspected (no bitstream detector)
+#   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#
+# NOTE: Vidchecker configures multiple audio check groups on the same track; they are flattened
+# NOTE: conjunctively here and need review before approval.
+schema_version: 1.0.0
+
+preset:
+  id: vc021_ddv2_npo_mxf_imx_d10_v0_93
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "DDV2 NPO MXF IMX-D10 v0.93"
+  description: "Imported from the Vidchecker template '- DDV2 NPO MXF IMX-D10 v0.93'. Vidchecker note: This template covers the general requirements for file based content for DDV2 NPO MXF IMX-D10 v0.93. Note that the audio checks need to be configured for the required stereo and surround sound audio tracks and channel layout. 8 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: mpeg2video
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: "4:2:2"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (Mpeg2422)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-level
+    parameter_id: video.level
+    operator: equals
+    expected:
+      value: "8"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Level (Mpeg2LevelMain)"
+    description: "ffprobe reports numeric level codes - see the video.level catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 720
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Width"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 608
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Height"
+    severity: warning
+    blocking: false
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "422"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (422)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 25
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (25 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bit-depth
+    parameter_id: video.bit_depth
+    operator: equals
+    expected:
+      value: 8
+      unit: bit
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (8-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 4.95e+07
+      max: 5.05e+07
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (49.5-50.5 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-track-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 1
+    display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: freeze-frames
+    parameter_id: video.freeze_frame_event
+    operator: less_than_or_equal
+    expected:
+      value: 30
+      unit: s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Freeze Frame Spans"
+    description: "Legitimate static content (title cards, slates) registers as frozen - see the parameter caveat."
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: tff
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (tff)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s16le, pcm_s16be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 16-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-channel-count-t1
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 8
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-momentary-loudness-t1
+    parameter_id: audio.max_momentary_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -15
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Momentary Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-short-term-loudness-t1
+    parameter_id: audio.max_short_term_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -20
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Short-Term Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: loudness-range-max-t1
+    parameter_id: audio.loudness_range
+    operator: less_than_or_equal
+    expected:
+      value: 15
+      unit: LU
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Loudness Range (max)"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level-t1
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 1.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -56 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-video-length-t1
+    parameter_id: audio.video_duration_delta
+    operator: approximately_equals
+    expected:
+      value: 0
+      tolerance: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio/Video Duration Match"
+    description: "Tolerance 0.5 s is a placeholder; Vidchecker's template carries no explicit tolerance."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1-g2
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s16le, pcm_s16be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 16-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1-g2
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g2
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-momentary-loudness-t1-g2
+    parameter_id: audio.max_momentary_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -15
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Momentary Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-short-term-loudness-t1-g2
+    parameter_id: audio.max_short_term_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -20
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Short-Term Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: loudness-range-max-t1-g2
+    parameter_id: audio.loudness_range
+    operator: less_than_or_equal
+    expected:
+      value: 15
+      unit: LU
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Loudness Range (max)"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g2
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level-t1-g2
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 1.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -56 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-video-length-t1-g2
+    parameter_id: audio.video_duration_delta
+    operator: approximately_equals
+    expected:
+      value: 0
+      tolerance: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio/Video Duration Match"
+    description: "Tolerance 0.5 s is a placeholder; Vidchecker's template carries no explicit tolerance."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1-g3
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s16le, pcm_s16be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 16-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1-g3
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g3
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-momentary-loudness-t1-g3
+    parameter_id: audio.max_momentary_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -15
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Momentary Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-short-term-loudness-t1-g3
+    parameter_id: audio.max_short_term_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -20
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Short-Term Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: loudness-range-max-t1-g3
+    parameter_id: audio.loudness_range
+    operator: less_than_or_equal
+    expected:
+      value: 15
+      unit: LU
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Loudness Range (max)"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g3
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level-t1-g3
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 1.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -56 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-video-length-t1-g3
+    parameter_id: audio.video_duration_delta
+    operator: approximately_equals
+    expected:
+      value: 0
+      tolerance: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio/Video Duration Match"
+    description: "Tolerance 0.5 s is a placeholder; Vidchecker's template carries no explicit tolerance."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1-g4
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s16le, pcm_s16be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 16-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1-g4
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g4
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-momentary-loudness-t1-g4
+    parameter_id: audio.max_momentary_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -15
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Momentary Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-short-term-loudness-t1-g4
+    parameter_id: audio.max_short_term_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -20
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Max Short-Term Loudness"
+    severity: warning
+    blocking: false
+
+  - rule_id: loudness-range-max-t1-g4
+    parameter_id: audio.loudness_range
+    operator: less_than_or_equal
+    expected:
+      value: 15
+      unit: LU
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Loudness Range (max)"
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g4
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: min-level-t1-g4
+    parameter_id: audio.low_rms_event
+    operator: less_than_or_equal
+    expected:
+      value: 1.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Min Level (Windowed RMS)"
+    description: "Vidchecker level was -56 dBFS; the windowed-RMS detector threshold is fixed at -90 dB (parameter caveat), so this rule approximates the original check."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-video-length-t1-g4
+    parameter_id: audio.video_duration_delta
+    operator: approximately_equals
+    expected:
+      value: 0
+      tolerance: 0.5
+      unit: s
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio/Video Duration Match"
+    description: "Tolerance 0.5 s is a placeholder; Vidchecker's template carries no explicit tolerance."
+    severity: warning
+    blocking: false

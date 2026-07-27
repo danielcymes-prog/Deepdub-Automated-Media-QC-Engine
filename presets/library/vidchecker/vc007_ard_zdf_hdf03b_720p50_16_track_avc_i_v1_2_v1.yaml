@@ -1,0 +1,257 @@
+# Generated from the Vidchecker 8.2.2 template '- ARD_ZDF_HDF03b 720p50 16 Track AVC-I V1.2' (template id 7) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (50 sub-tests): MXF structural checks are not implemented
+#   - MxfOp: MXF operational pattern is not inspected
+#   - SpsPps: H.264 SPS/PPS conformance is not inspected
+#   - GopLength: GOP length is not inspected (no bitstream detector)
+#   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
+#   - RgbGamut: legal-level analysis (video.signal_range_event) is planned
+#   - AudioBitrate: audio stream bitrate is not measured
+#
+# NOTE: Vidchecker configures multiple audio check groups on the same track; they are flattened
+# NOTE: conjunctively here and need review before approval.
+schema_version: 1.0.0
+
+preset:
+  id: vc007_ard_zdf_hdf03b_720p50_16_track_avc_i_v1_2
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "ARD_ZDF_HDF03b 720p50 16 Track AVC-I V1.2"
+  description: "Imported from the Vidchecker template '- ARD_ZDF_HDF03b 720p50 16 Track AVC-I V1.2'. Vidchecker note: This template covers the general requirements for file based HD content to the ARD_ZDF_HDF03b Technical Guidelines v1.2.  Please see the IRT website for further details: https://www.irt.de/en/publications/technical-guidelines.html 7 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: h264
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (H264)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: "High 4:2:2 Intra"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (H264High422Intra)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-level
+    parameter_id: video.level
+    operator: equals
+    expected:
+      value: "41"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Level (H264Level41)"
+    description: "ffprobe reports numeric level codes - see the video.level catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "422"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (422)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 50
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (50 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bit-depth
+    parameter_id: video.bit_depth
+    operator: equals
+    expected:
+      value: 10
+      unit: bit
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (10-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 1.1e+08
+      max: 1.15e+08
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (110-115 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-track-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 16
+    display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: progressive
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (progressive)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g2
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -24
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-23 \u00b11 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g2
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false

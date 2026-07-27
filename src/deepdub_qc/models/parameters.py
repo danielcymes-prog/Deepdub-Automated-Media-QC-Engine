@@ -191,6 +191,11 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         description="Total bitrate across all streams.",
         data_type=DataType.INTEGER,
         unit="bit/s",
+        detector_id=_FFPROBE,
+        implementation=_IMPL,
+        limitations=(
+            "Only emitted when the container declares an overall bit rate; some formats omit it."
+        ),
     ),
     ParameterDefinition(
         parameter_id="container.start_time",
@@ -199,6 +204,8 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         description="Start time offset of the container timeline.",
         data_type=DataType.FLOAT,
         unit="s",
+        detector_id=_FFPROBE,
+        implementation=_IMPL,
     ),
     ParameterDefinition(
         parameter_id="container.timecode_present",
@@ -206,6 +213,13 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         category=Category.CONTAINER,
         description="Whether the container carries a timecode track.",
         data_type=DataType.BOOLEAN,
+        detector_id=_FFPROBE,
+        implementation=_IMPL,
+        limitations=(
+            "Found via the container or stream 'timecode' tag (MOV tmcd track, "
+            "MXF material package). Embedded VITC/ancillary timecode without a "
+            "tag is not detected."
+        ),
     ),
     ParameterDefinition(
         parameter_id="container.timecode_start",
@@ -213,6 +227,12 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         category=Category.CONTAINER,
         description="First timecode value, as SMPTE HH:MM:SS:FF.",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        implementation=_IMPL,
+        limitations=(
+            "Only emitted when a 'timecode' tag exists; drop-frame timecodes "
+            "keep their semicolon separator as reported."
+        ),
     ),
     ParameterDefinition(
         parameter_id="container.truncated",
@@ -292,15 +312,29 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         parameter_id="video.profile",
         display_name="Video Profile",
         category=Category.VIDEO,
-        description="Codec profile (e.g. ProRes 422 HQ, High).",
+        description="Codec profile as reported by ffprobe (e.g. 'HQ', 'High 4:2:2 Intra').",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "Profile strings are ffprobe's names, which differ from vendor "
+            "spec sheets (ProRes 422 HQ reports as 'HQ')."
+        ),
     ),
     ParameterDefinition(
         parameter_id="video.level",
         display_name="Video Level",
         category=Category.VIDEO,
-        description="Codec level.",
+        description="Codec level as reported by ffprobe, stringified.",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "ffprobe reports numeric level codes: H.264 4.1 is '41'; MPEG-2 "
+            "uses enum values ('4' High, '6' High-1440, '8' Main, '10' Low)."
+        ),
     ),
     ParameterDefinition(
         parameter_id="video.frame_rate_mode",
@@ -316,34 +350,66 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         description="Bits per colour component.",
         data_type=DataType.INTEGER,
         unit="bit",
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "From bits_per_raw_sample when ffprobe reports it, else derived "
+            "from the pixel-format token (yuv422p10le -> 10, plain 'p' "
+            "suffix -> 8); streams reporting neither emit no measurement."
+        ),
     ),
     ParameterDefinition(
         parameter_id="video.display_aspect_ratio",
         display_name="Display Aspect Ratio",
         category=Category.VIDEO,
-        description="Display aspect ratio as declared by the stream.",
+        description="Display aspect ratio as declared by the stream (e.g. '16:9').",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations="Declared metadata only; not measured from the picture.",
     ),
     ParameterDefinition(
         parameter_id="video.sample_aspect_ratio",
         display_name="Sample Aspect Ratio",
         category=Category.VIDEO,
-        description="Pixel aspect ratio as declared by the stream.",
+        description="Pixel aspect ratio as declared by the stream (e.g. '1:1').",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations="Declared metadata only; not measured from the picture.",
     ),
     ParameterDefinition(
         parameter_id="video.scan_type",
         display_name="Scan Type",
         category=Category.VIDEO,
-        description="Progressive or interlaced.",
+        description="'progressive' or 'interlaced', derived from the declared field order.",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "Derived from stream flags, not baseband cadence analysis: "
+            "progressive-segmented or telecined material reports its flagged "
+            "value."
+        ),
     ),
     ParameterDefinition(
         parameter_id="video.field_order",
         display_name="Field Order",
         category=Category.VIDEO,
-        description="Field order for interlaced material (tff, bff).",
+        description="Field order: 'progressive', 'tff' or 'bff'.",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "Normalized from ffprobe's flags (tt/tb -> tff by coded order, "
+            "bb/bt -> bff); the raw value is preserved in measurement "
+            "metadata. Streams with unknown field order emit no measurement."
+        ),
     ),
     ParameterDefinition(
         parameter_id="video.color_primaries",
@@ -351,6 +417,10 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         category=Category.VIDEO,
         description="Colour primaries (bt709, bt2020, ...).",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations="Declared metadata only; unflagged streams emit no measurement.",
     ),
     ParameterDefinition(
         parameter_id="video.transfer_characteristics",
@@ -358,6 +428,10 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         category=Category.VIDEO,
         description="Transfer function (bt709, pq, hlg, ...).",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations="Declared metadata only; unflagged streams emit no measurement.",
     ),
     ParameterDefinition(
         parameter_id="video.color_space",
@@ -365,6 +439,10 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         category=Category.VIDEO,
         description="Matrix coefficients / colour space.",
         data_type=DataType.STRING,
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations="Declared metadata only; unflagged streams emit no measurement.",
     ),
     ParameterDefinition(
         parameter_id="video.hdr_metadata_present",
@@ -380,6 +458,12 @@ _DEFINITIONS: Final[tuple[ParameterDefinition, ...]] = (
         description="Video stream bitrate.",
         data_type=DataType.INTEGER,
         unit="bit/s",
+        detector_id=_FFPROBE,
+        stream_scoped=True,
+        implementation=_IMPL,
+        limitations=(
+            "Only emitted when the stream declares a bit rate; many MXF/MOV essence streams do not."
+        ),
     ),
     # --- Video incidents ----------------------------------------------------
     ParameterDefinition(

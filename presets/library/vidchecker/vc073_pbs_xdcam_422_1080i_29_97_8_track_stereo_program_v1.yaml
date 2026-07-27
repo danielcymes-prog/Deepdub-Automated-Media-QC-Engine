@@ -1,0 +1,398 @@
+# Generated from the Vidchecker 8.2.2 template '- PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program' (template id 73) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MxfOp: MXF operational pattern is not inspected
+#   - ClosedCaps708: closed-caption (CEA-708) presence is not inspected
+#   - ContainerDropFrame: container drop-frame flag is not rule-addressable
+#   - VideoDropFrame: video drop-frame flag is not rule-addressable
+#   - Black Frame (required black segments): positional requirements are not expressible; only
+#   - maximum-duration caps are
+#   - Letterboxing: video.letterbox_detected is planned, no detector yet
+#   - ChromaLevel: legal-level analysis (video.signal_range_event) is planned
+#   - BlackLevel: legal-level analysis (video.signal_range_event) is planned
+#   - RgbGamut: legal-level analysis (video.signal_range_event) is planned
+#   - SingleColor: single-colour frame detection is not implemented
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - AudioTransient: clicks-and-pops detection is not implemented
+#   - AudioPhase: audio.phase_correlation is planned, no detector yet
+#   - AudioTransient: clicks-and-pops detection is not implemented
+#
+# NOTE: Vidchecker configures multiple audio check groups on the same track; they are flattened
+# NOTE: conjunctively here and need review before approval.
+schema_version: 1.0.0
+
+preset:
+  id: vc073_pbs_xdcam_422_1080i_29_97_8_track_stereo_program
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program"
+  description: "Imported from the Vidchecker template '- PBS - XDCAM 422 1080i 29.97 - 8 Track Stereo Program'. Vidchecker note: This template covers the general requirements for file based HD content to the PBS Technical Operating Specification 2016 Edition. 14 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: mpeg2video
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: "4:2:2"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (Mpeg2422)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Width"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Height"
+    severity: warning
+    blocking: false
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "422"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (422)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
+  - rule_id: display-aspect-ratio
+    parameter_id: video.display_aspect_ratio
+    operator: equals
+    expected:
+      value: "16:9"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Display Aspect Ratio (16:9)"
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 29.97
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (29.97 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bit-depth
+    parameter_id: video.bit_depth
+    operator: equals
+    expected:
+      value: 8
+      unit: bit
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (8-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 4.5e+07
+      max: 5.5e+07
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (45-55 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-track-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 8
+    display_name: "Audio Track Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: start-timecode
+    parameter_id: container.timecode_start
+    operator: equals
+    expected:
+      value: "00:59:45:00"
+    display_name: "Start Timecode (00:59:45:00)"
+    description: "Drop-frame material reports its timecode with a ';' separator; adjust the expected value for drop-frame deliverables."
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: tff
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (tff)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor-t1
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Clipping (Flat Factor)"
+    description: "Vidchecker clipping sensitivity: Medium. Whole-stream indicator, not per-event (audio.clipping_event is planned)."
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-peak-level-t1
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -0.1
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Clipping (Sample Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t1-g2
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 24-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-sample-rate-t1-g2
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1-g2
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1-g2
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-flat-factor-t1-g2
+    parameter_id: audio.flat_factor
+    operator: less_than_or_equal
+    expected:
+      value: 0.01
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Clipping (Flat Factor)"
+    description: "Vidchecker clipping sensitivity: Medium. Whole-stream indicator, not per-event (audio.clipping_event is planned)."
+    severity: warning
+    blocking: false
+
+  - rule_id: clipping-peak-level-t1-g2
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -0.1
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Clipping (Sample Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: whole-track-silence-t1-g3
+    parameter_id: audio.peak_level
+    operator: less_than_or_equal
+    expected:
+      value: -70
+      unit: dBFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Track Must Be Silent"
+    description: "Vidchecker requires digital silence on this track; approximated as a sample-peak ceiling."
+    severity: warning
+    blocking: false

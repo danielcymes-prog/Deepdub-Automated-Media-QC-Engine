@@ -1,0 +1,674 @@
+# Generated from the Vidchecker 8.2.2 template '- Amazon v5.0 - ProRes422HQ MOV - 8Ch' (template id 46) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - EnhancedSyntax: codec bitstream syntax is not inspected
+#   - Black Frame (required black segments): positional requirements are not expressible; only
+#   - maximum-duration caps are
+#   - ColourBars: colour-bars detection is not implemented
+#   - Flash: PSE/flashing analysis is not implemented
+schema_version: 1.0.0
+
+preset:
+  id: vc046_amazon_v5_0_prores422hq_mov_8ch
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "Amazon v5.0 - ProRes422HQ MOV - 8Ch"
+  description: "Imported from the Vidchecker template '- Amazon v5.0 - ProRes422HQ MOV - 8Ch'. Vidchecker note: This template provides a basis for testing to the Amazon Studios specification, dated 16/03/2015. 4 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mov
+    display_name: "Container Format"
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: prores
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (ProRes)"
+
+  - rule_id: video-profile
+    parameter_id: video.profile
+    operator: equals
+    expected:
+      value: HQ
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Profile (ProResHq)"
+    description: "Compared against ffprobe's profile string - see the video.profile catalogue limitations."
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Width"
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Height"
+
+  - rule_id: chroma-subsampling
+    parameter_id: video.pixel_format
+    operator: contains
+    expected:
+      value: "422"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Chroma Subsampling (422)"
+    description: "Checked via the pixel-format token (e.g. yuv422p10le)."
+    severity: warning
+    blocking: false
+
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 23.976
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (23.976 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bit-depth
+    parameter_id: video.bit_depth
+    operator: equals
+    expected:
+      value: 10
+      unit: bit
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bit Depth (10-bit)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-track-count
+    parameter_id: audio.stream_count
+    operator: equals
+    expected:
+      value: 8
+    display_name: "Audio Track Count"
+
+  - rule_id: start-timecode
+    parameter_id: container.timecode_start
+    operator: equals
+    expected:
+      value: "00:59:30:00"
+    display_name: "Start Timecode (00:59:30:00)"
+    description: "Drop-frame material reports its timecode with a ';' separator; adjust the expected value for drop-frame deliverables."
+
+  - rule_id: audio-codec-t1
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t1
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t1
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t1
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t1
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 0
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t2
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 1
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t2
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 1
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t2
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 1
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t2
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 1
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t2
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 1
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t3
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 2
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t3
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 2
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t3
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 2
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t3
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 2
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t3
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 2
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t4
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 3
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t4
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 3
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t4
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 3
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t4
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 3
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t4
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 3
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t5
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 4
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t5
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 4
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t5
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 4
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t5
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 4
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t5
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 4
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t6
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 5
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t6
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 5
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t6
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 5
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t6
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 5
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t6
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 5
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t7
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 6
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t7
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 6
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t7
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 6
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t7
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 6
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t7
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 6
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false
+
+  - rule_id: audio-codec-t8
+    parameter_id: audio.codec
+    operator: in
+    expected:
+      values: [pcm_s24le, pcm_s24be]
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 7
+    display_name: "Audio Codec (PCM 24-bit)"
+
+  - rule_id: audio-sample-rate-t8
+    parameter_id: audio.sample_rate
+    operator: equals
+    expected:
+      value: 48000
+      unit: Hz
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 7
+    display_name: "Sample Rate"
+
+  - rule_id: audio-channel-count-t8
+    parameter_id: audio.channel_count
+    operator: equals
+    expected:
+      value: 1
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 7
+    display_name: "Channel Count"
+    severity: warning
+    blocking: false
+
+  - rule_id: integrated-loudness-t8
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -26
+      max: -22
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 7
+    display_name: "Integrated Loudness (-24 \u00b12 LUFS)"
+    description: "Vidchecker mode: ITU-R BS.1770. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+    severity: warning
+    blocking: false
+
+  - rule_id: max-peak-level-t8
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -2
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      selector:
+        index: 7
+    display_name: "Peak Level (True Peak)"
+    severity: warning
+    blocking: false

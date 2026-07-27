@@ -1,0 +1,56 @@
+# Generated from the Vidchecker 8.2.2 template '- Loudness EBU r128s1 Momentary' (template id 26) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+schema_version: 1.0.0
+
+preset:
+  id: vc026_loudness_ebu_r128s1_momentary
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: audio_delivery
+  title: "Loudness EBU r128s1 Momentary"
+  description: "Imported from the Vidchecker template '- Loudness EBU r128s1 Momentary'."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: integrated-loudness
+    parameter_id: audio.integrated_loudness
+    operator: between
+    expected:
+      min: -23.5
+      max: -22.5
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Integrated Loudness (-23 \u00b10.5 LUFS)"
+    description: "Vidchecker mode: EBU R128. Measured per stream; multi-mono channel groups need audio.group_integrated_loudness (planned, backlog #35)."
+
+  - rule_id: max-momentary-loudness
+    parameter_id: audio.max_momentary_loudness
+    operator: less_than_or_equal
+    expected:
+      value: -15
+      unit: LUFS
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Max Momentary Loudness"
+
+  - rule_id: max-peak-level
+    parameter_id: audio.true_peak
+    operator: less_than_or_equal
+    expected:
+      value: -1
+      unit: dBTP
+    applies_to:
+      stream_type: audio
+      quantifier: all
+    display_name: "Peak Level (True Peak)"

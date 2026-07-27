@@ -1,0 +1,77 @@
+# Generated from the Vidchecker 8.2.2 template '- MPEG2 SD NTSC' (template id 28) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (0 sub-tests): MXF structural checks are not implemented
+schema_version: 1.0.0
+
+preset:
+  id: vc028_mpeg2_sd_ntsc
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "MPEG2 SD NTSC"
+  description: "Imported from the Vidchecker template '- MPEG2 SD NTSC'. 1 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: mpeg2video
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (Mpeg2)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 720
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Width"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 480
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Height"
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 29.97
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (29.97 fps)"
+    severity: warning
+    blocking: false

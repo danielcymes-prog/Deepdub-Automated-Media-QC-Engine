@@ -1,0 +1,126 @@
+# Generated from the Vidchecker 8.2.2 template '- iTunes HD TV - ProRes 1080i2997' (template id 47) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - ContainerEssenceConsistency: container/essence consistency is not inspected
+#   - EnhancedSyntax: codec bitstream syntax is not inspected
+#   - ITunesCompatibility: iTunes package conformance is not implemented
+#   - VideoBitRateMode: CBR/VBR mode is not rule-addressable
+#   - Cadence: cadence analysis is not implemented
+schema_version: 1.0.0
+
+preset:
+  id: vc047_itunes_hd_tv_prores_1080i2997
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "iTunes HD TV - ProRes 1080i2997"
+  description: "Imported from the Vidchecker template '- iTunes HD TV - ProRes 1080i2997'. 5 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mov
+    display_name: "Container Format"
+
+  - rule_id: video-codec
+    parameter_id: video.codec
+    operator: equals
+    expected:
+      value: prores
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Codec (ProRes)"
+
+  - rule_id: video-width
+    parameter_id: video.width
+    operator: equals
+    expected:
+      value: 1920
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Width"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-height
+    parameter_id: video.height
+    operator: equals
+    expected:
+      value: 1080
+      unit: px
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Height"
+    severity: warning
+    blocking: false
+
+  - rule_id: sample-aspect-ratio
+    parameter_id: video.sample_aspect_ratio
+    operator: equals
+    expected:
+      value: "1:1"
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Pixel Aspect Ratio (1:1)"
+    severity: warning
+    blocking: false
+
+  - rule_id: frame-rate
+    parameter_id: video.frame_rate
+    operator: approximately_equals
+    expected:
+      value: 29.97
+      tolerance: 0.01
+      unit: fps
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Frame Rate (29.97 fps)"
+    severity: warning
+    blocking: false
+
+  - rule_id: video-bitrate
+    parameter_id: video.bitrate
+    operator: between
+    expected:
+      min: 8.8e+07
+      max: 2.2e+08
+      unit: bit/s
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Video Bitrate (88-220 Mbit/s)"
+    description: "Declared stream bitrate; streams without a declared bit rate skip this rule - see the video.bitrate catalogue limitations."
+    severity: warning
+    blocking: false
+
+  - rule_id: field-order
+    parameter_id: video.field_order
+    operator: equals
+    expected:
+      value: tff
+    applies_to:
+      stream_type: video
+      quantifier: all
+    display_name: "Field Order (tff)"
+    description: "Checks the declared stream flags; baseband field-dominance analysis is not implemented."
+    severity: warning
+    blocking: false

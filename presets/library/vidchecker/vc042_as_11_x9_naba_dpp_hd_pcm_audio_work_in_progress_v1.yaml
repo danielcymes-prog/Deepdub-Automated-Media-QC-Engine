@@ -1,0 +1,35 @@
+# Generated from the Vidchecker 8.2.2 template '- AS-11 X9 NABA DPP HD, PCM audio (work in progress)' (template id 42) by scripts/import_vidchecker_templates.py.
+# Source export: presets/_sources/vidchecker/ (captured 2026-07-27).
+#
+# ALL THRESHOLDS ARE PLACEHOLDERS PENDING HUMAN APPROVAL (handoff section 30).
+#
+# Vidchecker checks NOT covered by this preset (no implemented
+# parameter yet - see docs/vidchecker-import.md):
+#   - MXF structural checks (7 sub-tests): MXF structural checks are not implemented
+#   - ContainerEssenceConsistency: container/essence consistency is not inspected
+schema_version: 1.0.0
+
+preset:
+  id: vc042_as_11_x9_naba_dpp_hd_pcm_audio_work_in_progress
+  version: 1.0.0
+  client: vidchecker-library
+  content_type: av_delivery
+  title: "AS-11 X9 NABA DPP HD, PCM audio (work in progress)"
+  description: "Imported from the Vidchecker template '- AS-11 X9 NABA DPP HD, PCM audio (work in progress)'. 2 Vidchecker check(s) are not yet covered; see the preset file header."
+  owner: media-operations
+  status: draft
+  effective_date: 2026-07-27
+
+defaults:
+  blocking: true
+  severity: error
+
+rules:
+  - rule_id: container-format
+    parameter_id: container.format
+    operator: equals
+    expected:
+      value: mxf
+    display_name: "Container Format"
+    severity: warning
+    blocking: false
