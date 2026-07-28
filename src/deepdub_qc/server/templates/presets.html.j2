@@ -9,20 +9,20 @@ To change thresholds, talk to the preset owner.</p>
 {# No `rows-linked` class: these rows do not navigate anywhere, so they must not
    claim a pointer cursor. Row hover highlight still applies for tracking across
    five columns. #}
-{% if catalog %}
+{% set listed_entries = catalog|selectattr('listed')|list %}
+{% set library_entries = catalog|rejectattr('listed')|list %}
+{% macro preset_table(entries, caption) %}
 <table class="data-table">
-  <caption class="visually-hidden">
-    Available QC presets, grouped by client. Read-only.
-  </caption>
+  <caption class="visually-hidden">{{ caption }}</caption>
   <thead><tr><th scope="col">Title</th><th scope="col">ID / version</th>
              <th scope="col">Content type</th><th scope="col">Status</th>
              <th scope="col">Effective</th></tr></thead>
   <tbody>
-  {% for client, entries in catalog|groupby('client') %}
+  {% for client, group in entries|groupby('client') %}
     {# A group header row, not a data row — announced as a row header, and the
        colspan is derived from the header count above. #}
     <tr class="group-row"><th scope="colgroup" colspan="5">{{ client }}</th></tr>
-    {% for p in entries %}
+    {% for p in group %}
     <tr>
       {# The description was previously title-only, which is unreachable by
          keyboard and invisible on touch. Rendered inline as a second line. #}
@@ -40,6 +40,18 @@ To change thresholds, talk to the preset owner.</p>
   {% endfor %}
   </tbody>
 </table>
+{% endmacro %}
+{% if catalog %}
+{{ preset_table(listed_entries, 'Available QC presets, grouped by client. Read-only.') }}
+{% if library_entries %}
+<details class="log-tail">
+  <summary class="dim">Vidchecker library — reference only, not in the submit picker
+    ({{ library_entries|length }} presets)</summary>
+  {{ preset_table(library_entries,
+                  'Imported Vidchecker reference presets. Read-only, not selectable
+                   on the Submit page.') }}
+</details>
+{% endif %}
 {% else %}
 {# The jobs list had an empty state; this one did not, so an empty or unreadable
    presets_root rendered bare column headers with no explanation. #}

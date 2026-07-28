@@ -33,6 +33,10 @@ class PresetInfo:
     description: str
     effective_date: str
     path: Path
+    #: Unlisted presets (the imported Vidchecker library) stay out of the
+    #: submit picker but remain fully loadable - watch folders, the API and
+    #: shadow-validation runs can still target them (master-preset-spec §4).
+    listed: bool = True
 
 
 def build_catalog(presets_root: Path) -> list[PresetInfo]:
@@ -67,9 +71,23 @@ def build_catalog(presets_root: Path) -> list[PresetInfo]:
                 description=meta.description,
                 effective_date=str(meta.effective_date),
                 path=path,
+                listed=path.relative_to(presets_root).parts[0] != "library",
             )
         )
     return sorted(entries, key=lambda e: (e.client, e.title, e.version))
+
+
+#: The masters' client value; their picker group is pinned first (spec section 4).
+MASTER_CLIENT = "deepdub"
+
+
+def picker_groups(catalog: list[PresetInfo]) -> list[tuple[str, list[PresetInfo]]]:
+    """Listed presets grouped by client for the submit picker, masters first."""
+    groups: dict[str, list[PresetInfo]] = {}
+    for entry in catalog:
+        if entry.listed:
+            groups.setdefault(entry.client, []).append(entry)
+    return sorted(groups.items(), key=lambda kv: (kv[0] != MASTER_CLIENT, kv[0]))
 
 
 def find_preset(catalog: list[PresetInfo], preset_id: str, version: str) -> PresetInfo | None:

@@ -32,7 +32,9 @@
     <label for="preset">Client preset</label>
     <select id="preset" name="preset" required>
       <option value="" {% if not form.get('preset') %}selected{% endif %} disabled>Choose a preset…</option>
-      {% for client, entries in catalog|groupby('client') %}
+      {# The picker is pre-grouped and pre-ordered by the server (masters first,
+         Vidchecker library excluded — docs/master-preset-spec.md section 4). #}
+      {% for client, entries in picker %}
       <optgroup label="{{ client }}">
         {% for p in entries %}
         <option value="{{ p.preset_id }}@{{ p.version }}"
