@@ -90,10 +90,11 @@ enabled. **Rendered read-only:** rule id, parameter, operator, applies_to,
 the parameter's catalogue description and limitations (so the person changing
 a threshold sees what the measurement actually means).
 
-**Enable/disable:** the editor renders the union of the base version's rules
-and the master template's full rule set; a disabled rule is omitted from the
-saved YAML but stays visible (greyed) and re-enableable. Nothing is ever lost
-by unticking a box.
+**Enable/disable:** the rule model has a native `enabled` flag the rule
+engine already honors, so a disabled rule stays in the saved YAML with
+`enabled: false` — visible, re-enableable, nothing is ever lost by unticking
+a box. (Simpler than the originally sketched union-with-template approach,
+and strictly better: the file itself is the record.)
 
 **Save = new version:**
 - Minor version bump (1.0.0 → 1.1.0), new YAML file next to the base, status

@@ -1,0 +1,89 @@
+{% extends "base.html.j2" %}
+{% from "base.html.j2" import preset_status_pill %}
+{% set nav = 'presets' %}
+{% block title %}Edit {{ model.title }} — Deepdub QC{% endblock %}
+{% block content %}
+{# When a save failed validation, inputs re-render from the submitted form so a
+   page of typed thresholds is never thrown away. `submitted` distinguishes
+   "no form yet" (use file values) from "form posted" (checkbox presence IS the
+   value — an unchecked box is simply absent from the form). #}
+{% set submitted = form_values|length > 0 %}
+<h1>Edit: {{ model.title }}</h1>
+<p class="dim mono">{{ model.preset_id }}@{{ model.version }} {{ preset_status_pill(model.status) }}
+   · {{ model.client }} · {{ model.content_type }}</p>
+<p class="dim">Saving creates a <strong>new draft version</strong> — nothing is changed in
+place, and approval still happens via <span class="mono">presets lock</span>. The editor
+changes values, severity and enabled state; operators, scoping and new rules remain YAML
+work (docs/master-preset-spec.md §5).</p>
+
+{% if error %}
+<div class="banner banner-danger" role="alert"><span>◆</span><div>{{ error }}</div></div>
+{% endif %}
+
+<form method="post" action="/presets/{{ model.preset_id }}/{{ model.version }}/edit">
+<table class="data-table editor-table">
+  <caption class="visually-hidden">Editable rules of this preset, grouped by section.</caption>
+  <thead><tr><th scope="col">On</th><th scope="col">Check</th><th scope="col">Expected</th>
+             <th scope="col">Severity</th><th scope="col">Blocking</th></tr></thead>
+  <tbody>
+  {% for rule in model.rules %}
+    {% if loop.first or rule.section != loop.previtem.section %}
+    <tr class="group-row"><th scope="colgroup" colspan="5">{{ rule.section }}</th></tr>
+    {% endif %}
+    {% set prefix = 'r__' ~ rule.rule_id ~ '__' %}
+    {% if submitted %}
+      {% set enabled_now = (prefix ~ 'enabled') in form_values %}
+      {% set blocking_now = (prefix ~ 'blocking') in form_values %}
+    {% else %}
+      {% set enabled_now = rule.enabled %}
+      {% set blocking_now = rule.blocking %}
+    {% endif %}
+    <tr>
+      <td><input type="checkbox" name="{{ prefix }}enabled"
+                 aria-label="Enable {{ rule.display_name }}"
+                 {% if enabled_now %}checked{% endif %}></td>
+      <td>{{ rule.display_name }}
+        <span class="cell-caption mono">{{ rule.parameter_id }} · {{ rule.operator }} · {{ rule.applies_to }}</span>
+        {% if rule.catalogue_limitations %}
+        <span class="cell-caption">⚠ {{ rule.catalogue_limitations }}</span>
+        {% endif %}
+      </td>
+      <td class="editor-expected mono">
+        {% for key, value in rule.expected.items() %}
+        <label>{{ key }}
+          <input type="text" name="{{ prefix }}{{ key }}"
+                 value="{{ form_values.get(prefix ~ key, value|join(', ') if value is iterable and value is not string else value) }}">
+        </label>
+        {% endfor %}
+        {% if rule.unit %}<span class="dim">{{ rule.unit }}</span>{% endif %}
+        {% if not rule.expected %}<span class="dim">— ({{ rule.operator }})</span>{% endif %}
+      </td>
+      <td>
+        {% set current = form_values.get(prefix ~ 'severity', rule.severity) %}
+        <select name="{{ prefix }}severity" aria-label="Severity of {{ rule.display_name }}">
+          {% for severity in model.severities %}
+          <option value="{{ severity }}" {% if severity == current %}selected{% endif %}>{{ severity }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input type="checkbox" name="{{ prefix }}blocking"
+                 aria-label="Blocking: {{ rule.display_name }}"
+                 {% if blocking_now %}checked{% endif %}></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="editor-save">
+  <label for="edited_by">Your name <span class="dim">(recorded in the new version)</span></label>
+  <input type="text" id="edited_by" name="edited_by" required
+         value="{{ form_values.get('edited_by', '') }}">
+  <label for="note">Change note <span class="dim">(optional, one line)</span></label>
+  <input type="text" id="note" name="note" value="{{ form_values.get('note', '') }}">
+  <div class="actions-row">
+    <button class="primary button">Save as new draft version</button>
+    <a class="button" href="/presets">Cancel</a>
+  </div>
+</div>
+</form>
+{% endblock %}
