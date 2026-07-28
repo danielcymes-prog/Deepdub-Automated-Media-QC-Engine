@@ -324,3 +324,30 @@ class TestStaticCaching:
     def test_pages_are_not_marked_no_cache(self, env) -> None:
         _, _, _, client = env
         assert "cache-control" not in client.get("/jobs").headers
+
+
+class TestMasterPresetPicker:
+    """Spec master-preset §4: masters headline the picker; the library is
+    reference — hidden from the picker, visible on /presets, still submittable."""
+
+    def test_submit_picker_offers_masters_first_without_the_library(self, env) -> None:
+        _, _, _, client = env
+        page = client.get("/").text
+        assert "master_video@1.0.0" in page
+        assert "master_audio@1.0.0" in page
+        assert "vc002_" not in page
+        assert page.index('label="deepdub"') < page.index('label="marimba"')
+
+    def test_presets_page_groups_the_library_separately(self, env) -> None:
+        _, _, _, client = env
+        page = client.get("/presets").text
+        assert "Vidchecker library" in page
+        assert "vc002_" in page  # still visible for governance, just grouped away
+
+    def test_library_presets_remain_submittable_via_api(self, env) -> None:
+        config, _, _, client = env
+        payload = submit_payload(config.paths.media_roots[0])
+        payload["preset_id"] = "vc002_ard_zdf_hdf01a_1080i25_8_track_xdcam_hd422_v1_2"
+        payload["preset_version"] = "1.0.0"
+        response = client.post("/api/v1/qc/jobs", json=payload)
+        assert response.status_code == 201

@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from deepdub_qc import __version__
-from deepdub_qc.server.catalog import PresetInfo, build_catalog
+from deepdub_qc.server.catalog import PresetInfo, build_catalog, picker_groups
 from deepdub_qc.server.config import LoadedConfig
 from deepdub_qc.server.sessions import SessionTracker
 from deepdub_qc.server.store import JobRecord, JobStore, QueueFullError, UnknownJobError
@@ -159,6 +159,7 @@ def _api_router(state: AppState) -> APIRouter:  # noqa: PLR0915 - route table
                 "title": p.title,
                 "description": p.description,
                 "effective_date": p.effective_date,
+                "listed": p.listed,
             }
             for p in state.catalog
         ]
@@ -343,7 +344,7 @@ def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
         return render(
             request,
             "submit.html.j2",
-            catalog=state.catalog,
+            picker=picker_groups(state.catalog),
             errors={},
             form={},
             duplicate=None,
@@ -381,7 +382,7 @@ def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
             return render(
                 request,
                 "submit.html.j2",
-                catalog=state.catalog,
+                picker=picker_groups(state.catalog),
                 errors=errors,
                 form=form,
                 duplicate=None,
@@ -391,7 +392,7 @@ def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
             return render(
                 request,
                 "submit.html.j2",
-                catalog=state.catalog,
+                picker=picker_groups(state.catalog),
                 errors={},
                 form=form,
                 duplicate=result.duplicate,
