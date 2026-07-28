@@ -18,8 +18,9 @@ is visible in the existing jobs list exactly like a manually submitted job.
   (versionable, no new mutating admin surface on the shared host); the console
   gets a read-only status panel. Runtime CRUD is a later phase if operators
   need it.
-- Correction, verdict-based file routing, and webhooks — designed for in the
-  record shape (§3) but implemented in the follow-up routing PR.
+- Correction — a §30-reserved policy conversation before any code.
+- ~~Verdict-based file routing and webhooks~~ — delivered in the routing
+  follow-up (§10, ADR-028).
 
 ## 2. Operating model
 
@@ -55,10 +56,11 @@ watch_folders:
     poll_seconds: 10                  # optional, default 10
     settle_seconds: 30                # optional, default 30
     recursive: false                  # v1 default: top level only
-    # Reserved for the routing follow-up (parsed and validated, unused in v1):
-    # on_pass:    { move_to: 'D:\qc\pass' }
-    # on_warning: { move_to: 'D:\qc\warning' }
-    # on_reject:  { move_to: 'D:\qc\reject' }
+    # Verdict routing + webhook (§10, ADR-028) — all optional:
+    on_pass:    { move_to: 'D:\qc\pass' }
+    on_warning: { move_to: 'D:\qc\warning' }   # or copy_to; exactly one per action
+    on_reject:  { move_to: 'D:\qc\reject' }
+    webhook_url: 'https://example.internal/hooks/qc'
 ```
 
 Validation at startup (server refuses to start on violation, matching the
@@ -99,7 +101,8 @@ preset_version)`. The watcher-specific rules:
 | Queue full | File deferred, not dropped (§2.4). |
 | Server restart mid-scan | Safe: `watch_seen` is persistent; the settle rule re-applies; jobs already enqueued are in the store. |
 
-Nothing in the watcher deletes or moves input files in v1.
+Nothing in the *watcher* deletes or moves input files; post-QC movement is
+the routing step's job (§10) and runs only after a terminal verdict.
 
 ## 6. Console surface (read-only, v1)
 
@@ -139,3 +142,44 @@ backs the console panel. No secrets, no directory listings in logs.
    moving arrives with the routing follow-up.
 5. **`watch_seen` retention:** 90 days, pruned during scans (job-record
    retention remains a separately reserved decision).
+
+## 10. Verdict routing and completion webhooks (follow-up, ADR-028)
+
+Delivered after v1 shipped; activates the config keys reserved in §3. All
+behavior is a **post-terminal step in the worker** — it runs strictly after
+the job's terminal store write and can never alter a verdict, a report, or a
+job status. Every outcome (success or degradation) is recorded as a progress
+note on the job.
+
+**Routing** (`on_pass` / `on_warning` / `on_reject`):
+
+- Applies only to COMPLETED watch-folder jobs; the verdict maps PASS →
+  `on_pass`, WARNING → `on_warning`, FAIL → `on_reject`. ERROR is not a
+  media verdict and never routes. FAILED/CANCELLED jobs leave the file in
+  place for investigation.
+- An unset key means "leave the file in place". There is **no fallback**
+  between verdicts (route warnings with passes by pointing `on_warning` at
+  the same directory — explicit config over implied policy).
+- Each action takes exactly one of `move_to` / `copy_to`. Destinations must
+  exist at startup, live inside `media_roots`, and be outside the folder's
+  scanned area (a destination the scanner can see would re-enqueue routed
+  files forever; with `recursive: false` a subfolder of the dropbox is fine
+  and idiomatic). Name collisions get a `_1`/`_2` suffix — never overwrite.
+- A routing failure (file vanished, destination unwritable) logs ERROR and
+  notes the job; the verdict stands and the file stays where it is.
+- Routing policy lives on the folder binding, never in presets (ADR-003:
+  presets describe media requirements, not site plumbing). Manual console
+  submissions never route.
+
+**Webhook** (`webhook_url`, per folder):
+
+- Fires for COMPLETED and FAILED watch jobs (CANCELLED is a deliberate human
+  act and notifies nobody). Payload: job identity, folder, preset,
+  `qc_status`/error fields, where the file was routed, and the **full
+  report.json verbatim** for completed jobs (ADR-002 — receivers get the
+  source of truth, not a re-rendering).
+- Delivery: POST with a 10 s timeout; connection errors and 5xx retry twice
+  (1 s, 5 s); other statuses are treated as a misconfigured endpoint and not
+  retried. Failure is logged and noted on the job — never blocks or fails it.
+- Webhook URLs may embed tokens: they are never logged and never shown in
+  the console; logs and notes carry only the target host.

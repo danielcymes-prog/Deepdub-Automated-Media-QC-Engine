@@ -618,3 +618,38 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   webhooks are designed-for (reserved config keys) and land in the
   follow-up. Cloud bucket watchers remain out of scope until the tool
   leaves the RDP host.
+
+## ADR-028: Verdict routing and completion webhooks as a post-terminal worker step
+
+- **Status:** Accepted (2026-07-28); spec: docs/watch-folders-spec.md §10
+- **Context:** Watch folders (ADR-027) automate intake, but results still
+  require a human to look at the console: nothing tells downstream systems a
+  file passed, and processed files pile up in the dropbox. Vidchecker's
+  dropboxes move inputs to pass/reject folders that downstream automation
+  watches. Alternatives considered: (a) routing policy in presets — rejected,
+  presets describe media requirements, not site plumbing (ADR-003), and one
+  preset serves many folders; (b) a separate notifier process tailing the
+  store — a second lifecycle for a step that is causally tied to job
+  completion; (c) routing inside the pipeline — would give QC code the power
+  to move inputs, violating the measure/decide/render separation.
+- **Decision:** A `PostCompletion` hook (`server/routing.py`) the worker
+  invokes strictly AFTER the terminal store write, for COMPLETED and FAILED
+  jobs only. Policy lives on the `WatchFolderEntry`: `on_pass`/`on_warning`/
+  `on_reject` each take exactly one of `move_to`/`copy_to`; unset means
+  leave-in-place with no fallback between verdicts; ERROR never routes.
+  Destinations must exist at startup, sit inside `media_roots`, and be
+  outside the folder's scanned area (self-loop guard); collisions get a
+  `_1`/`_2` suffix. `webhook_url` POSTs the outcome with the full
+  report.json verbatim (ADR-002) via httpx (already a dependency), 10 s
+  timeout, retries on connection errors/5xx only; URLs may embed tokens so
+  logs and progress notes carry only the host. Every outcome is recorded as
+  a progress note on the job; any failure here degrades — it can never
+  change a verdict, fail a job, or kill the worker. Manual submissions
+  never route or notify.
+- **Consequences:** The RDP host is fully unattended: drop → QC → file lands
+  in a verdict folder → downstream system is notified. Webhook delivery
+  blocks the single worker for at most ~36 s worst-case (accepted against
+  multi-minute jobs; a delivery queue is the follow-up if that regresses).
+  Chaining dropboxes (route into another watch folder) is possible and
+  deliberate; accidental cycles self-limit via `watch_seen` dedup since
+  moves preserve size and mtime.

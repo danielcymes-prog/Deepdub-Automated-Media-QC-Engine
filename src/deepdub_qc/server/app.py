@@ -127,6 +127,7 @@ def _api_router(state: AppState) -> APIRouter:  # noqa: PLR0915 - route table
                 "last_scan_at": status.last_scan_at,
                 "enqueued_total": status.enqueued_total,
                 "deferred_count": status.deferred_count,
+                "routing": status.routing,
             }
             for status in state.watcher.status()
         ]

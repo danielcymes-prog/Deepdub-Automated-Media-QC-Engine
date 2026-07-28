@@ -290,6 +290,7 @@ def serve(
         load_config,
         validate_runtime,
     )
+    from deepdub_qc.server.routing import PostCompletion  # noqa: PLC0415
     from deepdub_qc.server.store import JobStore  # noqa: PLC0415
     from deepdub_qc.server.watch import Watcher  # noqa: PLC0415
     from deepdub_qc.server.worker import Worker  # noqa: PLC0415
@@ -316,7 +317,7 @@ def serve(
 
     store = JobStore(settings.paths.database)
     application = create_app(loaded, store=store)
-    worker = Worker(store, settings)
+    worker = Worker(store, settings, post_completion=PostCompletion(store, settings).handle)
     worker.start()
     try:
         watcher = Watcher(store, settings)

@@ -55,3 +55,12 @@ logging:
 #    poll_seconds: 10       # scan cadence
 #    settle_seconds: 30     # quiet period before a new file is trusted
 #    recursive: false       # subfolders act as staging when false
+#    # Verdict routing + webhook (ADR-028) — all optional. An unset verdict
+#    # leaves the file in place (no fallback between verdicts). Each action
+#    # takes exactly one of move_to / copy_to; destinations must exist,
+#    # be inside media_roots, and be outside the scanned area.
+#    on_pass:    { move_to: 'D:\qc\pass' }
+#    on_warning: { move_to: 'D:\qc\pass' }     # route warnings with passes
+#    on_reject:  { move_to: 'D:\qc\reject' }
+#    # POSTs the job outcome + report.json on completion/failure:
+#    webhook_url: 'https://example.internal/hooks/qc'

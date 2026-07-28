@@ -26,8 +26,9 @@ from pathlib import Path
 from typing import Protocol
 
 from deepdub_qc.exceptions import DeepdubQCError, PresetError
+from deepdub_qc.models.enums import JobStatus
 from deepdub_qc.server.config import ServerConfig
-from deepdub_qc.server.store import REASON_TIMEOUT, JobRecord, JobStore
+from deepdub_qc.server.store import REASON_TIMEOUT, JobRecord, JobStore, UnknownJobError
 from deepdub_qc.utils.subprocess import terminate_active_tool
 
 logger = logging.getLogger(__name__)
@@ -89,11 +90,13 @@ class Worker:
         config: ServerConfig,
         runner: PipelineRunner | None = None,
         poll_interval: float = POLL_INTERVAL_SECONDS,
+        post_completion: Callable[[JobRecord], None] | None = None,
     ) -> None:
         self._store = store
         self._config = config
         self._runner: PipelineRunner = runner if runner is not None else _run_real_pipeline
         self._poll_interval = poll_interval
+        self._post_completion = post_completion
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -172,6 +175,27 @@ class Worker:
         finally:
             job_done.set()
             monitor_thread.join(timeout=5.0)
+        self._run_post_completion(job.job_id)
+
+    def _run_post_completion(self, job_id: str) -> None:
+        """Verdict routing + webhooks (ADR-028), strictly AFTER the terminal write.
+
+        Post-completion work must never alter a verdict or kill the worker:
+        CANCELLED jobs are excluded (a human already acted) and any exception
+        here is logged and swallowed.
+        """
+        if self._post_completion is None:
+            return
+        try:
+            record = self._store.get(job_id)
+        except UnknownJobError:
+            return
+        if record.status not in (JobStatus.COMPLETED, JobStatus.FAILED):
+            return
+        try:
+            self._post_completion(record)
+        except Exception:  # the QC outcome stands regardless of routing/webhooks
+            logger.exception("post-completion step failed", extra={"job_id": job_id})
 
     def _render_pdf(self, job: JobRecord) -> str | None:
         """E10: PDF failure degrades artifacts, never the job or the verdict."""

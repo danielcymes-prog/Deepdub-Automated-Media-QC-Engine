@@ -57,8 +57,12 @@ def enqueue(store: JobStore, config: ServerConfig, name: str = "a.mov") -> str:
     return store.enqueue(submission, jobs_root=config.paths.jobs_root, max_queue_length=20).job_id
 
 
-def run_worker_until(store: JobStore, config: ServerConfig, runner, job_ids: list[str]) -> None:
-    worker = Worker(store, config, runner=runner, poll_interval=0.02)
+def run_worker_until(
+    store: JobStore, config: ServerConfig, runner, job_ids: list[str], post_completion=None
+) -> None:
+    worker = Worker(
+        store, config, runner=runner, poll_interval=0.02, post_completion=post_completion
+    )
     worker.start()
     deadline = time.monotonic() + 10
     try:
@@ -301,3 +305,64 @@ class TestCatalog:
         assert ("alphorn_ad_full_mix", "1.0.0") in ids
         clients = [p.client for p in catalog]
         assert clients == sorted(clients)  # grouped for the picker
+
+
+class TestPostCompletionHook:
+    """ADR-028: runs strictly after the terminal write; can never hurt the job."""
+
+    def test_hook_receives_the_terminal_completed_record(self, tmp_path: Path) -> None:
+        config = make_config(tmp_path)
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+        received = []
+
+        def runner(input_path, preset_path, output_dir, on_progress):
+            return "PASS", {}
+
+        run_worker_until(store, config, runner, [job_id], post_completion=received.append)
+        assert [r.job_id for r in received] == [job_id]
+        assert received[0].status is JobStatus.COMPLETED
+        assert received[0].qc_status == "PASS"
+
+    def test_hook_receives_failed_jobs_too(self, tmp_path: Path) -> None:
+        config = make_config(tmp_path)
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+        received = []
+
+        def runner(*args, **kwargs):
+            raise DeepdubQCError("unreadable")
+
+        run_worker_until(store, config, runner, [job_id], post_completion=received.append)
+        assert [r.status for r in received] == [JobStatus.FAILED]
+
+    def test_cancelled_jobs_never_reach_the_hook(self, tmp_path: Path) -> None:
+        config = make_config(tmp_path)
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+        received = []
+
+        def runner(input_path, preset_path, output_dir, on_progress):
+            store.request_cancel(job_id)
+            on_progress("stage after cancel")  # raises JobCancelledError
+            raise AssertionError("unreachable")
+
+        run_worker_until(store, config, runner, [job_id], post_completion=received.append)
+        assert store.get(job_id).status is JobStatus.CANCELLED
+        assert received == []
+
+    def test_hook_exception_never_alters_the_job(self, tmp_path: Path) -> None:
+        config = make_config(tmp_path)
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+
+        def hook(record):
+            raise RuntimeError("webhook endpoint exploded")
+
+        def runner(input_path, preset_path, output_dir, on_progress):
+            return "PASS", {}
+
+        run_worker_until(store, config, runner, [job_id], post_completion=hook)
+        job = store.get(job_id)
+        assert job.status is JobStatus.COMPLETED
+        assert job.qc_status == "PASS"
