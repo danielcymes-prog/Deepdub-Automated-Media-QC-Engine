@@ -22,7 +22,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Annotated, Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from deepdub_qc.exceptions import DeepdubQCError
 
@@ -97,6 +97,28 @@ class LoggingSection(_Section):
     retention_days: Annotated[int, Field(ge=1)] = 30
 
 
+class WatchFolderEntry(_Section):
+    """One watch folder binding (docs/watch-folders-spec.md section 3)."""
+
+    name: Annotated[str, Field(min_length=1)]
+    path: Path
+    preset: Annotated[str, Field(pattern=r"^[^@]+@[^@]+$")]  # "<preset_id>@<version>"
+    extensions: Annotated[list[str], Field(min_length=1)]
+    enabled: bool = True
+    poll_seconds: Annotated[int, Field(ge=1, le=3600)] = 10
+    settle_seconds: Annotated[int, Field(ge=0, le=3600)] = 30
+    recursive: bool = False
+
+    @field_validator("extensions")
+    @classmethod
+    def _normalize_extensions(cls, value: list[str]) -> list[str]:
+        normalized = [ext.lstrip(".").lower() for ext in value]
+        if any(not ext for ext in normalized):
+            msg = "extensions entries must be non-empty"
+            raise ValueError(msg)
+        return normalized
+
+
 class ServerConfig(_Section):
     """The complete Phase 3.5 server configuration (docs/server-config-spec.md)."""
 
@@ -107,6 +129,16 @@ class ServerConfig(_Section):
     tools: ToolsSection
     pdf: PdfSection = PdfSection()
     logging: LoggingSection = LoggingSection()
+    watch_folders: list[WatchFolderEntry] = []
+
+    @model_validator(mode="after")
+    def _watch_folder_names_unique(self) -> ServerConfig:
+        names = [entry.name for entry in self.watch_folders]
+        duplicates = {name for name in names if names.count(name) > 1}
+        if duplicates:
+            msg = f"watch_folders names must be unique; duplicated: {sorted(duplicates)}"
+            raise ValueError(msg)
+        return self
 
 
 @dataclass(frozen=True)
@@ -218,6 +250,21 @@ def validate_runtime(loaded: LoadedConfig) -> list[str]:
     ):
         if not tool.is_file():
             raise ConfigError(f"tools.{name} does not exist: {tool}")
+
+    for entry in config.watch_folders:
+        if not entry.path.is_dir():
+            raise ConfigError(f"watch folder {entry.name!r}: path is not a directory: {entry.path}")
+        resolved = entry.path.resolve()
+        if not any(
+            resolved.is_relative_to(root.resolve())
+            for root in config.paths.media_roots
+            if root.is_dir()
+        ):
+            raise ConfigError(
+                f"watch folder {entry.name!r}: {entry.path} is outside every "
+                "configured media root - watch folders may only read where "
+                "the server may read"
+            )
 
     if config.tools.expected_ffmpeg_version is not None:
         from deepdub_qc.utils.subprocess import ToolError, run_tool  # noqa: PLC0415

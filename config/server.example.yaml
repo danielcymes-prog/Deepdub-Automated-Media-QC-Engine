@@ -42,3 +42,16 @@ logging:
   level: INFO
   directory: 'C:\DeepdubQC\logs\app'
   retention_days: 30
+
+# Watch folders (docs/watch-folders-spec.md): files dropped into `path` are
+# QC'd automatically against `preset`. Read-only status panel at /watch.
+# Uncomment and adapt; folder paths must be inside media_roots.
+#watch_folders:
+#  - name: marimba-deliveries
+#    path: 'D:\dropboxes\marimba'
+#    preset: marimba_deliver_audio@1.0.0
+#    extensions: [wav, mov, mxf]
+#    enabled: true
+#    poll_seconds: 10       # scan cadence
+#    settle_seconds: 30     # quiet period before a new file is trusted
+#    recursive: false       # subfolders act as staging when false

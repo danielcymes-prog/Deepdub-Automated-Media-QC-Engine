@@ -30,7 +30,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -136,6 +136,14 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);
 CREATE INDEX IF NOT EXISTS idx_jobs_dupkey ON jobs (duplicate_key);
+CREATE TABLE IF NOT EXISTS watch_seen (
+    path        TEXT PRIMARY KEY,
+    size        INTEGER NOT NULL,
+    mtime       REAL NOT NULL,
+    folder      TEXT NOT NULL,
+    job_id      TEXT NOT NULL,
+    enqueued_at TEXT NOT NULL
+);
 """
 
 
@@ -456,6 +464,38 @@ class JobStore:
                     (JobStatus.PENDING.value, JobStatus.RUNNING.value),
                 ).fetchone()[0]
             )
+
+    # ------------------------------------------------------------ watch folders
+
+    def watch_seen_get(self, path: str) -> tuple[int, float] | None:
+        """(size, mtime) last enqueued for this path, or None if never seen.
+
+        Persistent so a service restart never re-QCs already-processed files
+        (docs/watch-folders-spec.md section 4).
+        """
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT size, mtime FROM watch_seen WHERE path = ?", (path,)
+            ).fetchone()
+        return (int(row["size"]), float(row["mtime"])) if row is not None else None
+
+    def watch_seen_record(
+        self, path: str, size: int, mtime: float, folder: str, job_id: str
+    ) -> None:
+        """Remember an enqueued file; a re-delivery replaces the prior entry."""
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO watch_seen (path, size, mtime, folder, job_id, "
+                "enqueued_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (path, size, mtime, folder, job_id, _now()),
+            )
+
+    def watch_seen_prune(self, retention_days: int) -> int:
+        """Drop watch_seen entries older than the retention window."""
+        cutoff = (datetime.now(UTC) - timedelta(days=retention_days)).isoformat(timespec="seconds")
+        with self._connect() as conn:
+            cursor = conn.execute("DELETE FROM watch_seen WHERE enqueued_at < ?", (cutoff,))
+            return cursor.rowcount
 
 
 def _record(row: sqlite3.Row) -> JobRecord:

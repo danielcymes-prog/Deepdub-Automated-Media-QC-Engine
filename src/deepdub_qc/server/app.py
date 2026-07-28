@@ -29,6 +29,7 @@ from deepdub_qc.server.config import LoadedConfig
 from deepdub_qc.server.sessions import SessionTracker
 from deepdub_qc.server.store import JobRecord, JobStore, QueueFullError, UnknownJobError
 from deepdub_qc.server.validation import validate_submission
+from deepdub_qc.server.watch import Watcher
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,9 @@ class AppState:
     store: JobStore
     catalog: list[PresetInfo]
     sessions: SessionTracker
+    #: Set by the serve command when watch folders are configured; the GUI
+    #: panel and /api/v1/watch-folders read its status snapshots.
+    watcher: Watcher | None = None
 
 
 def _job_payload(store: JobStore, job: JobRecord) -> dict[str, Any]:
@@ -106,6 +110,26 @@ def _api_router(state: AppState) -> APIRouter:  # noqa: PLR0915 - route table
             "queue_depth": store.queue_depth(),
             "active_gui_sessions": state.sessions.active_count(),
         }
+
+    @router.get("/watch-folders")
+    def watch_folders() -> list[dict[str, Any]]:
+        if state.watcher is None:
+            return []
+        return [
+            {
+                "name": status.name,
+                "path": status.path,
+                "preset_id": status.preset_id,
+                "preset_version": status.preset_version,
+                "preset_status": status.preset_status,
+                "enabled": status.enabled,
+                "error": status.error,
+                "last_scan_at": status.last_scan_at,
+                "enqueued_total": status.enqueued_total,
+                "deferred_count": status.deferred_count,
+            }
+            for status in state.watcher.status()
+        ]
 
     @router.get("/presets")
     def presets() -> list[dict[str, Any]]:
@@ -435,6 +459,11 @@ def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
     @router.get("/presets", response_class=HTMLResponse)
     def presets_page(request: Request) -> HTMLResponse:
         return render(request, "presets.html.j2", catalog=state.catalog)
+
+    @router.get("/watch", response_class=HTMLResponse)
+    def watch_page(request: Request) -> HTMLResponse:
+        statuses = state.watcher.status() if state.watcher is not None else []
+        return render(request, "watch.html.j2", folders=statuses)
 
     return router
 
