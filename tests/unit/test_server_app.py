@@ -308,3 +308,19 @@ class TestProgressWheel:
         assert "progress-ring" not in page
         assert "Running" in page
         assert client.get(f"/api/v1/qc/jobs/{job_id}").json()["percent"] is None
+
+
+class TestStaticCaching:
+    """Static assets must revalidate: a new release's page must never render
+    with the previous release's stylesheet (heuristic browser caching)."""
+
+    def test_static_assets_are_no_cache_with_etag(self, env) -> None:
+        _, _, _, client = env
+        response = client.get("/static/app.css")
+        assert response.status_code == 200
+        assert response.headers["cache-control"] == "no-cache"
+        assert "etag" in response.headers  # revalidation stays cheap (304s)
+
+    def test_pages_are_not_marked_no_cache(self, env) -> None:
+        _, _, _, client = env
+        assert "cache-control" not in client.get("/jobs").headers

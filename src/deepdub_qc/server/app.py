@@ -504,6 +504,22 @@ def create_app(loaded: LoadedConfig, store: JobStore | None = None) -> FastAPI:
     app.include_router(_gui_router(state, templates))
 
     @app.middleware("http")
+    async def static_revalidation(request: Request, call_next: Any) -> Any:
+        """Static assets must revalidate on every page load (no-cache).
+
+        Without an explicit Cache-Control, browsers cache /static/ responses
+        heuristically (a fraction of the file's age since Last-Modified) - on
+        a long-lived install that meant a release's new markup rendered with
+        the PREVIOUS release's stylesheet until an operator hard-refreshed.
+        no-cache still allows caching: StaticFiles serves ETags, so unchanged
+        assets answer with a 304 - free on the loopback-only console.
+        """
+        response = await call_next(request)
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    @app.middleware("http")
     async def session_cap(request: Request, call_next: Any) -> Any:
         """GUI session cap (spec section 7). API and static paths are exempt."""
         path = request.url.path
