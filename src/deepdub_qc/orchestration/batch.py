@@ -120,7 +120,10 @@ def run_batch(
     for index, media in enumerate(files, start=1):
         job_dir = output_root / media.name
         if options.on_progress is not None:
-            options.on_progress(f"[{index}/{len(files)}] {media.name}")
+            # Batch-level fraction: files completed so far (per-file stage
+            # fractions from run_analysis interleave with these, same as the
+            # messages always have).
+            options.on_progress(f"[{index}/{len(files)}] {media.name}", (index - 1) / len(files))
         try:
             result = run_analysis(media, preset_path, job_dir, options)
         except PresetError:

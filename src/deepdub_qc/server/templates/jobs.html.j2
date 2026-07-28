@@ -35,7 +35,7 @@
       <td title="{{ job.input_path }}">{{ job.filename }}</td>
       <td class="mono">{{ job.preset_id }}@{{ job.preset_version }}</td>
       <td>{{ job.requested_by }}</td>
-      <td data-cell="state">{{ job_chip(job.status, job.queue_position) }}</td>
+      <td data-cell="state">{{ job_chip(job.status, job.queue_position, percent=job.percent) }}</td>
       <td data-cell="verdict">{{ verdict_badge(job.qc_status) }}</td>
       <td class="row-chevron" aria-hidden="true">›</td>
     </tr>

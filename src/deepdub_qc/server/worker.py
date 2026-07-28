@@ -37,6 +37,16 @@ POLL_INTERVAL_SECONDS = 0.5
 MONITOR_INTERVAL_SECONDS = 0.5
 
 
+class ProgressCallback(Protocol):
+    """Stage-progress sink handed to the pipeline runner.
+
+    The fraction is optional so simple runners (and older call sites) can
+    report a message alone; the real pipeline always supplies it.
+    """
+
+    def __call__(self, message: str, fraction: float | None = None) -> None: ...
+
+
 class JobCancelledError(Exception):
     """Raised inside the pipeline callback to unwind a cancelled job."""
 
@@ -53,7 +63,7 @@ class PipelineRunner(Protocol):
         input_path: Path,
         preset_path: Path,
         output_dir: Path,
-        on_progress: Callable[[str], None],
+        on_progress: ProgressCallback,
     ) -> tuple[str, dict[str, object]]:
         """Returns (overall_qc_status, summary_dict)."""
         ...
@@ -63,7 +73,7 @@ def _run_real_pipeline(
     input_path: Path,
     preset_path: Path,
     output_dir: Path,
-    on_progress: Callable[[str], None],
+    on_progress: ProgressCallback,
 ) -> tuple[str, dict[str, object]]:
     from deepdub_qc.orchestration.pipeline import AnalysisOptions, run_analysis  # noqa: PLC0415
 
@@ -138,11 +148,16 @@ class Worker:
                     terminate_active_tool(worker_ident)
                     return
 
-        def on_progress(message: str) -> None:
-            self._store.record_progress(
-                job.job_id,
-                {"label": message, "at": datetime.now(UTC).isoformat(timespec="seconds")},
-            )
+        def on_progress(message: str, fraction: float | None = None) -> None:
+            event: dict[str, object] = {
+                "label": message,
+                "at": datetime.now(UTC).isoformat(timespec="seconds"),
+            }
+            if fraction is not None:
+                # Display-only percentage for the console's progress wheel;
+                # stage-weighted (see pipeline._ProgressReporter), never canonical.
+                event["percent"] = round(fraction * 100)
+            self._store.record_progress(job.job_id, event)
             if timed_out.is_set():
                 raise JobTimeoutError(message)
             if self._store.cancel_requested(job.job_id):

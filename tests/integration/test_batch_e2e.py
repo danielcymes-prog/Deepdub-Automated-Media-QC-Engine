@@ -53,7 +53,9 @@ class TestBatch:
             wav_dir,
             TIER2_PRESET,
             output_root,
-            AnalysisOptions(render_pdf=False, on_progress=progress.append),
+            AnalysisOptions(
+                render_pdf=False, on_progress=lambda message, _fraction: progress.append(message)
+            ),
         )
 
         assert [item.filename for item in items] == ["audio_ok.wav", "audio_silences.wav"]

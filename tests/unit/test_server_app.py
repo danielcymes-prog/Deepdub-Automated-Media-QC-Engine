@@ -269,3 +269,42 @@ class TestGui:
         # existing sessions keep working; the API is exempt from the cap
         assert first.get("/jobs").status_code == 200
         assert third.get("/api/v1/health").status_code == 200
+
+
+class TestProgressWheel:
+    """Running jobs surface the stage-weighted percent as a wheel + chip suffix."""
+
+    def start_running_job(self, config, store, client, percent) -> str:
+        created = client.post("/api/v1/qc/jobs", json=submit_payload(config.paths.media_roots[0]))
+        job_id = created.json()["job_id"]
+        store.claim_next()
+        event = {"label": "[3/7] Running audio.analysis.ffmpeg", "at": "2026-07-28T10:00:00+00:00"}
+        if percent is not None:
+            event["percent"] = percent
+        store.record_progress(job_id, event)
+        return job_id
+
+    def test_running_job_page_renders_the_wheel(self, env) -> None:
+        config, store, _, client = env
+        job_id = self.start_running_job(config, store, client, percent=42)
+
+        page = client.get(f"/jobs/{job_id}").text
+        assert "progress-ring" in page
+        assert "42%" in page
+        assert "stroke-dasharray" in page
+        assert "42% complete" in page  # stage-status live region announces it
+
+        listing = client.get("/jobs").text
+        assert "Running · 42%" in listing
+
+        detail = client.get(f"/api/v1/qc/jobs/{job_id}").json()
+        assert detail["percent"] == 42
+
+    def test_running_job_without_percent_keeps_plain_chip(self, env) -> None:
+        config, store, _, client = env
+        job_id = self.start_running_job(config, store, client, percent=None)
+
+        page = client.get(f"/jobs/{job_id}").text
+        assert "progress-ring" not in page
+        assert "Running" in page
+        assert client.get(f"/api/v1/qc/jobs/{job_id}").json()["percent"] is None

@@ -57,11 +57,26 @@ class AppState:
     watcher: Watcher | None = None
 
 
+def _latest_percent(progress: list[dict[str, Any]]) -> int | None:
+    """Newest stage-weighted percent from the progress events (display only).
+
+    Events without a percent (pre-wheel rows, plain-message runners) are
+    skipped rather than read as 0 - absence of data must not look like a
+    stalled job.
+    """
+    for event in reversed(progress):
+        percent = event.get("percent")
+        if percent is not None:
+            return int(percent)
+    return None
+
+
 def _job_payload(store: JobStore, job: JobRecord) -> dict[str, Any]:
     position = store.queue_position(job.job_id)
     return {
         "job_id": job.job_id,
         "status": job.status.value,
+        "percent": _latest_percent(job.progress),
         "queue_position": position[0] if position else None,
         "queue_total": position[1] if position else None,
         "input_path": job.input_path,
