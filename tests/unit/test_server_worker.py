@@ -366,3 +366,24 @@ class TestPostCompletionHook:
         job = store.get(job_id)
         assert job.status is JobStatus.COMPLETED
         assert job.qc_status == "PASS"
+
+
+class TestProgressPercent:
+    """The wheel's data: fractions become percent on progress events; absence stays absent."""
+
+    def test_fractions_recorded_as_percent(self, tmp_path: Path) -> None:
+        config = make_config(tmp_path)
+        store = JobStore(config.paths.database)
+        job_id = enqueue(store, config)
+
+        def runner(input_path, preset_path, output_dir, on_progress):
+            on_progress("[1/2] Running a", 0.0)
+            on_progress("    a done", 0.5)
+            on_progress("legacy message with no fraction")
+            return "PASS", {}
+
+        run_worker_until(store, config, runner, [job_id])
+        events = store.get(job_id).progress
+        assert events[0]["percent"] == 0
+        assert events[1]["percent"] == 50
+        assert "percent" not in events[2]

@@ -78,8 +78,9 @@ def analyze(
         "ERROR": ExitCode.QC_EXECUTION_ERROR,
     }
 
-    def show_progress(message: str) -> None:
-        err_console.print(f"[dim]{message}[/dim]")
+    def show_progress(message: str, fraction: float | None = None) -> None:
+        prefix = f"{round(fraction * 100):>3d}%  " if fraction is not None else ""
+        err_console.print(f"[dim]{prefix}{message}[/dim]")
 
     try:
         result = run_analysis(
@@ -133,8 +134,9 @@ def batch(
     )
     from deepdub_qc.orchestration.pipeline import AnalysisOptions  # noqa: PLC0415
 
-    def show_progress(message: str) -> None:
-        err_console.print(f"[dim]{message}[/dim]")
+    def show_progress(message: str, fraction: float | None = None) -> None:
+        prefix = f"{round(fraction * 100):>3d}%  " if fraction is not None else ""
+        err_console.print(f"[dim]{prefix}{message}[/dim]")
 
     try:
         items = run_batch(

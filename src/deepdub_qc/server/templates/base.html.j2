@@ -58,11 +58,11 @@
 {%- else -%}<span class="dim">—</span>{%- endif -%}
 {% endmacro %}
 
-{% macro job_chip(status, position=None, total=None) %}
+{% macro job_chip(status, position=None, total=None, percent=None) %}
 {%- if status == 'pending' -%}
 <span class="chip">○ Queued{% if position %} · #{{ position }}{% endif %}</span>
 {%- elif status == 'running' -%}
-<span class="chip chip-running"><span class="spinner"></span> Running</span>
+<span class="chip chip-running"><span class="spinner"></span> Running{% if percent is not none %} · {{ percent }}%{% endif %}</span>
 {%- elif status == 'completed' -%}
 <span class="chip">● Done</span>
 {%- elif status == 'failed' -%}
@@ -74,4 +74,20 @@
 
 {% macro preset_status_pill(status) %}
 <span class="pill pill-{{ status }}">{{ status }}</span>
+{% endmacro %}
+
+{% macro progress_ring(percent) %}
+{# Determinate wheel for a running job. The percent is stage-weighted, computed
+   by the pipeline (display only, never canonical). Drawn with stroke-dasharray
+   over an r=20 circle (circumference 125.7). The SVG is decorative: the label
+   carries the value as real text and the stage-status live region announces
+   progress, so nothing here is conveyed by the graphic alone. #}
+<div class="progress-ring" title="Analysis {{ percent }}% complete">
+  <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+    <circle class="ring-track" cx="24" cy="24" r="20"></circle>
+    <circle class="ring-fill" cx="24" cy="24" r="20"
+            stroke-dasharray="{{ '%.1f'|format(percent * 1.257) }} 125.7"></circle>
+  </svg>
+  <span class="ring-label mono">{{ percent }}%</span>
+</div>
 {% endmacro %}

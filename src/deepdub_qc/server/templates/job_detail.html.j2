@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{% from "base.html.j2" import verdict_badge, job_chip %}
+{% from "base.html.j2" import verdict_badge, job_chip, progress_ring %}
 {% set nav = 'jobs' %}
 {% block title %}{{ job.filename }} — Deepdub QC{% endblock %}
 {% block content %}
@@ -20,6 +20,9 @@
   </div>
   <div class="hero-state">
     {% if job.status == 'completed' %}{{ verdict_badge(job.qc_status, 'lg') }}
+    {% elif job.status == 'running' and job.percent is not none %}
+      {{ progress_ring(job.percent) }}
+      {{ job_chip(job.status, job.queue_position) }}
     {% else %}{{ job_chip(job.status, job.queue_position) }}{% endif %}
   </div>
 </div>
@@ -55,6 +58,7 @@
   <p class="stage-status" role="status" aria-live="polite" data-stage-status>
     {%- if job.progress -%}
       Stage {{ job.progress|length }} complete: {{ job.progress[-1].label }}
+      {%- if job.percent is not none %} — {{ job.percent }}% complete{% endif -%}
     {%- else -%}
       Analysis started
     {%- endif -%}

@@ -653,3 +653,32 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   Chaining dropboxes (route into another watch folder) is possible and
   deliberate; accidental cycles self-limit via `watch_seen` dedup since
   moves preserve size and mtime.
+
+## ADR-029: Stage-weighted progress fractions for the console wheel
+
+- **Status:** Accepted (2026-07-28)
+- **Context:** Running jobs showed only a stage log and an indeterminate
+  spinner; operators watching a long master had no sense of completion. A
+  true time-based percentage (parsing ffmpeg `-progress` against media
+  duration) would require streaming-stderr surgery on the deterministic
+  subprocess utility (which owns the kill registry for cancel/timeout) and
+  threading progress callbacks into detectors - detectors measure, they do
+  not report UI state (ADR-001 separation).
+- **Decision:** The pipeline - the only layer that knows the stage plan -
+  reports `(message, fraction)` through the existing on_progress callback.
+  The fraction is STAGE-weighted: each applicable detector and each fixed
+  post-stage (rules, evidence, hashing, rendering) is one unit; skipped
+  stages still count so the denominator never lies. Monotonic and honest
+  about work completed, silent about time remaining. The worker stores it
+  as a display-only `percent` on progress events (never canonical, never
+  in report.json); the console renders a server-side SVG ring on the job
+  detail page plus a percent suffix in the jobs-list chip, both updated by
+  the existing poller with zero new client JS. Events without a percent
+  (pre-wheel rows) render the plain chip - absence of data must not look
+  like a stalled job.
+- **Consequences:** The wheel advances in steps at stage boundaries; a
+  single long ffmpeg decode holds it still (the spinner still signals
+  activity). If operators need within-stage motion, the known follow-up is
+  ffmpeg `-progress` streaming confined to utils.subprocess with the
+  fraction interpolated inside the current stage unit - the callback
+  contract already carries it.

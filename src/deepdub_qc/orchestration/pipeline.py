@@ -55,10 +55,47 @@ class AnalysisOptions:
 
     render_pdf: bool = True
     job_id: UUID | None = None  # injectable for tests; random by default
-    #: Optional stage-progress callback (message string). Long analyses would
-    #: otherwise be silent: full-file decodes and hashing take minutes on
-    #: large masters. Never receives canonical data - display only.
-    on_progress: Callable[[str], None] | None = None
+    #: Optional stage-progress callback (message, fraction complete in [0, 1]).
+    #: Long analyses would otherwise be silent: full-file decodes and hashing
+    #: take minutes on large masters. The fraction is stage-weighted (see
+    #: _ProgressReporter), display only - never canonical data.
+    on_progress: Callable[[str, float], None] | None = None
+
+
+class _ProgressReporter:
+    """Translates stage completions into (message, fraction) callbacks.
+
+    The fraction is STAGE-weighted, not time-weighted: each applicable
+    detector and each fixed post-stage (rules, evidence, hashing, rendering)
+    counts as one unit, so a wheel driven by it advances monotonically but
+    not at wall-clock rate - a full-file loudness decode and a millisecond
+    rule pass each move it one step. Honest about work completed, silent
+    about time remaining. Display only, never canonical (ADR-001).
+    """
+
+    FIXED_STAGES = 4  # rules, evidence, hashing, rendering
+
+    def __init__(self, callback: Callable[[str, float], None] | None) -> None:
+        self._callback = callback or (lambda _message, _fraction: None)
+        self._done = 0
+        self._total = self.FIXED_STAGES
+
+    def plan(self, detector_count: int) -> None:
+        """Fix the denominator once the applicable detector list is known."""
+        self._total = detector_count + self.FIXED_STAGES
+
+    def announce(self, message: str) -> None:
+        """A stage is starting; the fraction reports work completed so far."""
+        self._callback(message, self._fraction())
+
+    def finish_stage(self, message: str | None = None) -> None:
+        """A stage finished (a skipped stage passes no message but still counts)."""
+        self._done += 1
+        if message is not None:
+            self._callback(message, self._fraction())
+
+    def _fraction(self) -> float:
+        return round(self._done / self._total, 4)
 
 
 def run_analysis(
@@ -95,12 +132,12 @@ def run_analysis(
         },
     )
 
-    notify = options.on_progress or (lambda _message: None)
+    progress = _ProgressReporter(options.on_progress)
 
     context = QCContext(job_id=job_id, input_path=input_path, raw_dir=raw_dir)
-    measurements, failed_parameters, failure_reasons = _run_detectors(context, notify)
+    measurements, failed_parameters, failure_reasons = _run_detectors(context, progress)
 
-    notify("Evaluating rules")
+    progress.announce("Evaluating rules")
     findings = evaluate(
         preset,
         measurements,
@@ -108,20 +145,23 @@ def run_analysis(
         failed_parameters=frozenset(failed_parameters),
         failure_reasons=failure_reasons,
     )
+    progress.finish_stage()
 
     evidence: list[Evidence] = []
     if preset.report.include_evidence:
         from deepdub_qc.evidence.thumbnails import generate_thumbnails  # noqa: PLC0415
 
-        notify("Generating evidence")
+        progress.announce("Generating evidence")
         evidence, findings = generate_thumbnails(findings, input_path, output_dir)
+    progress.finish_stage()
 
     summary = build_summary(findings)
 
     media_summary = _load_media_summary(raw_dir)
     duration = _container_duration(measurements)
-    notify(f"Hashing asset ({input_path.stat().st_size / 1_073_741_824:.2f} GB)")
+    progress.announce(f"Hashing asset ({input_path.stat().st_size / 1_073_741_824:.2f} GB)")
     asset_sha256 = sha256_file(input_path)
+    progress.finish_stage()
     completed_wall = datetime.now(UTC)
 
     result = QCResult(
@@ -161,7 +201,7 @@ def run_analysis(
         ),
     )
 
-    notify("Rendering reports")
+    progress.announce("Rendering reports")
     write_json_report(result, output_dir)
     write_html_report(result, output_dir, generated_at=completed_wall)
     if options.render_pdf:
@@ -183,16 +223,17 @@ def run_analysis(
 
 def _run_detectors(
     context: QCContext,
-    notify: Callable[[str], None],
+    progress: _ProgressReporter,
 ) -> tuple[list[Measurement], set[str], dict[str, str]]:
     """Run applicable detectors; failures become ERROR findings, never crashes."""
     measurements: list[Measurement] = []
     failed_parameters: set[str] = set()
     failure_reasons: dict[str, str] = {}
     detectors = [d for d in all_detectors() if d.is_applicable(context)]
+    progress.plan(len(detectors))
     detector: Detector
     for index, detector in enumerate(detectors, start=1):
-        notify(f"[{index}/{len(detectors)}] Running {detector.detector_id}")
+        progress.announce(f"[{index}/{len(detectors)}] Running {detector.detector_id}")
         started = time.monotonic()
         try:
             produced = detector.run(context)
@@ -210,10 +251,10 @@ def _run_detectors(
                 if parameter not in produced_ids:
                     failed_parameters.add(parameter)
                     failure_reasons[parameter] = str(exc)
-            notify(f"    {detector.detector_id} FAILED: {exc}")
+            progress.finish_stage(f"    {detector.detector_id} FAILED: {exc}")
             continue
         measurements.extend(produced)
-        notify(
+        progress.finish_stage(
             f"    {detector.detector_id} done in {time.monotonic() - started:.1f}s "
             f"({len(produced)} measurements)"
         )
