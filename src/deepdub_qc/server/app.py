@@ -24,7 +24,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from deepdub_qc import __version__
-from deepdub_qc.server.catalog import PresetInfo, build_catalog, picker_groups
+from deepdub_qc.presets.loader import load_preset
+from deepdub_qc.server import editor
+from deepdub_qc.server.catalog import PresetInfo, build_catalog, find_preset, picker_groups
 from deepdub_qc.server.config import LoadedConfig
 from deepdub_qc.server.sessions import SessionTracker
 from deepdub_qc.server.store import JobRecord, JobStore, QueueFullError, UnknownJobError
@@ -163,6 +165,45 @@ def _api_router(state: AppState) -> APIRouter:  # noqa: PLR0915 - route table
             }
             for p in state.catalog
         ]
+
+    @router.get("/presets/{preset_id}/{version}/editable")
+    def preset_editable(preset_id: str, version: str) -> Any:
+        entry = find_preset(state.catalog, preset_id, version)
+        if entry is None:
+            return JSONResponse(status_code=404, content={"error": "unknown preset version"})
+        return editor.editable_model(entry.path)
+
+    @router.post("/presets/{preset_id}/versions", status_code=201)
+    def preset_save_version(preset_id: str, payload: dict[str, Any]) -> JSONResponse:
+        """Create the next draft version from submitted rule edits (ADR-031)."""
+        base_version = str(payload.get("base_version", ""))
+        entry = find_preset(state.catalog, preset_id, base_version)
+        if entry is None:
+            return JSONResponse(status_code=404, content={"error": "unknown preset version"})
+        try:
+            new_path = editor.apply_edits(
+                base_path=entry.path,
+                base_version=base_version,
+                catalog=state.catalog,
+                edits=editor.edits_from_payload(payload.get("rules", [])),
+                edited_by=str(payload.get("edited_by", "")),
+                note=str(payload.get("note", "")),
+            )
+        except editor.VersionConflictError as exc:
+            return JSONResponse(status_code=409, content={"error": str(exc)})
+        except editor.EditorError as exc:
+            return JSONResponse(status_code=422, content={"error": str(exc)})
+        state.catalog[:] = build_catalog(config.paths.presets_root)
+        saved = load_preset(new_path)
+        return JSONResponse(
+            status_code=201,
+            content={
+                "preset_id": saved.preset.id,
+                "version": str(saved.preset.version),
+                "status": saved.preset.status.value,
+                "path": str(new_path),
+            },
+        )
 
     @router.post("/qc/jobs", status_code=201)
     def submit_job(payload: dict[str, Any]) -> JSONResponse:
@@ -330,7 +371,9 @@ def _format_size(size: int | None) -> str:
     return f"{size} B"
 
 
-def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
+def _gui_router(  # noqa: PLR0915 - route table
+    state: AppState, templates: Jinja2Templates
+) -> APIRouter:
     router = APIRouter()
     store, config = state.store, state.loaded.config
 
@@ -474,8 +517,57 @@ def _gui_router(state: AppState, templates: Jinja2Templates) -> APIRouter:
         return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
 
     @router.get("/presets", response_class=HTMLResponse)
-    def presets_page(request: Request) -> HTMLResponse:
-        return render(request, "presets.html.j2", catalog=state.catalog)
+    def presets_page(request: Request, saved: str = Query("")) -> HTMLResponse:
+        return render(request, "presets.html.j2", catalog=state.catalog, saved=saved)
+
+    @router.get("/presets/{preset_id}/{version}/edit", response_class=HTMLResponse)
+    def preset_edit_page(request: Request, preset_id: str, version: str) -> HTMLResponse:
+        entry = find_preset(state.catalog, preset_id, version)
+        if entry is None:
+            return render(
+                request,
+                "error.html.j2",
+                title="Unknown preset",
+                message=f"No preset {preset_id}@{version} exists in the catalog.",
+                advice="It may have been renamed or removed. Check the Presets page.",
+            )
+        model = editor.editable_model(entry.path)
+        return render(request, "preset_edit.html.j2", model=model, error=None, form_values={})
+
+    @router.post("/presets/{preset_id}/{version}/edit")
+    async def preset_edit_save(request: Request, preset_id: str, version: str) -> Any:
+        """Editor form save: new draft version, never an in-place change (ADR-031)."""
+        entry = find_preset(state.catalog, preset_id, version)
+        if entry is None:
+            return render(
+                request,
+                "error.html.j2",
+                title="Unknown preset",
+                message=f"No preset {preset_id}@{version} exists in the catalog.",
+                advice="It may have been renamed or removed. Check the Presets page.",
+            )
+        form = {key: str(value) for key, value in (await request.form()).items()}
+        model = editor.editable_model(entry.path)
+        try:
+            new_path = editor.apply_edits(
+                base_path=entry.path,
+                base_version=version,
+                catalog=state.catalog,
+                edits=editor.edits_from_form(form, model),
+                edited_by=form.get("edited_by", ""),
+                note=form.get("note", ""),
+            )
+        except editor.EditorError as exc:
+            # Re-render with the operator's values intact: a validation error
+            # must not throw away a page of typed thresholds.
+            return render(
+                request, "preset_edit.html.j2", model=model, error=str(exc), form_values=form
+            )
+        state.catalog[:] = build_catalog(config.paths.presets_root)
+        saved = load_preset(new_path)
+        return RedirectResponse(
+            url=f"/presets?saved={saved.preset.id}@{saved.preset.version}", status_code=303
+        )
 
     @router.get("/watch", response_class=HTMLResponse)
     def watch_page(request: Request) -> HTMLResponse:

@@ -4,8 +4,16 @@
 {% block title %}Presets — Deepdub QC{% endblock %}
 {% block content %}
 <h1>Presets</h1>
-<p class="dim">Presets are versioned files managed in git — this list is read-only.
-To change thresholds, talk to the preset owner.</p>
+<p class="dim">Presets are versioned files. <strong>Edit</strong> opens the console
+editor — every save creates a new draft version with an audit trail; nothing is
+changed in place, and approval still happens via <span class="mono">presets
+lock</span>.</p>
+{% if saved %}
+<div class="banner" role="status"><span>✓</span>
+  <div>Saved <span class="mono">{{ saved }}</span> as a new draft version.
+       It is selectable on the Submit page now.</div>
+</div>
+{% endif %}
 {# No `rows-linked` class: these rows do not navigate anywhere, so they must not
    claim a pointer cursor. Row hover highlight still applies for tracking across
    five columns. #}
@@ -16,12 +24,13 @@ To change thresholds, talk to the preset owner.</p>
   <caption class="visually-hidden">{{ caption }}</caption>
   <thead><tr><th scope="col">Title</th><th scope="col">ID / version</th>
              <th scope="col">Content type</th><th scope="col">Status</th>
-             <th scope="col">Effective</th></tr></thead>
+             <th scope="col">Effective</th>
+             <th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
   <tbody>
   {% for client, group in entries|groupby('client') %}
     {# A group header row, not a data row — announced as a row header, and the
        colspan is derived from the header count above. #}
-    <tr class="group-row"><th scope="colgroup" colspan="5">{{ client }}</th></tr>
+    <tr class="group-row"><th scope="colgroup" colspan="6">{{ client }}</th></tr>
     {% for p in group %}
     <tr>
       {# The description was previously title-only, which is unreachable by
@@ -35,6 +44,10 @@ To change thresholds, talk to the preset owner.</p>
       <td>{{ p.content_type }}</td>
       <td>{{ preset_status_pill(p.status) }}</td>
       <td class="mono">{{ p.effective_date }}</td>
+      {# Approved presets are immutable (ADR-013): the same editor drafts their
+         successor, so only the label differs. #}
+      <td><a class="button" href="/presets/{{ p.preset_id }}/{{ p.version }}/edit"
+            >{{ 'Edit' if p.status == 'draft' else 'New draft' }}</a></td>
     </tr>
     {% endfor %}
   {% endfor %}

@@ -714,3 +714,37 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   defaults are reviewable in one file per content type instead of 53. The
   console preset editor (ADR-031, PR B) builds on exactly this: editing a
   master produces a new draft version, never a silent change.
+
+## ADR-031: Console preset editor — every save is a new draft version
+
+- **Status:** Accepted (2026-07-28); spec: docs/master-preset-spec.md §5
+- **Context:** The master presets (ADR-030) only pay off if the A/V engineer
+  can change thresholds without YAML. Alternatives considered: (a) in-place
+  editing of draft files — rejected, it destroys the audit trail and breaks
+  determinism ("which preset judged this file" must have one answer);
+  (b) unversioned per-job overrides — rejected by the operator (spec §8:
+  versioned saves); (c) a full YAML editor in the browser — over-scoped and
+  invites structural mistakes the form cannot make.
+- **Decision:** `server/editor.py` + a server-rendered editor page (no new
+  client JS). The editor changes VALUES only: expected payload fields
+  (value/values/min/max/tolerance/pattern), severity, blocking, enabled —
+  operators, scoping and new rules remain YAML work. Disabling uses the rule
+  model's native `enabled` flag, so the rule stays in the file. Every save
+  writes a NEW file: minor version bump, status draft, `supersedes` set,
+  provenance header (who/when/base/note; a name is mandatory), and the text
+  round-trips through the real preset loader under a temp name before it can
+  reach its final one — an invalid edit leaves the directory untouched. A
+  save carries its base version and is rejected (409) when a newer version
+  exists: last-write-wins is unacceptable for QC policy. On success the
+  in-process catalog refreshes, so the new draft is submittable immediately,
+  and the GUI re-renders validation failures with the operator's typed
+  values intact. Approved presets are never touched: the same editor drafts
+  their successor ("New draft" is the only difference). Editor-created files
+  land under presets_root (on the RDP host: the git checkout — `git status`
+  is the audit; committing them back is a maintenance duty, spec §6).
+- **Consequences:** Threshold review becomes a form, not a YAML lesson;
+  ADR-013 governance is unchanged (drafts everywhere until `presets lock`).
+  Comments from the base file (including ADR-030's corpus-spread comments)
+  do not survive a save — the base version file remains on disk as the
+  reviewable record. Concurrent editors get honest conflicts instead of
+  silent overwrites.
