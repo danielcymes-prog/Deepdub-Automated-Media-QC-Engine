@@ -14,7 +14,8 @@ panel is read-only (docs/watch-folders-spec.md).</p>
   </caption>
   <thead><tr><th scope="col">Name</th><th scope="col">Folder</th>
              <th scope="col">Preset</th><th scope="col">State</th>
-             <th scope="col">Enqueued</th><th scope="col">Deferred</th></tr></thead>
+             <th scope="col">Enqueued</th><th scope="col">Deferred</th>
+             <th scope="col">Routing</th></tr></thead>
   <tbody>
   {% for f in folders %}
     <tr>
@@ -30,6 +31,7 @@ panel is read-only (docs/watch-folders-spec.md).</p>
       </td>
       <td class="mono">{{ f.enqueued_total }}</td>
       <td class="mono">{{ f.deferred_count }}</td>
+      <td class="mono">{% if f.routing %}{{ f.routing }}{% else %}<span class="dim">—</span>{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>

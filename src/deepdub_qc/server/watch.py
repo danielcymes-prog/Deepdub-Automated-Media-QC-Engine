@@ -87,6 +87,9 @@ class FolderStatus:
     last_scan_at: float | None
     enqueued_total: int
     deferred_count: int
+    #: Human summary of the folder's routing/webhook config (ADR-028); the
+    #: webhook URL itself never appears here - it may embed tokens.
+    routing: str
 
 
 def scan_folder(path: Path, extensions: list[str], recursive: bool) -> list[FileSnapshot]:
@@ -108,6 +111,18 @@ def scan_folder(path: Path, extensions: list[str], recursive: bool) -> list[File
         stat = candidate.stat()
         snapshots.append(FileSnapshot(path=str(candidate), size=stat.st_size, mtime=stat.st_mtime))
     return snapshots
+
+
+def routing_summary(entry: WatchFolderEntry) -> str:
+    """One line for the panel: which verdicts route where, and whether a webhook is set."""
+    labels = {"on_pass": "pass", "on_warning": "warning", "on_reject": "reject"}
+    parts = []
+    for key, action in entry.routing_actions.items():
+        verb = "move" if action.move_to is not None else "copy"
+        parts.append(f"{labels[key]} → {action.destination} ({verb})")
+    if entry.webhook_url is not None:
+        parts.append("webhook set")
+    return "; ".join(parts)
 
 
 def is_stable(
@@ -339,6 +354,7 @@ class Watcher:
                     last_scan_at=state.last_scan_at,
                     enqueued_total=state.enqueued_total,
                     deferred_count=len(state.deferrals) + len(state.parked),
+                    routing=routing_summary(state.entry),
                 )
                 for state in self._states
             ]

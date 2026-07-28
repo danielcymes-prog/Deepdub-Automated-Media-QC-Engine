@@ -97,6 +97,34 @@ class LoggingSection(_Section):
     retention_days: Annotated[int, Field(ge=1)] = 30
 
 
+class RoutingAction(_Section):
+    """Where a routed input goes for one verdict (docs/watch-folders-spec.md section 10).
+
+    Exactly one of move_to / copy_to: silence about which operation happens
+    to the source file would be ambiguous, and a default would hide a
+    destructive choice (move deletes from the dropbox).
+    """
+
+    move_to: Path | None = None
+    copy_to: Path | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one_destination(self) -> RoutingAction:
+        if (self.move_to is None) == (self.copy_to is None):
+            msg = "routing action requires exactly one of move_to / copy_to"
+            raise ValueError(msg)
+        return self
+
+    @property
+    def destination(self) -> Path:
+        if self.move_to is not None:
+            return self.move_to
+        if self.copy_to is not None:
+            return self.copy_to
+        msg = "routing action has no destination"  # unreachable post-validation
+        raise ValueError(msg)
+
+
 class WatchFolderEntry(_Section):
     """One watch folder binding (docs/watch-folders-spec.md section 3)."""
 
@@ -108,6 +136,12 @@ class WatchFolderEntry(_Section):
     poll_seconds: Annotated[int, Field(ge=1, le=3600)] = 10
     settle_seconds: Annotated[int, Field(ge=0, le=3600)] = 30
     recursive: bool = False
+    # Verdict routing + webhook (ADR-028). Unset = leave the file in place /
+    # no notification — routing is explicit-only, never implied by another key.
+    on_pass: RoutingAction | None = None
+    on_warning: RoutingAction | None = None
+    on_reject: RoutingAction | None = None
+    webhook_url: Annotated[str, Field(pattern=r"^https?://")] | None = None
 
     @field_validator("extensions")
     @classmethod
@@ -117,6 +151,31 @@ class WatchFolderEntry(_Section):
             msg = "extensions entries must be non-empty"
             raise ValueError(msg)
         return normalized
+
+    @property
+    def routing_actions(self) -> dict[str, RoutingAction]:
+        """The configured verdict->action bindings, keyed by config key name."""
+        actions = {
+            "on_pass": self.on_pass,
+            "on_warning": self.on_warning,
+            "on_reject": self.on_reject,
+        }
+        return {key: action for key, action in actions.items() if action is not None}
+
+    @model_validator(mode="after")
+    def _destinations_outside_scan_scope(self) -> WatchFolderEntry:
+        """A destination inside the scanned area would re-QC routed files forever."""
+        for key, action in self.routing_actions.items():
+            destination = action.destination
+            if destination == self.path or (
+                self.recursive and destination.is_relative_to(self.path)
+            ):
+                msg = (
+                    f"{key} destination {destination} is inside the scanned area of "
+                    f"watch folder {self.name!r} - routed files would be re-enqueued"
+                )
+                raise ValueError(msg)
+        return self
 
 
 class ServerConfig(_Section):
@@ -222,6 +281,39 @@ def load_config(path: Path, environ: dict[str, str] | None = None) -> LoadedConf
     return LoadedConfig(config=config, warnings=warnings, env_overrides=env_overrides)
 
 
+def _inside_media_roots(path: Path, config: ServerConfig) -> bool:
+    resolved = path.resolve()
+    return any(
+        resolved.is_relative_to(root.resolve())
+        for root in config.paths.media_roots
+        if root.is_dir()
+    )
+
+
+def _validate_watch_folder_runtime(entry: WatchFolderEntry, config: ServerConfig) -> None:
+    """Filesystem checks for one watch folder binding; raises ConfigError."""
+    if not entry.path.is_dir():
+        raise ConfigError(f"watch folder {entry.name!r}: path is not a directory: {entry.path}")
+    if not _inside_media_roots(entry.path, config):
+        raise ConfigError(
+            f"watch folder {entry.name!r}: {entry.path} is outside every "
+            "configured media root - watch folders may only read where "
+            "the server may read"
+        )
+    for key, action in entry.routing_actions.items():
+        destination = action.destination
+        if not destination.is_dir():
+            raise ConfigError(
+                f"watch folder {entry.name!r}: {key} destination is not a directory: {destination}"
+            )
+        if not _inside_media_roots(destination, config):
+            raise ConfigError(
+                f"watch folder {entry.name!r}: {key} destination {destination} "
+                "is outside every configured media root - routing may only "
+                "write where the server may operate"
+            )
+
+
 def validate_runtime(loaded: LoadedConfig) -> list[str]:
     """Filesystem/tool startup checks (docs/server-config-spec.md section 4).
 
@@ -252,19 +344,7 @@ def validate_runtime(loaded: LoadedConfig) -> list[str]:
             raise ConfigError(f"tools.{name} does not exist: {tool}")
 
     for entry in config.watch_folders:
-        if not entry.path.is_dir():
-            raise ConfigError(f"watch folder {entry.name!r}: path is not a directory: {entry.path}")
-        resolved = entry.path.resolve()
-        if not any(
-            resolved.is_relative_to(root.resolve())
-            for root in config.paths.media_roots
-            if root.is_dir()
-        ):
-            raise ConfigError(
-                f"watch folder {entry.name!r}: {entry.path} is outside every "
-                "configured media root - watch folders may only read where "
-                "the server may read"
-            )
+        _validate_watch_folder_runtime(entry, config)
 
     if config.tools.expected_ffmpeg_version is not None:
         from deepdub_qc.utils.subprocess import ToolError, run_tool  # noqa: PLC0415
