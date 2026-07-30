@@ -66,11 +66,25 @@ jobs:
         # (docs/windows-deployment.md section 7) and may have no PyPI access.
         # If the CLI ever stops working without the dev groups, deployment
         # breaks; this catches it here instead of on the RDP host.
+        #
+        # The import walk is the real check: the CLI lazy-imports server
+        # modules inside command bodies, so `serve --help` never reaches
+        # them — httpx sat dev-only while routing.py imported it at runtime,
+        # and the first RDP install found out (2026-07-30). Importing every
+        # module under deepdub_qc proves each runtime import resolves from
+        # runtime dependencies alone.
         run: |
           uv sync --frozen --no-dev
           uv run --no-dev deepdub-qc version
           uv run --no-dev deepdub-qc presets validate presets
           uv run --no-dev deepdub-qc serve --help
+          uv run --no-dev python -c "
+          import importlib, pkgutil
+          import deepdub_qc
+          for module in pkgutil.walk_packages(deepdub_qc.__path__, 'deepdub_qc.'):
+              importlib.import_module(module.name)
+          print('all runtime modules import without dev dependencies')
+          "
 
   # The canonical verification (ADR-022): the same suite inside the pinned
   # image, so reproducibility is proven on the FFmpeg we actually ship.
