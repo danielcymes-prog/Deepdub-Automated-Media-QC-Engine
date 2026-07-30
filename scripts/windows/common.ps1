@@ -63,14 +63,21 @@ function Invoke-RuntimeSync {
     # Runtime dependencies ONLY (--no-dev): a delivery host has no use for
     # pytest/ruff/mypy and may be unable to fetch them; --frozen means the
     # committed lock is the contract (docs/windows-deployment.md section 8.1).
+    # --group pdf adds playwright so report.pdf renders on this host.
     param([string]$RepoRoot)
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
         throw 'uv not found on PATH - install uv first (https://docs.astral.sh/uv/).'
     }
+    # copy, never hardlink: uv's default hardlinks venv files from the
+    # per-user cache, and a hardlinked file keeps the CACHE's ACLs - the
+    # service account cannot read the installing user's profile, so imports
+    # failed intermittently depending on which files happened to be linked
+    # (first observed as 'No module named deepdub_qc' on the RDP host).
+    $env:UV_LINK_MODE = 'copy'
     Push-Location $RepoRoot
     try {
-        & uv sync --frozen --no-dev
-        if ($LASTEXITCODE -ne 0) { throw "uv sync --frozen --no-dev failed (exit $LASTEXITCODE)" }
+        & uv sync --frozen --no-dev --group pdf
+        if ($LASTEXITCODE -ne 0) { throw "uv sync --frozen --no-dev --group pdf failed (exit $LASTEXITCODE)" }
     } finally {
         Pop-Location
     }

@@ -31,6 +31,13 @@ dependencies = [
 deepdub-qc = "deepdub_qc.cli:app"
 
 [dependency-groups]
+# PDF rendering on the delivery host (docs/windows-deployment.md 8.1 step 4).
+# A group rather than a runtime dependency: playwright is heavy, the import
+# is lazy, and HTML/JSON (the canonical outputs) never need it — CI and
+# Docker stay lean, while the Windows scripts sync with `--group pdf`.
+pdf = [
+    "playwright>=1.45",
+]
 dev = [
     "pytest>=8.2",
     "ruff>=0.6",

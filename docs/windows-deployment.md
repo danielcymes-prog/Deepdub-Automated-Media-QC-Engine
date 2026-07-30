@@ -146,7 +146,11 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\install.ps1 `
 1. Verify prerequisites: admin rights, `uv` on PATH, NSSM at `-NssmPath` (its sha256 goes in the install log).
 2. Create the §2 directory tree.
 3. Place the pinned FFmpeg build; write `VERSION.txt` (version line + sha256 + source). A fresh config gets `tools.expected_ffmpeg_version` **set automatically** from the pinned build, arming the ADR-008 startup guard.
-4. Build the venv **in the repo checkout** with **`uv sync --frozen --no-dev`**, then `playwright install chromium` with `PLAYWRIGHT_BROWSERS_PATH=C:\DeepdubQC\browsers` — Playwright's per-user default location is invisible to the service account, so the location must be explicit and shared. Chromium failure is a warning, not an error: PDF degrades with a note; HTML/JSON (canonical) always render.
+4. Build the venv **in the repo checkout** with **`uv sync --frozen --no-dev --group pdf`** (the `pdf` group adds playwright so `report.pdf` renders on this host), then `playwright install chromium` with `PLAYWRIGHT_BROWSERS_PATH=C:\DeepdubQC\browsers` — Playwright's per-user default location is invisible to the service account, so the location must be explicit and shared. Chromium failure is a warning, not an error: PDF degrades with a note; HTML/JSON (canonical) always render.
+
+   Every sync runs with **`UV_LINK_MODE=copy`**. uv's default hardlinks venv files from the per-user cache, and a hardlinked file keeps the *cache's* ACLs — unreadable by the service account, producing intermittent `ModuleNotFoundError`s that depend on which files happened to be linked (first RDP install, 2026-07-30). Copies inherit the repo ACLs the installer grants.
+
+   `-MediaRoots` entries must be **directories** — the installer refuses a file path outright (the server would only reject the resulting config at startup, one failure later than necessary).
 
    `--no-dev` is not optional. It omits the `dev` and `lint` dependency groups (pytest, ruff, mypy, import-linter), which a delivery host has no use for and may be unable to fetch. Without it, adding a lint tool to the repo becomes a deployment failure on this host. CI proves the CLI and `serve` still work with runtime dependencies only, so this path stays honest.
 
@@ -165,10 +169,10 @@ Upgrades must not destroy queue state or job history, and must not interrupt a r
 2. Stop the service.
 3. Back up `data\qc.sqlite3` (and `-wal`/`-shm`) to `data\backups\pre-upgrade-<timestamp>\`.
 4. `git fetch` + `git reset --hard <ref>` in the checkout. `reset --hard` discards local edits to **tracked** files (e.g. a `uv.lock` touched by an accidental plain `uv sync`) but preserves **untracked** files — console-editor preset drafts saved on this host live there until committed back, and an upgrade must never destroy them; the script lists any it finds.
-5. Rebuild the venv: `uv sync --frozen --no-dev`.
+5. Rebuild the venv: `uv sync --frozen --no-dev --group pdf` (`UV_LINK_MODE=copy`, §8.1 step 4).
 6. Database migrations are **automatic at startup** (the store applies its schema and lightweight column migrations when the server opens the DB) — there is no separate migration step to run or to fail. Config and data are untouched (new config keys must have defaults; a required new key without a default is a breaking release and must say so in its release notes).
 7. Start the service; run the same smoke test as install step 8.
-8. On smoke-test failure: automatic `rollback.ps1 -Commit <previous> -DatabaseBackup <step-3 dir>` — the DB backup is restored because the failed version's startup may already have migrated the schema — then exit nonzero with both attempts logged.
+8. On smoke-test failure: automatic `rollback.ps1 -Commit <previous> -DatabaseBackup <step-3 dir>` — the DB backup is restored because the failed version's startup may already have migrated the schema — then exit nonzero with both attempts logged. **`-NoRollback`** skips this and leaves the new state in place for diagnosis: when the current version is *also* broken, rolling back ping-pongs between two bad states and hides the real error (first RDP install, 2026-07-30).
 
 ### 8.3 Rollback (`rollback.ps1`)
 

@@ -13,7 +13,12 @@ param(
     [string]$Root = 'C:\DeepdubQC',
     [string]$Ref = 'origin/main',
     [int]$MaxWaitMinutes = 30,
-    [switch]$Force   # skip draining; the interrupted job is marked FAILED (interrupted_by_restart), never silent
+    [switch]$Force,       # skip draining; the interrupted job is marked FAILED (interrupted_by_restart), never silent
+    # Leave the new state in place when the smoke test fails, instead of
+    # rolling back. Use when the CURRENT version is already broken: rolling
+    # back to a broken base ping-pongs between two bad states and hides the
+    # real error (observed during the first RDP install).
+    [switch]$NoRollback
 )
 
 $ErrorActionPreference = 'Stop'
@@ -82,9 +87,16 @@ try {
     Start-QcService -ServiceName $serviceName
     Invoke-SmokeTest -Root $Root -Port $port | Out-Null
 } catch {
+    Write-Log "UPGRADE FAILED: $_" 'Red'
+    if ($NoRollback) {
+        # Deliberate: the operator declared the base broken too. Keep the
+        # new checkout so the failure can be diagnosed in place; the DB
+        # backup from step 2 is untouched and named in the log above.
+        Write-Log "-NoRollback: leaving $newCommit in place for diagnosis (service state unknown)." 'Yellow'
+        throw "Upgrade to $Ref failed; NOT rolled back (-NoRollback). See the install log."
+    }
     # Automatic rollback (section 8.2 step 8). The DB backup is restored
     # because the new version's startup may already have migrated the schema.
-    Write-Log "UPGRADE FAILED: $_" 'Red'
     Write-Log "Rolling back to $previousCommit..." 'Yellow'
     & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'rollback.ps1') `
         -Root $Root -Commit $previousCommit -DatabaseBackup $backupDir
