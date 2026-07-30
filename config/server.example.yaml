@@ -1,4 +1,6 @@
-# Deepdub QC server configuration — example (docs/server-config-spec.md).
+# Deepdub QC server configuration - example (docs/server-config-spec.md).
+# ASCII only: install.ps1 round-trips this file through Windows PowerShell,
+# which reads BOM-less files as ANSI and mangles multi-byte characters.
 # Copy to C:\DeepdubQC\config\server.yaml on the RDP host and edit the
 # REQUIRED values below. The server refuses to start on unknown keys.
 schema_version: 1
@@ -55,7 +57,7 @@ logging:
 #    poll_seconds: 10       # scan cadence
 #    settle_seconds: 30     # quiet period before a new file is trusted
 #    recursive: false       # subfolders act as staging when false
-#    # Verdict routing + webhook (ADR-028) — all optional. An unset verdict
+#    # Verdict routing + webhook (ADR-028) - all optional. An unset verdict
 #    # leaves the file in place (no fallback between verdicts). Each action
 #    # takes exactly one of move_to / copy_to; destinations must exist,
 #    # be inside media_roots, and be outside the scanned area.

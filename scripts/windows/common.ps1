@@ -1,4 +1,4 @@
-# Deepdub QC — shared deployment helpers (docs/windows-deployment.md).
+# Deepdub QC - shared deployment helpers (docs/windows-deployment.md).
 # Dot-sourced by the scripts in this directory; not runnable on its own.
 # Windows PowerShell 5.1 compatible: no pwsh-only syntax.
 
@@ -12,7 +12,7 @@ function Initialize-DeployLog {
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $script:LogFile = Join-Path $logDir "install-$stamp.log"
-    Write-Log "== Deepdub QC $Action — $stamp =="
+    Write-Log "== Deepdub QC $Action - $stamp =="
 }
 
 function Write-Log {
@@ -42,7 +42,7 @@ function Read-DeployState {
     param([string]$Root)
     $path = Get-StatePath $Root
     if (-not (Test-Path $path)) {
-        throw "No deployment state at $path — run install.ps1 first."
+        throw "No deployment state at $path - run install.ps1 first."
     }
     Get-Content $path -Raw | ConvertFrom-Json
 }
@@ -65,7 +65,7 @@ function Invoke-RuntimeSync {
     # committed lock is the contract (docs/windows-deployment.md section 8.1).
     param([string]$RepoRoot)
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-        throw 'uv not found on PATH — install uv first (https://docs.astral.sh/uv/).'
+        throw 'uv not found on PATH - install uv first (https://docs.astral.sh/uv/).'
     }
     Push-Location $RepoRoot
     try {
@@ -76,7 +76,7 @@ function Invoke-RuntimeSync {
     }
     $entry = Join-Path $RepoRoot '.venv\Scripts\deepdub-qc.exe'
     if (-not (Test-Path $entry)) {
-        throw "Entrypoint missing after sync: $entry — incomplete checkout or stale lockfile."
+        throw "Entrypoint missing after sync: $entry - incomplete checkout or stale lockfile."
     }
     $entry
 }
@@ -99,7 +99,7 @@ function Wait-Healthy {
 
 function Invoke-SmokeTest {
     # Script-enforced (docs/windows-deployment.md section 8.1 step 8): the
-    # service must be healthy AND attributable — app version present, the
+    # service must be healthy AND attributable - app version present, the
     # ffmpeg it resolved is the pinned one, the DB is the expected file.
     param([string]$Root, [int]$Port)
     $health = Wait-Healthy -Port $Port

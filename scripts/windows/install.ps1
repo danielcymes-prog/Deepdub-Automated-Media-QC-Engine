@@ -1,4 +1,4 @@
-# Deepdub QC — fresh install / re-install (docs/windows-deployment.md section 8.1).
+# Deepdub QC - fresh install / re-install (docs/windows-deployment.md section 8.1).
 # Run as Administrator from the repo checkout:
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\install.ps1 `
 #     -NssmPath C:\tools\nssm.exe -FfmpegDir C:\Downloads\ffmpeg-7.1\bin `
@@ -16,7 +16,7 @@ param(
     [Parameter(Mandatory = $true)][string]$FfmpegDir,   # dir containing ffmpeg.exe/ffprobe.exe
     [string]$ServiceName = 'DeepdubQC',
     [int]$Port = 8571,
-    # Default: the per-service virtual account NT SERVICE\<name> — no password,
+    # Default: the per-service virtual account NT SERVICE\<name> - no password,
     # least privilege, cannot read other users' profiles. Pass a real account
     # (DOMAIN\user or .\user) only when the service must reach UNC shares.
     [string]$ServiceAccount = '',
@@ -57,7 +57,7 @@ Write-Log "Pinned ffmpeg: $versionLine (sha256=$ffmpegHash)"
 $nssmHash = (Get-FileHash $NssmPath -Algorithm SHA256).Hash
 Write-Log "NSSM: $NssmPath (sha256=$nssmHash)"
 
-# 2. Initial config (never overwrite an existing one — it is operator state).
+# 2. Initial config (never overwrite an existing one - it is operator state).
 $configPath = Join-Path $Root 'config\server.yaml'
 $configExisted = Test-Path $configPath
 if (-not $configExisted) {
@@ -77,7 +77,7 @@ if (-not $configExisted) {
     Set-Content $configPath $config
     Write-Log "Wrote initial config: $configPath"
     if ($MediaRoots.Count -eq 0) {
-        Write-Log 'media_roots still holds example paths — EDIT the config before first start.' 'Yellow'
+        Write-Log 'media_roots still holds example paths - EDIT the config before first start.' 'Yellow'
     }
 } else {
     Write-Log "Config exists, leaving untouched: $configPath"
@@ -86,7 +86,7 @@ if (-not $configExisted) {
 # 3. Runtime venv from the committed lock (section 8.1 step 4).
 $entry = Invoke-RuntimeSync -RepoRoot $RepoRoot
 
-# 4. Chromium for PDF rendering — into a shared, service-readable location.
+# 4. Chromium for PDF rendering - into a shared, service-readable location.
 #    Playwright installs browsers under the CURRENT USER's profile by default,
 #    which the service account cannot read; PLAYWRIGHT_BROWSERS_PATH makes the
 #    location explicit for both this install step and the service (step 5).
@@ -98,9 +98,9 @@ if (-not $SkipPlaywright) {
     $playwright = Join-Path $RepoRoot '.venv\Scripts\playwright.exe'
     if (Test-Path $playwright) {
         & $playwright install chromium
-        if ($LASTEXITCODE -ne 0) { Write-Log 'Playwright install failed — PDF rendering will degrade (HTML/JSON unaffected).' 'Yellow' }
+        if ($LASTEXITCODE -ne 0) { Write-Log 'Playwright install failed - PDF rendering will degrade (HTML/JSON unaffected).' 'Yellow' }
     } else {
-        Write-Log 'playwright.exe not in venv — PDF rendering will degrade (HTML/JSON unaffected).' 'Yellow'
+        Write-Log 'playwright.exe not in venv - PDF rendering will degrade (HTML/JSON unaffected).' 'Yellow'
     }
 }
 
@@ -137,7 +137,7 @@ if ($ServiceAccount) {
     if ($LASTEXITCODE -ne 0) { throw "Failed to set service account $ServiceAccount" }
 } else {
     # Per-service virtual account: no password, no profile, least privilege.
-    # NOT LocalSystem (the NSSM default) — untrusted media goes through
+    # NOT LocalSystem (the NSSM default) - untrusted media goes through
     # FFmpeg under this identity; blast radius must stay small (section 3).
     # sc.exe rather than nssm: it sets passwordless identities reliably.
     & sc.exe config $ServiceName obj= $serviceIdentity
@@ -145,7 +145,7 @@ if ($ServiceAccount) {
 }
 Write-Log "Service $ServiceName registered as $serviceIdentity"
 
-# 6. ACLs — exactly what the identity needs, nothing more (section 3):
+# 6. ACLs - exactly what the identity needs, nothing more (section 3):
 #    modify on data\ and logs\, read on the rest of the tree and the repo
 #    (the venv, presets, and templates live in the checkout).
 foreach ($grant in @(
@@ -170,7 +170,7 @@ if ($MediaRoots.Count -gt 0) {
     }
 }
 
-# 7. Browser shortcut (section 7) — launches nothing, never starts the server.
+# 7. Browser shortcut (section 7) - launches nothing, never starts the server.
 $shortcut = "[InternetShortcut]`nURL=http://127.0.0.1:$Port/"
 Set-Content (Join-Path $Root 'shortcuts\Deepdub QC.url') $shortcut
 Copy-Item (Join-Path $Root 'shortcuts\Deepdub QC.url') "$env:PUBLIC\Desktop\Deepdub QC.url" -Force
@@ -189,7 +189,7 @@ Write-DeployState -Root $Root -State @{
 }
 Write-Log "Deployment state written (commit $commit)."
 
-# 9. Start + smoke test — only when the config is real. A fresh config with
+# 9. Start + smoke test - only when the config is real. A fresh config with
 #    example media_roots makes the server refuse to start (by design), so
 #    starting it would just record a crash loop.
 if ($NoStart -or (-not $configExisted -and $MediaRoots.Count -eq 0)) {
