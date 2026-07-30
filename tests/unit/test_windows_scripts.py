@@ -130,3 +130,12 @@ class TestDataStewardship:
         # account; both the install step and the service env must pin it.
         text = read("install.ps1")
         assert text.count("PLAYWRIGHT_BROWSERS_PATH") >= 2
+
+    def test_shortcut_carries_the_brand_icon(self) -> None:
+        # A .url without IconFile renders as a generic page glyph; the icon
+        # asset must ship in the repo and be copied beside the shortcut.
+        ico = SCRIPTS_DIR.parent.parent / "assets" / "deepdub-qc.ico"
+        assert ico.is_file() and ico.read_bytes()[:4] == b"\x00\x00\x01\x00"
+        text = read("install.ps1")
+        assert "deepdub-qc.ico" in text
+        assert "IconFile=" in text

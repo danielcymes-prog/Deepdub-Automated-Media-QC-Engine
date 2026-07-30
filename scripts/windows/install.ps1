@@ -179,7 +179,11 @@ if ($MediaRoots.Count -gt 0) {
 }
 
 # 7. Browser shortcut (section 7) - launches nothing, never starts the server.
-$shortcut = "[InternetShortcut]`nURL=http://127.0.0.1:$Port/"
+#    The icon is copied out of the repo so the shortcut keeps its face even
+#    if the checkout moves; .url IconFile must point at a real .ico.
+Copy-Item (Join-Path $RepoRoot 'assets\deepdub-qc.ico') (Join-Path $Root 'shortcuts\deepdub-qc.ico') -Force
+$iconPath = Join-Path $Root 'shortcuts\deepdub-qc.ico'
+$shortcut = "[InternetShortcut]`nURL=http://127.0.0.1:$Port/`nIconFile=$iconPath`nIconIndex=0"
 Set-Content (Join-Path $Root 'shortcuts\Deepdub QC.url') $shortcut
 Copy-Item (Join-Path $Root 'shortcuts\Deepdub QC.url') "$env:PUBLIC\Desktop\Deepdub QC.url" -Force
 
