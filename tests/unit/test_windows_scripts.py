@@ -102,8 +102,28 @@ class TestDataStewardship:
         assert "-PurgeData" in text or "$PurgeData" in text
         assert "switch]$PurgeData" in text
 
-    def test_runtime_sync_is_frozen_no_dev(self) -> None:
-        assert "uv sync --frozen --no-dev" in read("common.ps1")
+    def test_runtime_sync_is_frozen_no_dev_with_pdf(self) -> None:
+        assert "uv sync --frozen --no-dev --group pdf" in read("common.ps1")
+
+    def test_runtime_sync_copies_instead_of_hardlinking(self) -> None:
+        # uv's default hardlinks venv files from the per-user cache; a
+        # hardlinked file keeps the cache's ACLs, which the service account
+        # cannot read. Imports then fail intermittently (RDP, 2026-07-30).
+        text = read("common.ps1")
+        assert "UV_LINK_MODE = 'copy'" in text
+        assert text.index("UV_LINK_MODE") < text.index("uv sync --frozen")
+
+    def test_media_roots_must_be_directories(self) -> None:
+        # The first real install received a .yaml FILE as -MediaRoots and
+        # wrote a config the server could never validate.
+        assert "-PathType Container" in read("install.ps1")
+
+    def test_upgrade_offers_norollback_escape(self) -> None:
+        # Rolling back to a broken base ping-pongs between two bad states
+        # and hides the real error; the operator needs an escape hatch.
+        text = read("upgrade.ps1")
+        assert "switch]$NoRollback" in text
+        assert "NOT rolled back" in text
 
     def test_playwright_browsers_path_is_shared(self) -> None:
         # Playwright's per-user default location is invisible to the service

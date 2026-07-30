@@ -29,6 +29,14 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 Assert-Administrator
+# Fail before touching anything: -MediaRoots entries must be FOLDERS. The
+# first real install received a .yaml file path here; Test-Path alone let it
+# through and the server then (correctly) refused its own config on startup.
+foreach ($mediaRoot in $MediaRoots) {
+    if ((Test-Path $mediaRoot) -and -not (Test-Path $mediaRoot -PathType Container)) {
+        throw "-MediaRoots entry is a file, not a folder: $mediaRoot (pass the DIRECTORIES your media lives in)"
+    }
+}
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 foreach ($dir in @('config', 'data\jobs', 'data\backups', 'logs\service', 'logs\app',
                    'bin\ffmpeg', 'browsers', 'shortcuts')) {
