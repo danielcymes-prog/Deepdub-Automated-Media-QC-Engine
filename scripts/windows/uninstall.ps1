@@ -1,9 +1,9 @@
-# Deepdub QC — uninstall the service (docs/windows-deployment.md section 8.3).
+# Deepdub QC - uninstall the service (docs/windows-deployment.md section 8.3).
 # Run as Administrator:
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\uninstall.ps1
 #
 # Deregisters the service and removes binaries and shortcuts. data\ (job
-# history — client-relevant QC evidence) and logs\ stay in place unless
+# history - client-relevant QC evidence) and logs\ stay in place unless
 # -PurgeData is passed: deletion is a separate, deliberate act. The repo
 # checkout is never touched.
 
@@ -29,7 +29,7 @@ foreach ($dir in @('bin', 'browsers', 'shortcuts')) {
 }
 
 if ($PurgeData) {
-    Write-Log 'PURGING data\, logs\ and config\ — job history is gone after this.' 'Red'
+    Write-Log 'PURGING data\, logs\ and config\ - job history is gone after this.' 'Red'
     Remove-Item $Root -Recurse -Force
 } else {
     Write-Log "Kept: $Root\data (QC evidence), logs\, config\. Remove manually or re-run with -PurgeData." 'Yellow'

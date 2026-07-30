@@ -1,4 +1,4 @@
-# Deepdub QC — roll back to a previous commit (docs/windows-deployment.md section 8.2).
+# Deepdub QC - roll back to a previous commit (docs/windows-deployment.md section 8.2).
 # Run as Administrator:
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\rollback.ps1
 #
@@ -25,7 +25,7 @@ $port = $state.port
 
 if (-not $Commit) {
     $Commit = $state.previousCommit
-    if (-not $Commit) { throw 'No previous commit recorded and no -Commit given — nothing to roll back to.' }
+    if (-not $Commit) { throw 'No previous commit recorded and no -Commit given - nothing to roll back to.' }
 }
 
 Stop-QcService -ServiceName $serviceName

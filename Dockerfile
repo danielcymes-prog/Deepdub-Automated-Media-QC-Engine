@@ -82,6 +82,9 @@ RUN uv sync --frozen --dev --python /usr/local/bin/python3
 COPY presets ./presets
 COPY schemas ./schemas
 COPY scripts ./scripts
+# config/ is test input: the Windows deployment installer round-trips
+# server.example.yaml through ANSI encoding, so a test pins it to ASCII.
+COPY config ./config
 # docs/ is test input: the export drift tests compare the committed
 # docs/parameter-catalogue.md byte-for-byte against a fresh render.
 COPY docs ./docs

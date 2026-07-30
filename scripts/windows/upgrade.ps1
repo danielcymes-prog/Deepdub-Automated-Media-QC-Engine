@@ -1,4 +1,4 @@
-# Deepdub QC — upgrade to a newer commit (docs/windows-deployment.md section 8.2).
+# Deepdub QC - upgrade to a newer commit (docs/windows-deployment.md section 8.2).
 # Run as Administrator:
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\upgrade.ps1
 #
@@ -40,7 +40,7 @@ try {
     $health = Get-Health -Port $port
     Write-Log "Preflight: v$($health.version), queue_depth=$($health.queue_depth), running=$(Get-RunningCount $health)"
 } catch {
-    Write-Log 'Service not answering (already stopped?) — skipping drain.' 'Yellow'
+    Write-Log 'Service not answering (already stopped?) - skipping drain.' 'Yellow'
     $preflightFailed = $true
 }
 if (-not $preflightFailed -and -not $Force -and (Get-RunningCount $health) -gt 0) {
@@ -61,18 +61,18 @@ $backupDir = Backup-Database -Root $Root -Label 'pre-upgrade'
 
 # 3. Move the checkout. reset --hard discards local edits to TRACKED files
 #    (e.g. a uv.lock touched by an accidental plain `uv sync`) but preserves
-#    UNTRACKED files — console-editor preset drafts saved on this host live
+#    UNTRACKED files - console-editor preset drafts saved on this host live
 #    there until committed back, and an upgrade must never destroy them.
 $previousCommit = Get-RepoCommit -RepoRoot $repoRoot
 & git -C $repoRoot fetch origin
-if ($LASTEXITCODE -ne 0) { throw 'git fetch failed — check network/credentials.' }
+if ($LASTEXITCODE -ne 0) { throw 'git fetch failed - check network/credentials.' }
 & git -C $repoRoot reset --hard $Ref
 if ($LASTEXITCODE -ne 0) { throw "git reset --hard $Ref failed." }
 $newCommit = Get-RepoCommit -RepoRoot $repoRoot
 Write-Log "Checkout: $previousCommit -> $newCommit"
 $drafts = (& git -C $repoRoot status --porcelain) | Where-Object { $_ -match '^\?\?' }
 if ($drafts) {
-    Write-Log "$(@($drafts).Count) untracked file(s) preserved (editor-created preset drafts?) — commit them back during maintenance:" 'Yellow'
+    Write-Log "$(@($drafts).Count) untracked file(s) preserved (editor-created preset drafts?) - commit them back during maintenance:" 'Yellow'
     $drafts | ForEach-Object { Write-Log "  $_" 'Yellow' }
 }
 
@@ -89,7 +89,7 @@ try {
     & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'rollback.ps1') `
         -Root $Root -Commit $previousCommit -DatabaseBackup $backupDir
     if ($LASTEXITCODE -ne 0) {
-        Write-Log 'ROLLBACK ALSO FAILED — service needs manual attention (see log above).' 'Red'
+        Write-Log 'ROLLBACK ALSO FAILED - service needs manual attention (see log above).' 'Red'
     }
     throw "Upgrade to $Ref failed and was rolled back. Both attempts are in the install log."
 }

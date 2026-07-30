@@ -1,4 +1,4 @@
-# Deepdub QC — host status report (docs/windows-deployment.md section 9).
+# Deepdub QC - host status report (docs/windows-deployment.md section 9).
 # No admin required:
 #   powershell -ExecutionPolicy Bypass -File scripts\windows\status.ps1
 #
@@ -23,13 +23,13 @@ if ($service) {
     $color = if ($service.Status -eq 'Running') { 'Green' } else { 'Red' }
     Write-Host "Service:  $($state.serviceName) is $($service.Status) (account: $($state.serviceIdentity))" -ForegroundColor $color
 } else {
-    Write-Host "Service:  $($state.serviceName) NOT REGISTERED — run install.ps1" -ForegroundColor Red
+    Write-Host "Service:  $($state.serviceName) NOT REGISTERED - run install.ps1" -ForegroundColor Red
 }
 
 try {
     $health = Get-Health -Port $state.port
     $healthy = $true
-    Write-Host "Health:   v$($health.version) — queue_depth=$($health.queue_depth), gui_sessions=$($health.active_gui_sessions)" -ForegroundColor Green
+    Write-Host "Health:   v$($health.version) - queue_depth=$($health.queue_depth), gui_sessions=$($health.active_gui_sessions)" -ForegroundColor Green
     # Fields added with the deployment scripts; a pre-upgrade service omits them.
     foreach ($field in @('running', 'ffmpeg_version', 'database')) {
         if ($health.PSObject.Properties[$field]) {
@@ -57,7 +57,7 @@ if (Test-Path $jobsDir) {
     $jobs = Get-ChildItem $jobsDir -Directory -ErrorAction SilentlyContinue
     $bytes = (Get-ChildItem $jobsDir -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum
     $gb = if ($bytes) { [math]::Round($bytes / 1GB, 2) } else { 0 }
-    Write-Host "Jobs:     $(@($jobs).Count) job dir(s), $gb GB under data\jobs (retention: keep everything — deletion is a human act)"
+    Write-Host "Jobs:     $(@($jobs).Count) job dir(s), $gb GB under data\jobs (retention: keep everything - deletion is a human act)"
 }
 
 $errLog = Join-Path $Root 'logs\service\service-err.log'

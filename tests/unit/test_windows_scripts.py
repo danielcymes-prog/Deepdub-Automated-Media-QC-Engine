@@ -26,6 +26,21 @@ class TestInventory:
         for name in (*RUNNABLE, "common.ps1"):
             assert (SCRIPTS_DIR / name).is_file(), f"missing {name}"
 
+    @pytest.mark.parametrize("name", (*RUNNABLE, "common.ps1"))
+    def test_scripts_are_pure_ascii(self, name: str) -> None:
+        """PowerShell 5.1 reads BOM-less files as ANSI: a UTF-8 em dash
+        decodes as a-hat + curly quote, and the curly quote TERMINATES
+        strings — the whole file fails to parse (seen on the RDP host)."""
+        raw = (SCRIPTS_DIR / name).read_bytes()
+        non_ascii = [(i, byte) for i, byte in enumerate(raw) if byte > 0x7F]
+        assert not non_ascii, f"{name}: non-ASCII bytes at offsets {non_ascii[:5]}"
+
+    def test_example_config_is_pure_ascii(self) -> None:
+        # install.ps1 round-trips this file through ANSI Get/Set-Content.
+        example = SCRIPTS_DIR.parent.parent / "config" / "server.example.yaml"
+        raw = example.read_bytes()
+        assert all(byte <= 0x7F for byte in raw), "server.example.yaml has non-ASCII bytes"
+
     def test_superseded_partial_installer_is_gone(self) -> None:
         assert not (SCRIPTS_DIR / "install-service.ps1").exists()
 
