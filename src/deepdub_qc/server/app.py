@@ -57,6 +57,11 @@ class AppState:
     #: Set by the serve command when watch folders are configured; the GUI
     #: panel and /api/v1/watch-folders read its status snapshots.
     watcher: Watcher | None = None
+    #: First line of `ffmpeg -version`, probed once by the serve command.
+    #: Surfaced on /api/v1/health so the deployment smoke test verifies the
+    #: SERVICE resolves the pinned binary, not just that a file exists on
+    #: disk (docs/windows-deployment.md section 4; determinism, ADR-008).
+    ffmpeg_version: str | None = None
 
 
 def _latest_percent(progress: list[dict[str, Any]]) -> int | None:
@@ -125,7 +130,10 @@ def _api_router(state: AppState) -> APIRouter:  # noqa: PLR0915 - route table
             "status": "ok",
             "version": __version__,
             "queue_depth": store.queue_depth(),
+            "running": store.running_count(),
             "active_gui_sessions": state.sessions.active_count(),
+            "database": str(config.paths.database),
+            "ffmpeg_version": state.ffmpeg_version,
         }
 
     @router.get("/watch-folders")
@@ -577,7 +585,11 @@ def _gui_router(  # noqa: PLR0915 - route table
     return router
 
 
-def create_app(loaded: LoadedConfig, store: JobStore | None = None) -> FastAPI:
+def create_app(
+    loaded: LoadedConfig,
+    store: JobStore | None = None,
+    ffmpeg_version: str | None = None,
+) -> FastAPI:
     """Build the application; the worker is started by the serve command."""
     config = loaded.config
     state = AppState(
@@ -587,6 +599,7 @@ def create_app(loaded: LoadedConfig, store: JobStore | None = None) -> FastAPI:
         sessions=SessionTracker(
             config.server.max_gui_sessions, config.server.gui_session_ttl_minutes
         ),
+        ffmpeg_version=ffmpeg_version,
     )
     app = FastAPI(title="Deepdub QC", version=__version__, docs_url="/api/docs")
     app.state.qc = state

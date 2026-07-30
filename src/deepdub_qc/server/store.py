@@ -465,6 +465,22 @@ class JobStore:
                 ).fetchone()[0]
             )
 
+    def running_count(self) -> int:
+        """RUNNING jobs only — the upgrade script drains on this reaching 0.
+
+        queue_depth includes PENDING, which an upgrade deliberately leaves
+        queued (the restarted service picks them up); only an in-flight job
+        must finish before the service stops (docs/windows-deployment.md
+        section 8.2).
+        """
+        with self._connect() as conn:
+            return int(
+                conn.execute(
+                    "SELECT COUNT(*) FROM jobs WHERE status = ?",
+                    (JobStatus.RUNNING.value,),
+                ).fetchone()[0]
+            )
+
     # ------------------------------------------------------------ watch folders
 
     def watch_seen_get(self, path: str) -> tuple[int, float] | None:

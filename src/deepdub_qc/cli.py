@@ -8,7 +8,7 @@ of the handoff). It contains no QC logic.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich.console import Console
@@ -19,6 +19,9 @@ from deepdub_qc.exceptions import DeepdubQCError, PresetError, PresetValidationE
 from deepdub_qc.exit_codes import ExitCode
 from deepdub_qc.logging import configure_logging
 from deepdub_qc.presets.loader import load_preset, preset_sha256
+
+if TYPE_CHECKING:
+    from deepdub_qc.server.config import ServerConfig
 
 app = typer.Typer(
     name="deepdub-qc",
@@ -269,6 +272,22 @@ def compare(
         raise typer.Exit(code=ExitCode.QC_FAIL)
 
 
+def _probe_ffmpeg_version(settings: ServerConfig) -> str | None:
+    """First line of `ffmpeg -version` from the configured binary, or None.
+
+    Display-only (health endpoint): a probe failure must not stop the server —
+    validate_runtime already enforced existence and, when configured, the
+    expected version (the determinism guard); this is the attribution copy.
+    """
+    from deepdub_qc.utils.subprocess import ToolError, run_tool  # noqa: PLC0415
+
+    try:
+        result = run_tool([str(settings.tools.ffmpeg_path), "-version"], timeout=30.0)
+    except ToolError:
+        return None
+    return result.stdout.splitlines()[0] if result.stdout else None
+
+
 @app.command()
 def serve(
     config: Annotated[
@@ -318,7 +337,7 @@ def serve(
     )
 
     store = JobStore(settings.paths.database)
-    application = create_app(loaded, store=store)
+    application = create_app(loaded, store=store, ffmpeg_version=_probe_ffmpeg_version(settings))
     worker = Worker(store, settings, post_completion=PostCompletion(store, settings).handle)
     worker.start()
     try:

@@ -748,3 +748,47 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   do not survive a save — the base version file remains on disk as the
   reviewable record. Concurrent editors get honest conflicts instead of
   silent overwrites.
+
+## ADR-032: Windows deployment scripts — git checkout as the release unit
+
+- **Status:** Accepted (2026-07-30); spec: docs/windows-deployment.md
+- **Context:** The RDP host gained Administrator access, unblocking the
+  Phase 3.5 production install (until now the engine ran as a manual
+  terminal process that died with the operator's session — untenable for
+  the 1–2 week unattended shadow-validation run). The deployment spec
+  draft assumed packaged release artifacts (`app\releases\` + a `current`
+  junction) and left five open questions requiring human/IT decisions.
+  This project has no artifact pipeline: the host already runs from a git
+  checkout, and inventing packaging solely to satisfy the draft would add
+  a release process nobody asked for.
+- **Decision:** The git checkout IS the release unit. `install.ps1` /
+  `upgrade.ps1` / `rollback.ps1` / `status.ps1` / `uninstall.ps1` (shared
+  `common.ps1`, PowerShell 5.1) implement the spec: version identity is
+  the commit sha recorded in `config\deploy-state.json`; upgrade is
+  `git fetch` + `reset --hard` (tracked-file drift like a touched uv.lock
+  dies, untracked editor-created preset drafts survive and are listed) +
+  `uv sync --frozen --no-dev`; rollback is `reset --hard` to the recorded
+  previous commit, optionally restoring the pre-upgrade DB backup the
+  upgrade always takes. The smoke test is script-enforced against
+  /api/v1/health, which now reports `ffmpeg_version` (probed once at
+  startup), `database`, and `running` — the pinned-binary comparison and
+  upgrade draining read the service's own answers, not the disk's.
+  Open questions resolved: service account defaults to the per-service
+  virtual account `NT SERVICE\DeepdubQC` (the superseded partial installer
+  never set ObjectName, silently landing on LocalSystem — the exact
+  configuration the spec forbids); a real account is an install parameter
+  for UNC access; NSSM retained with its sha256 logged; retention v1 =
+  keep everything (deletion stays a §30 human act); pre-upgrade DB backups
+  are the script-level guarantee, host backup regime is IT's call;
+  FFmpeg source gyan.dev (BtbN acceptable) with the `expected_ffmpeg_version`
+  pin armed automatically at install. Playwright's Chromium goes to a
+  shared `browsers\` dir via PLAYWRIGHT_BROWSERS_PATH — the per-user
+  default is invisible to a service account.
+- **Consequences:** The engine survives logoff, reboot, and crashes on the
+  RDP host; every install/upgrade/rollback is logged and attributable
+  (commit + ffmpeg hash); a failed upgrade self-reverts. The scripts are
+  untestable in Linux CI — a unit test enforces their static invariants
+  (inventory, no LocalSystem regression, ErrorActionPreference, backup
+  ordering), and real verification is the documented first install on the
+  host. Windows-native runs remain attributable-but-not-canonical
+  (Docker stays the determinism environment, ADR-008).

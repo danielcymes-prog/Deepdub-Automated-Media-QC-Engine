@@ -59,6 +59,41 @@ class TestApi:
         body = client.get("/api/v1/health").json()
         assert body["status"] == "ok"
         assert body["queue_depth"] == 0
+        assert body["running"] == 0
+
+    def test_health_reports_deployment_attribution(self, env) -> None:
+        """The Windows smoke test (docs/windows-deployment.md 8.1 step 8)
+        verifies the SERVICE's own answers: DB path and the resolved ffmpeg.
+        Absence of a probe result must read as null, never crash health."""
+        config, _, _, client = env
+        body = client.get("/api/v1/health").json()
+        assert body["database"] == str(config.paths.database)
+        assert body["ffmpeg_version"] is None  # fixture app: no probe wired
+
+    def test_health_ffmpeg_version_passthrough(self, tmp_path) -> None:
+        media = tmp_path / "media"
+        media.mkdir()
+        config = ServerConfig.model_validate(
+            {
+                "schema_version": 1,
+                "paths": {
+                    "media_roots": [str(media)],
+                    "jobs_root": str(tmp_path / "jobs"),
+                    "database": str(tmp_path / "qc.sqlite3"),
+                    "presets_root": str(REPO_ROOT / "presets"),
+                },
+                "tools": {
+                    "ffmpeg_path": str(tmp_path / "ffmpeg"),
+                    "ffprobe_path": str(tmp_path / "ffprobe"),
+                },
+            }
+        )
+        store = JobStore(config.paths.database)
+        app = create_app(
+            LoadedConfig(config=config), store=store, ffmpeg_version="ffmpeg version 7.1-test"
+        )
+        body = TestClient(app).get("/api/v1/health").json()
+        assert body["ffmpeg_version"] == "ffmpeg version 7.1-test"
 
     def test_presets_listing(self, env) -> None:
         _, _, _, client = env

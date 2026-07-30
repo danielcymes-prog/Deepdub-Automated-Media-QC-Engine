@@ -54,6 +54,19 @@ class TestQueue:
     def test_claim_empty_queue_returns_none(self, store: JobStore) -> None:
         assert store.claim_next() is None
 
+    def test_running_count_tracks_claims_not_pending(self, store: JobStore, tmp_path: Path) -> None:
+        """running_count drives upgrade draining: PENDING jobs deliberately
+        survive a service restart, so only RUNNING may hold an upgrade."""
+        submit(store, tmp_path, "a.mov")
+        submit(store, tmp_path, "b.mov")
+        assert store.running_count() == 0
+        assert store.queue_depth() == 2
+        claimed = store.claim_next()
+        assert claimed is not None
+        assert store.running_count() == 1
+        store.mark_completed(claimed.job_id, qc_status="PASS", summary={})
+        assert store.running_count() == 0
+
     def test_concurrent_claims_never_double_claim(self, store: JobStore, tmp_path: Path) -> None:
         for i in range(4):
             submit(store, tmp_path, f"f{i}.mov")
