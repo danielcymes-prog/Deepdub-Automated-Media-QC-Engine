@@ -121,12 +121,12 @@ Per ADR 0004, the "app" on the desktop is a browser shortcut to the persistently
   ```ini
   [InternetShortcut]
   URL=http://127.0.0.1:8571/
-  IconFile=C:\DeepdubQC\app\current\assets\deepdub-qc.ico
+  IconFile=C:\DeepdubQC\shortcuts\deepdub-qc.ico
   IconIndex=0
   ```
 
 - The install script copies it to `C:\Users\Public\Desktop\` so every RDP operator sees it. (A `.lnk` alternative targeting the default browser with the URL as argument is acceptable if `.url` icon handling proves unreliable on the host's Windows build; the install script owns this choice.)
-- The `.ico` asset ships inside the application package so upgrades keep the icon path valid via the `current` junction.
+- The `.ico` ships in the repo at `assets/deepdub-qc.ico` (Deepdub brand mark, multi-resolution); the install script copies it next to the shortcut so the icon survives even if the checkout moves. The console serves the same mark as its favicon (`/static/favicon.ico`).
 - If the service is down, the browser shows a connection error; operator remedy is documented on the runbook card (§9): check the `DeepdubQC` service in `services.msc` or run `scripts\windows\status.ps1`.
 
 ## 8. Install and Upgrade Procedure

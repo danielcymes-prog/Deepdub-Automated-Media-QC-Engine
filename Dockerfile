@@ -85,6 +85,9 @@ COPY scripts ./scripts
 # config/ is test input: the Windows deployment installer round-trips
 # server.example.yaml through ANSI encoding, so a test pins it to ASCII.
 COPY config ./config
+# assets/ is test input: the desktop-shortcut test verifies the shipped
+# .ico exists and is a real ICO.
+COPY assets ./assets
 # docs/ is test input: the export drift tests compare the committed
 # docs/parameter-catalogue.md byte-for-byte against a fresh render.
 COPY docs ./docs

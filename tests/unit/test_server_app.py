@@ -70,6 +70,13 @@ class TestApi:
         assert body["database"] == str(config.paths.database)
         assert body["ffmpeg_version"] is None  # fixture app: no probe wired
 
+    def test_favicon_served_and_linked(self, env) -> None:
+        _, _, _, client = env
+        icon = client.get("/static/favicon.ico")
+        assert icon.status_code == 200
+        assert icon.content[:4] == b"\x00\x00\x01\x00"  # ICO magic
+        assert 'rel="icon"' in client.get("/").text
+
     def test_health_ffmpeg_version_passthrough(self, tmp_path) -> None:
         media = tmp_path / "media"
         media.mkdir()
