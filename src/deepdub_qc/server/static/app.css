@@ -320,6 +320,10 @@ main {
    a title attribute, unreachable by keyboard and invisible on touch. */
 .cell-caption { display: block; color: var(--dd-text-dim); font-size: 12px;
   margin-top: 3px; max-width: 46ch; }
+/* Superseded preset versions, collapsed under the current one (ADR-033). */
+.version-history { margin-top: 3px; font-size: 12px; color: var(--dd-text-dim); }
+.version-history summary { cursor: pointer; width: fit-content; }
+.version-history ul { margin: 4px 0 0; padding-left: 14px; list-style: none; }
 .table-foot { display: flex; justify-content: space-between; align-items: center;
   padding: 12px 6px; font-size: 12.5px; gap: 16px; }
 .pagination { display: flex; align-items: center; gap: 2px; }

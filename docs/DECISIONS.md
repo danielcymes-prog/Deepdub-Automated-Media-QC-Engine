@@ -792,3 +792,32 @@ One record per decision. Statuses: Proposed → Accepted → Superseded. Never e
   ordering), and real verification is the documented first install on the
   host. Windows-native runs remain attributable-but-not-canonical
   (Docker stays the determinism environment, ADR-008).
+
+## ADR-033: GUI shows one current version per preset; history is collapsed
+
+- **Status:** Accepted (2026-08-02)
+- **Context:** ADR-031's editor creates a new draft file on every save, and
+  the GUI presented every version as a peer row on /presets and a peer
+  option in the submit picker. After a handful of edits the operator saw
+  what looked like "multiple drafts of the same preset" — confusing, and
+  an invitation to submit against a stale draft by accident. The operator
+  explicitly asked for this to go away.
+- **Alternatives:** (a) Edit drafts in place until approval — rejected:
+  report.json cites the exact preset id@version that judged a file
+  (ADR-002/013); mutating a version a job already ran against breaks that
+  chain, and the concurrent-editor conflict guard depends on immutable
+  versions. (b) Prune superseded draft files — explicitly declined by the
+  operator; nothing is deleted.
+- **Decision:** Presentation-only collapse. The catalog gains
+  `split_current()`: one current (numerically newest) version per preset
+  id; superseded versions become that preset's history. The /presets page
+  renders one row per preset with earlier versions in a collapsed
+  disclosure (no Edit links — the conflict guard rejects stale bases
+  anyway), and `picker_groups()` offers only current versions. The files,
+  the loader, `/api/v1/presets`, watch-folder routing, and API submission
+  of any explicit version are unchanged.
+- **Consequences:** The operator's mental model becomes "a preset with an
+  audit trail" instead of "a pile of drafts," while every historical
+  version stays on disk and API-reachable as the evidence chain behind
+  past verdicts. Version ordering is numeric (`1.10.0 > 1.9.0`), shared
+  with the editor's conflict guard via `catalog.version_key`.

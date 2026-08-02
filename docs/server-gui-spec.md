@@ -57,7 +57,7 @@ The landing page. Contents:
 
 1. **Media path input** — a text field for an absolute path or UNC path (`\\server\share\...`) to the media file, plus a server-side path browser (see below). **There is no file upload.** The server reads media directly from disk/shares; uploading through the browser is explicitly out of scope (handoff §20: media never leaves the host; also multi-GB uploads to localhost are wasteful).
    - *Server-side path browser:* a modal that lists directories/files under the configured `media_roots` only (see `server-config-spec.md`). It never lists paths outside `media_roots`. Filterable by media extensions.
-2. **Preset picker** — grouped by client, showing `title`, `preset_id`, `version`, and `status` badge (`draft` / `approved` / `deprecated`). Default selection: none (operator must choose). Deprecated presets are visible but require an explicit confirmation checkbox; draft presets show a "not approved for delivery decisions" caption. Data comes from the existing preset loader — the GUI does not parse YAML itself.
+2. **Preset picker** — grouped by client, showing `title`, `preset_id`, `version`, and `status` badge (`draft` / `approved` / `deprecated`). Only each preset's newest version is offered; superseded versions are history, not options (ADR-033). Default selection: none (operator must choose). Deprecated presets are visible but require an explicit confirmation checkbox; draft presets show a "not approved for delivery decisions" caption. Data comes from the existing preset loader — the GUI does not parse YAML itself.
 3. **Requested by** — text field, pre-filled with the detected Windows session username if available, editable. Required, non-empty. Persisted in the job record.
 4. **Output location** — read-only display of where the job directory will be created (`jobs_root/<job_id>/`), for operator orientation.
 5. **Submit button** — disabled until path, preset, and requested_by are valid.
@@ -98,7 +98,7 @@ The report viewer is **the existing self-contained `report.html`**, served as a 
 
 ### 3.5 Preset Picker (component + `/presets` page)
 
-Besides the submit-form component (§3.1), a read-only `/presets` page lists every preset with id, version, client, content type, status, title, description, and effective date — the operator's reference for "which preset do I use for this client." No editing. Preset authoring stays in git (ADR-003, ADR-013).
+Besides the submit-form component (§3.1), a `/presets` page lists every preset with id, version, client, content type, status, title, description, and effective date — the operator's reference for "which preset do I use for this client." One row per preset id, showing its current (newest) version; superseded versions sit in a collapsed "earlier versions" disclosure under the current row, with no Edit links (ADR-033). Threshold edits happen in the console editor (ADR-031), which drafts a new version; rule authoring and structure stay in git (ADR-003, ADR-013).
 
 ## 4. User Flows
 

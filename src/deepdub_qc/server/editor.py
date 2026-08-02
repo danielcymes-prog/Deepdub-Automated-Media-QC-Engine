@@ -40,7 +40,7 @@ from deepdub_qc.exceptions import DeepdubQCError, PresetError, preset_error_deta
 from deepdub_qc.models.enums import Severity
 from deepdub_qc.models.parameters import CATALOGUE
 from deepdub_qc.presets.loader import load_preset
-from deepdub_qc.server.catalog import PresetInfo
+from deepdub_qc.server.catalog import PresetInfo, version_key
 
 #: expected-payload keys the editor may change, in emission order. `unit` is
 #: deliberately absent: it describes the measurement, it is not a threshold.
@@ -134,10 +134,6 @@ def _bump_minor(version: str) -> str:
     return f"{major}.{minor + 1}.0"
 
 
-def _version_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.split("."))
-
-
 def _coerce_like(original: Any, submitted: Any) -> Any:  # noqa: PLR0911 - one return per type
     """Type an input string like the value it replaces (ints stay ints, etc.).
 
@@ -183,10 +179,10 @@ def apply_edits(  # noqa: PLR0913 - one argument per audited save field
         )
     newest = max(
         (entry.version for entry in catalog if entry.preset_id == meta["id"]),
-        key=_version_tuple,
+        key=version_key,
         default=base_version,
     )
-    if _version_tuple(newest) > _version_tuple(base_version):
+    if version_key(newest) > version_key(base_version):
         raise VersionConflictError(
             f"version {newest} of {meta['id']!r} already exists - your edit is based on "
             f"{base_version}. Reload the editor on the newest version and reapply."

@@ -272,3 +272,43 @@ class TestEditorRoutes:
         _, client = env
         page = client.get("/presets/nope/9.9.9/edit")
         assert "Unknown preset" in page.text
+
+
+class TestVersionCollapseInGui:
+    """ADR-033: after a save the GUI shows ONE master_audio - the new current
+    version as the row/picker option, the superseded one as collapsed history."""
+
+    def save_new_version(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/v1/presets/master_audio/versions",
+            json={"base_version": "1.0.0", "edited_by": "collapse-test", "note": "", "rules": []},
+        )
+        assert response.status_code == 201
+
+    def test_presets_page_shows_one_row_with_history(self, env) -> None:
+        _, client = env
+        self.save_new_version(client)
+        page = client.get("/presets").text
+        assert "master_audio@1.1.0" in page
+        assert "1 earlier version" in page
+        assert "v1.0.0" in page  # inside the history disclosure
+        # The superseded version gets no row and no Edit link - the editor's
+        # conflict guard would reject a save from that stale base anyway.
+        assert "master_audio@1.0.0" not in page
+        assert "/presets/master_audio/1.0.0/edit" not in page
+        assert "/presets/master_audio/1.1.0/edit" in page
+
+    def test_submit_picker_offers_only_the_current_version(self, env) -> None:
+        _, client = env
+        self.save_new_version(client)
+        page = client.get("/").text
+        assert "master_audio@1.1.0" in page
+        assert "master_audio@1.0.0" not in page
+
+    def test_api_still_returns_every_version(self, env) -> None:
+        # Superseded versions remain real, loadable and API-visible: they are
+        # the audit trail behind past verdicts, only the GUI collapses them.
+        _, client = env
+        self.save_new_version(client)
+        versions = {(p["preset_id"], p["version"]) for p in client.get("/api/v1/presets").json()}
+        assert {("master_audio", "1.0.0"), ("master_audio", "1.1.0")} <= versions

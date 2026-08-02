@@ -295,9 +295,10 @@ class TestGui:
     def test_presets_page_states_governance(self, env) -> None:
         _, _, _, client = env
         html = client.get("/presets").text
-        # ADR-031: the page is no longer read-only, but governance must stay
-        # stated - saves are drafts and approval remains `presets lock`.
-        assert "new draft version" in html
+        # ADR-031/033: the page is no longer read-only, but governance must
+        # stay stated - saves never mutate a file in place and approval
+        # remains `presets lock`.
+        assert "changed in place" in html
         assert "lock" in html
         assert "marimba_deliver_audio@1.0.0" in html
 
