@@ -26,7 +26,13 @@ from fastapi.templating import Jinja2Templates
 from deepdub_qc import __version__
 from deepdub_qc.presets.loader import load_preset
 from deepdub_qc.server import editor
-from deepdub_qc.server.catalog import PresetInfo, build_catalog, find_preset, picker_groups
+from deepdub_qc.server.catalog import (
+    PresetInfo,
+    build_catalog,
+    find_preset,
+    picker_groups,
+    split_current,
+)
 from deepdub_qc.server.config import LoadedConfig
 from deepdub_qc.server.sessions import SessionTracker
 from deepdub_qc.server.store import JobRecord, JobStore, QueueFullError, UnknownJobError
@@ -526,7 +532,8 @@ def _gui_router(  # noqa: PLR0915 - route table
 
     @router.get("/presets", response_class=HTMLResponse)
     def presets_page(request: Request, saved: str = Query("")) -> HTMLResponse:
-        return render(request, "presets.html.j2", catalog=state.catalog, saved=saved)
+        current, history = split_current(state.catalog)
+        return render(request, "presets.html.j2", catalog=current, history=history, saved=saved)
 
     @router.get("/presets/{preset_id}/{version}/edit", response_class=HTMLResponse)
     def preset_edit_page(request: Request, preset_id: str, version: str) -> HTMLResponse:

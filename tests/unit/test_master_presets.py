@@ -5,7 +5,14 @@ from pathlib import Path
 
 from deepdub_qc.models.parameters import CATALOGUE, ImplementationStatus
 from deepdub_qc.presets.loader import load_preset
-from deepdub_qc.server.catalog import MASTER_CLIENT, build_catalog, picker_groups
+from deepdub_qc.server.catalog import (
+    MASTER_CLIENT,
+    PresetInfo,
+    build_catalog,
+    picker_groups,
+    split_current,
+    version_key,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -79,6 +86,44 @@ class TestCommittedMasters:
     def test_regeneration_refuses_to_overwrite_without_force(self, monkeypatch) -> None:
         monkeypatch.setattr(sys, "argv", ["build_master_presets"])
         assert main() == 1  # committed masters exist; nothing may be clobbered
+
+
+def entry(preset_id: str, version: str, client: str = "acme", listed: bool = True) -> PresetInfo:
+    return PresetInfo(
+        preset_id=preset_id,
+        version=version,
+        client=client,
+        content_type="av_delivery",
+        status="draft",
+        title=preset_id,
+        description="",
+        effective_date="2026-08-01",
+        path=Path(f"{preset_id}_{version}.yaml"),
+        listed=listed,
+    )
+
+
+class TestVersionCollapse:
+    """One current version per preset id; the rest is history (ADR-033)."""
+
+    def test_versions_order_numerically_not_lexically(self) -> None:
+        assert version_key("1.10.0") > version_key("1.9.0")
+
+    def test_split_current_keeps_the_numerically_newest(self) -> None:
+        catalog = [entry("a", "1.9.0"), entry("a", "1.10.0"), entry("b", "1.0.0")]
+        current, history = split_current(catalog)
+        assert [(e.preset_id, e.version) for e in current] == [("a", "1.10.0"), ("b", "1.0.0")]
+        assert [e.version for e in history["a"]] == ["1.9.0"]
+        assert "b" not in history  # single-version presets carry no disclosure
+
+    def test_history_lists_newest_first(self) -> None:
+        catalog = [entry("a", "1.0.0"), entry("a", "1.2.0"), entry("a", "1.1.0")]
+        _, history = split_current(catalog)
+        assert [e.version for e in history["a"]] == ["1.1.0", "1.0.0"]
+
+    def test_picker_offers_only_the_current_version(self) -> None:
+        groups = picker_groups([entry("a", "1.0.0"), entry("a", "1.1.0")])
+        assert [(p.preset_id, p.version) for _, ps in groups for p in ps] == [("a", "1.1.0")]
 
 
 class TestLibraryDemotion:

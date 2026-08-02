@@ -81,10 +81,46 @@ def build_catalog(presets_root: Path) -> list[PresetInfo]:
 MASTER_CLIENT = "deepdub"
 
 
-def picker_groups(catalog: list[PresetInfo]) -> list[tuple[str, list[PresetInfo]]]:
-    """Listed presets grouped by client for the submit picker, masters first."""
-    groups: dict[str, list[PresetInfo]] = {}
+def version_key(version: str) -> tuple[int, ...]:
+    """Numeric ordering for dotted versions ('1.10.0' sorts above '1.9.0')."""
+    return tuple(int(part) for part in version.split("."))
+
+
+def split_current(
+    catalog: list[PresetInfo],
+) -> tuple[list[PresetInfo], dict[str, list[PresetInfo]]]:
+    """(newest version of each preset id, superseded versions keyed by id).
+
+    The GUI treats a preset as one thing with a history, not as peer rows per
+    version: only the newest version is a row or a picker option (ADR-033).
+    Superseded versions are never deleted - report.json cites the exact
+    version that judged a file (ADR-013) - they are just presented as history,
+    newest first, and stay loadable by the API and watch folders.
+    """
+    newest: dict[str, PresetInfo] = {}
     for entry in catalog:
+        held = newest.get(entry.preset_id)
+        if held is None or version_key(entry.version) > version_key(held.version):
+            newest[entry.preset_id] = entry
+    current = [entry for entry in catalog if newest[entry.preset_id] is entry]
+    history: dict[str, list[PresetInfo]] = {}
+    for entry in catalog:
+        if newest[entry.preset_id] is not entry:
+            history.setdefault(entry.preset_id, []).append(entry)
+    for versions in history.values():
+        versions.sort(key=lambda e: version_key(e.version), reverse=True)
+    return current, history
+
+
+def picker_groups(catalog: list[PresetInfo]) -> list[tuple[str, list[PresetInfo]]]:
+    """Listed presets grouped by client for the submit picker, masters first.
+
+    Only each preset's newest version is offered: a superseded draft is
+    history, not a choice an operator should be able to make by accident.
+    """
+    current, _ = split_current(catalog)
+    groups: dict[str, list[PresetInfo]] = {}
+    for entry in current:
         if entry.listed:
             groups.setdefault(entry.client, []).append(entry)
     return sorted(groups.items(), key=lambda kv: (kv[0] != MASTER_CLIENT, kv[0]))

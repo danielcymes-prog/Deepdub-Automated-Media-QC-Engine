@@ -4,14 +4,15 @@
 {% block title %}Presets — Deepdub QC{% endblock %}
 {% block content %}
 <h1>Presets</h1>
-<p class="dim">Presets are versioned files. <strong>Edit</strong> opens the console
-editor — every save creates a new draft version with an audit trail; nothing is
-changed in place, and approval still happens via <span class="mono">presets
-lock</span>.</p>
+<p class="dim">One row per preset, showing its current version. <strong>Edit</strong>
+opens the console editor — a save becomes the preset's new current version;
+nothing is ever changed in place, so superseded versions stay under
+“earlier versions” as the audit trail. Approval still happens via
+<span class="mono">presets lock</span>.</p>
 {% if saved %}
 <div class="banner" role="status"><span>✓</span>
-  <div>Saved <span class="mono">{{ saved }}</span> as a new draft version.
-       It is selectable on the Submit page now.</div>
+  <div>Saved <span class="mono">{{ saved }}</span> as the new current version.
+       It has replaced the previous version on the Submit page.</div>
 </div>
 {% endif %}
 {# No `rows-linked` class: these rows do not navigate anywhere, so they must not
@@ -19,7 +20,7 @@ lock</span>.</p>
    five columns. #}
 {% set listed_entries = catalog|selectattr('listed')|list %}
 {% set library_entries = catalog|rejectattr('listed')|list %}
-{% macro preset_table(entries, caption) %}
+{% macro preset_table(entries, history, caption) %}
 <table class="data-table">
   <caption class="visually-hidden">{{ caption }}</caption>
   <thead><tr><th scope="col">Title</th><th scope="col">ID / version</th>
@@ -40,7 +41,22 @@ lock</span>.</p>
         <span class="cell-caption">{{ p.description }}</span>
         {% endif %}
       </td>
-      <td class="mono">{{ p.preset_id }}@{{ p.version }}</td>
+      <td class="mono">{{ p.preset_id }}@{{ p.version }}
+        {# Superseded versions are audit history, not peer presets: no rows of
+           their own, no Edit links (the conflict guard rejects a stale base
+           anyway), collapsed by default (ADR-033). #}
+        {% set older = history.get(p.preset_id) %}
+        {% if older %}
+        <details class="version-history">
+          <summary>{{ older|length }} earlier version{{ 's' if older|length != 1 }}</summary>
+          <ul>
+            {% for old in older %}
+            <li>v{{ old.version }} · {{ old.status }} · {{ old.effective_date }}</li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </td>
       <td>{{ p.content_type }}</td>
       <td>{{ preset_status_pill(p.status) }}</td>
       <td class="mono">{{ p.effective_date }}</td>
@@ -55,12 +71,13 @@ lock</span>.</p>
 </table>
 {% endmacro %}
 {% if catalog %}
-{{ preset_table(listed_entries, 'Available QC presets, grouped by client. Read-only.') }}
+{{ preset_table(listed_entries, history,
+                'Available QC presets, grouped by client. Read-only.') }}
 {% if library_entries %}
 <details class="log-tail">
   <summary class="dim">Vidchecker library — reference only, not in the submit picker
     ({{ library_entries|length }} presets)</summary>
-  {{ preset_table(library_entries,
+  {{ preset_table(library_entries, history,
                   'Imported Vidchecker reference presets. Read-only, not selectable
                    on the Submit page.') }}
 </details>
